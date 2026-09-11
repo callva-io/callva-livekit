@@ -21,12 +21,11 @@ jobs:
           enable-cache: true
           python-version: ${{ matrix.python-version }}
 
-      # A virtual environment, not --system: the runner's own Python is externally
-      # managed and refuses installs into it.
+      # setup-uv with a python-version has already made the virtual environment and
+      # exported VIRTUAL_ENV; installing --system would hit the runner's own Python,
+      # which is externally managed and refuses.
       - name: Install
-        run: |
-          uv venv
-          uv pip install -e ".[dev,s3]"
+        run: uv pip install -e ".[dev,s3]"
 
       - name: Lint
         run: uv run ruff check .
