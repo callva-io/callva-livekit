@@ -278,3 +278,34 @@ async def test_no_recording_at_all(bind_context, sent, target):
 
     assert sent[1]["payload"]["recording"] is None
     assert len(sent) == 2
+
+
+def test_the_shutdown_callback_can_take_the_reason(bind_context):
+    """The SDK reads ``__code__`` to decide whether to pass the shutdown reason.
+
+    A closure works; a functools.partial would have no ``__code__`` and would crash the
+    job at registration time.
+    """
+    ctx = bind_context(FakeContext())
+    callva_webhook.attach()
+
+    callback = ctx.shutdown_callbacks[0]
+    assert callback.__code__.co_argcount >= 1
+
+
+async def test_the_fallback_does_not_need_the_ambient_job(bind_context, sent, target, monkeypatch):
+    """A shutdown callback runs in its own task; the contextvar may be gone by then."""
+    ctx = bind_context(FakeContext())
+    ctx.report = FakeReport()
+    callva_webhook.attach()
+    await live_call(ctx)
+
+    def no_ambient_job():
+        raise AssertionError("the fallback must not reach for the ambient job context")
+
+    monkeypatch.setattr(_state, "context", no_ambient_job)
+
+    for callback in ctx.shutdown_callbacks:
+        await callback("room disconnected")
+
+    assert [item["payload"]["event"] for item in sent] == ["call.started", "call.ended"]

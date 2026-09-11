@@ -53,7 +53,15 @@ def attach(
 
     ctx = st.ctx
     ctx.add_participant_entrypoint(_on_participant)
-    ctx.add_shutdown_callback(_on_shutdown)
+
+    # The context is captured here rather than read from the SDK's contextvar at shutdown:
+    # a callback runs in its own task, and nothing guarantees the ambient job is still set
+    # by then. A plain closure, never a partial — the SDK inspects `__code__` to decide
+    # whether to pass it the shutdown reason.
+    async def _shutdown(reason: str = "") -> None:
+        await _on_shutdown(ctx, reason)
+
+    ctx.add_shutdown_callback(_shutdown)
 
     logger.debug("call webhooks attached")
 
@@ -159,14 +167,14 @@ async def on_session_end(ctx: Any = None) -> None:
         await upload(body, report_dict)
 
 
-async def _on_shutdown(_reason: str = "") -> None:
+async def _on_shutdown(ctx: Any, _reason: str = "") -> None:
     """Fallback for agents that cannot reach ``on_session_end``."""
-    st = _state.state()
+    st = _state.state(ctx)
     if st.ended_sent:
         return
 
     logger.warning(FALLBACK_WARNING)
-    await on_session_end(st.ctx)
+    await on_session_end(ctx)
 
 
 def _session_report(st: _state.CallState) -> tuple[Any, dict[str, Any] | None]:
