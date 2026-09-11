@@ -163,14 +163,18 @@ forwarded to a configuration endpoint unchanged.
 
 ```
 job.metadata carries a body      → use it, returns before connect()
-job.metadata carries a pointer   → fetch from that URL
-job.metadata empty, env URL set  → fetch from the environment URL
+job.metadata carries a pointer   → follow it
+job.metadata empty, env URL set  → follow that
 otherwise                        → no config
 ```
 
-The endpoint paths need the SIP envelope to build their request, which means they await the
-participant. `load()` therefore returns immediately in the inline case and after participant
-join in the endpoint case. Documented, not hidden.
+A pointer is an endpoint, or a local file: `file://…` or a plain path, distinguished by the
+absence of a scheme. A file is read as it is — no request, no waiting — which makes it the
+shortest development loop. It cannot answer per caller, so it is not the production channel.
+
+Only the endpoint path needs the SIP envelope to build its request, so only it awaits the
+participant. `load()` returns immediately for a body in metadata and for a file, and after
+participant join for an endpoint. Documented, not hidden.
 
 ### Request payload
 

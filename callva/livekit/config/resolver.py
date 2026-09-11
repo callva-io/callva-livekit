@@ -1,6 +1,11 @@
 from __future__ import annotations
 
+import asyncio
+import json
+from pathlib import Path
 from typing import Any, Literal
+from urllib.parse import urlparse
+from urllib.request import url2pathname
 
 from ..core import env, transport
 from ..core import state as _state
@@ -12,6 +17,26 @@ OnError = Literal["terminate", "continue"]
 
 class ConfigError(RuntimeError):
     """Configuration for this call could not be resolved."""
+
+
+def as_path(endpoint: str) -> Path | None:
+    """A local file, or ``None`` if this names a remote endpoint.
+
+    ``file:///etc/agent.json`` and a bare ``./agent.json`` both mean the same thing. A
+    file answers instantly and needs no participant, which makes it the shortest possible
+    development loop; it cannot answer per caller, which is why it is not the production
+    channel.
+    """
+    if endpoint.startswith("file://"):
+        return Path(url2pathname(urlparse(endpoint).path))
+    if "://" in endpoint:
+        return None
+    return Path(endpoint).expanduser()
+
+
+async def _read_file(path: Path) -> Any:
+    text = await asyncio.get_running_loop().run_in_executor(None, path.read_text)
+    return json.loads(text)
 
 
 async def load(
@@ -27,12 +52,15 @@ async def load(
     Resolution order:
 
     1. a body inside ``ctx.job.metadata`` — returns immediately, before anyone has joined
-    2. a pointer inside ``ctx.job.metadata`` — fetched from that URL
-    3. ``CALLVA_CONFIG_URL`` (or the ``url`` argument) — fetched, with the call's context
-       as the request body, so the responder can answer "who called which number"
+    2. a pointer inside ``ctx.job.metadata`` — followed
+    3. ``CALLVA_CONFIG_URL`` (or the ``url`` argument) — followed
 
-    The two fetching paths need the SIP envelope to build their request, so they wait for
-    the participant to join. The inline path does not.
+    A pointer is either an endpoint, asked with the call's own context as the request body
+    so the responder can answer "who called which number", or a local file — ``file://…``
+    or a plain path — read as it is.
+
+    Only the endpoint path needs the SIP envelope to build its request, so only it waits
+    for the participant to join. A body in metadata and a file both answer immediately.
 
     When configuration cannot be resolved the call is terminated and the reason logged: an
     agent without its prompt is a broken call either way, and failing quietly hides it.
@@ -52,6 +80,20 @@ async def load(
     if not endpoint:
         logger.debug("no configuration source: job metadata carries none and no URL is set")
         return _store(st, CallConfig(source="none"))
+
+    path = as_path(endpoint)
+    if path is not None:
+        try:
+            body = await _read_file(path)
+        except (OSError, ValueError) as exc:
+            return _fail(st, on_error, f"could not read configuration from {path}: {exc}")
+
+        config = CallConfig.parse(body, source="file")
+        if config.empty:
+            return _fail(st, on_error, f"configuration file {path} carried nothing usable")
+
+        logger.debug("resolved configuration from %s", path)
+        return _store(st, config)
 
     try:
         participant = await st.ctx.wait_for_participant()

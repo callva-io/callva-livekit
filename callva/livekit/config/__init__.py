@@ -7,13 +7,14 @@ in the room, so a prompt placed there is readable by any connected client.
 """
 
 from .models import CallConfig, Variables
-from .resolver import ConfigError, load, request_payload
+from .resolver import ConfigError, as_path, load, request_payload
 from .template import render
 
 __all__ = [
     "CallConfig",
     "ConfigError",
     "Variables",
+    "as_path",
     "load",
     "render",
     "request_payload",

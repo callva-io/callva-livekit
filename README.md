@@ -95,9 +95,14 @@ Configuration reaches the agent through **agent dispatch metadata**, read as
 ```
 
 Put a `config_url` there instead of a `config`, or set `CALLVA_CONFIG_URL`, and the agent
-asks that endpoint instead. The request is the question — it carries who is calling, which
-number they reached and the whole SIP envelope — so the endpoint can answer "this number
-belongs to that customer, here is their prompt". That is the inbound case in one hop.
+follows that instead. The request is the question — it carries who is calling, which number
+they reached and the whole SIP envelope — so the endpoint can answer "this number belongs to
+that customer, here is their prompt". That is the inbound case in one hop.
+
+A pointer can also be a local file — `file:///etc/agent.json` or a plain `./agent.json`. It
+is read as it is, with no request and no waiting for anyone to join, which makes it the
+shortest development loop there is. It cannot answer per caller, so it is not the production
+channel.
 
 The response:
 

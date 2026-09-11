@@ -32,3 +32,22 @@ jobs:
 
       - name: Test
         run: uv run pytest tests -q
+
+  # The floor declared in pyproject.toml, proven rather than asserted. The SDK surface
+  # this package stands on — get_job_context, make_session_report, on_session_end,
+  # add_participant_entrypoint — has to hold across the whole declared range.
+  floor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          python-version: "3.12"
+
+      - name: Install with the oldest supported SDK
+        run: uv pip install -e ".[dev,s3]" "livekit-agents==1.5.7"
+
+      - name: Test
+        run: uv run pytest tests -q

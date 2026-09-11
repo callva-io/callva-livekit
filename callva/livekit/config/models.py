@@ -70,7 +70,7 @@ class CallConfig:
     webhook: WebhookTarget | None = None
     extra: dict[str, Any] = field(default_factory=dict)
     source: str = "none"
-    """Where this came from: ``metadata``, ``url``, or ``none``."""
+    """Where this came from: ``metadata``, ``file``, ``url``, or ``none``."""
 
     @property
     def empty(self) -> bool:

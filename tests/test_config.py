@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -171,3 +172,72 @@ async def test_an_empty_response_is_treated_as_a_failure(bind_context, monkeypat
         await callva_config.load()
 
     assert ctx.shutdown_reason is not None
+
+
+async def test_a_plain_path_is_read_as_a_file(bind_context, no_fetch, monkeypatch, tmp_path):
+    document = tmp_path / "agent.json"
+    document.write_text(json.dumps(BODY))
+    monkeypatch.setenv("CALLVA_CONFIG_URL", str(document))
+    bind_context(FakeContext())
+
+    config = await callva_config.load()
+
+    assert config.source == "file"
+    assert config.prompt == "You are talking to Anna."
+    assert no_fetch == [], "a file is read, not fetched"
+
+
+async def test_a_file_url_is_read_as_a_file(bind_context, no_fetch, monkeypatch, tmp_path):
+    document = tmp_path / "agent.json"
+    document.write_text(json.dumps(BODY))
+    monkeypatch.setenv("CALLVA_CONFIG_URL", document.as_uri())
+    bind_context(FakeContext())
+
+    assert (await callva_config.load()).source == "file"
+
+
+async def test_a_file_answers_without_waiting_for_anyone(bind_context, monkeypatch, tmp_path):
+    """The shortest development loop: no participant, no round trip."""
+    document = tmp_path / "agent.json"
+    document.write_text(json.dumps(BODY))
+    monkeypatch.setenv("CALLVA_CONFIG_URL", str(document))
+
+    ctx = FakeContext()
+
+    async def never(**_):
+        raise AssertionError("a file must not wait for a participant")
+
+    ctx.wait_for_participant = never
+    bind_context(ctx)
+
+    assert (await callva_config.load()).prompt == "You are talking to Anna."
+
+
+async def test_a_missing_file_terminates_the_call(bind_context, monkeypatch, tmp_path):
+    monkeypatch.setenv("CALLVA_CONFIG_URL", str(tmp_path / "absent.json"))
+    ctx = bind_context(FakeContext())
+
+    with pytest.raises(callva_config.ConfigError, match="could not read configuration"):
+        await callva_config.load()
+
+    assert ctx.shutdown_reason is not None
+
+
+async def test_a_file_that_is_not_json_terminates_the_call(bind_context, monkeypatch, tmp_path):
+    document = tmp_path / "agent.json"
+    document.write_text("this is not json")
+    monkeypatch.setenv("CALLVA_CONFIG_URL", str(document))
+    bind_context(FakeContext())
+
+    with pytest.raises(callva_config.ConfigError):
+        await callva_config.load()
+
+
+def test_telling_a_file_from_an_endpoint():
+    from callva.livekit.config import as_path
+
+    assert as_path("https://example.test/config") is None
+    assert as_path("http://example.test/config") is None
+    assert as_path("./agent.json") == Path("./agent.json")
+    assert as_path("/etc/agent.json") == Path("/etc/agent.json")
+    assert as_path("file:///etc/agent.json") == Path("/etc/agent.json")
