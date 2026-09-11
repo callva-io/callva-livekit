@@ -164,6 +164,22 @@ answer for long calls.
 The `call.ended` webhook is always sent **before** the upload, so a call is closed out with
 a terminal status even if the process does not survive the transfer.
 
+## Versioning
+
+Semantic versioning, and the compatibility promise is about **what a receiver has to
+parse**, not about the size of the diff:
+
+- **0.1.x** — fixes, and fields *added* to a payload. Adding is not breaking: a receiver
+  ignores keys it does not know, and because everything LiveKit produces is nested verbatim,
+  fields the SDK adds arrive without a release here at all.
+- **0.2.0** — anything a receiver could choke on: a field renamed or removed, an event name
+  changed, a header changed, an environment variable renamed, a public function changed.
+- **1.0.0** — when the contract is worth freezing.
+
+In `0.x` the digits are shifted one place: the middle number is the breaking one, which is
+what `^0.1.0` means to every resolver. So a `0.2.0` here is not a large release — it is a
+release that someone's receiver has to be told about.
+
 ## Two things worth knowing
 
 **Your agent needs `agent_name` set and explicit dispatch.** With automatic dispatch

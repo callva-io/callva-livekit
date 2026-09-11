@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 from pathlib import Path
 from typing import Any
@@ -309,3 +310,45 @@ async def test_the_fallback_does_not_need_the_ambient_job(bind_context, sent, ta
         await callback("room disconnected")
 
     assert [item["payload"]["event"] for item in sent] == ["call.started", "call.ended"]
+
+
+async def test_a_simulated_job_reports_its_start_without_a_participant(
+    bind_context, sent, target
+):
+    """Console mode runs a mock room nobody joins, so waiting for a participant is waiting
+    forever. The call still starts and still has to say so."""
+    ctx = FakeContext()
+    ctx.fake_job = True
+    ctx.report = FakeReport()
+    bind_context(ctx)
+
+    callva_webhook.attach()
+    await asyncio.sleep(0)
+
+    assert [item["payload"]["event"] for item in sent] == ["call.started"]
+    started = sent[0]["payload"]
+    assert started["call"]["from"]["number"] is None, "a console call has no parties"
+    assert started["call"]["id"]
+
+
+async def test_a_simulated_call_never_ends_before_it_begins(bind_context, sent, target):
+    """A short console session can finish while the start is still in flight."""
+    ctx = FakeContext()
+    ctx.fake_job = True
+    ctx.report = FakeReport()
+    bind_context(ctx)
+
+    callva_webhook.attach()
+    await callva_webhook.on_session_end(ctx)
+
+    assert [item["payload"]["event"] for item in sent] == ["call.started", "call.ended"]
+    assert sent[0]["payload"]["call"]["id"] == sent[1]["payload"]["call"]["id"]
+
+
+async def test_a_real_job_still_waits_for_someone_to_join(bind_context, sent, target):
+    bind_context(FakeContext())
+
+    callva_webhook.attach()
+    await asyncio.sleep(0)
+
+    assert sent == [], "nothing to report until the call is actually live"

@@ -22,7 +22,7 @@ Each is armed by its own call. Installing the package activates nothing.
 - **Provider configuration.** The public config schema carries no speech-stack, model or
   voice settings. Vendor-specific material travels in the opaque `extra` field.
 - **Call lifecycle management** (duration caps, reminder prompts, transfer). A later
-  module; see §12.
+  module; see §13.
 
 ## 2. Names
 
@@ -321,8 +321,24 @@ configured is what applies.
   at call time. The public alias is `core.call_state`.
 - **Shutdown callbacks are gathered concurrently**, not run in registration order. Nothing
   may depend on one running before another.
+- **A simulated job — console mode — has a mock room nobody joins**, so the participant
+  entrypoint never fires. `attach()` detects it through `ctx.is_fake_job()` and reports the
+  call as started when the session starts instead. Such a call has no parties and no SIP
+  envelope.
 
-## 12. Later
+## 12. Versioning
+
+Semantic versioning, not CalVer. A date says when a release happened; it says nothing about
+whether a receiver written against the last one still parses this one, and that question is
+the entire product here. LiveKit itself is on SemVer, and this package declares a range
+against it, so the schemes match.
+
+The bump follows a rule rather than taste: additive payload fields and fixes are patches,
+anything a receiver could choke on is a minor. In `0.x` the minor is the breaking position —
+`^0.1.0` admits `0.1.x` and not `0.2.0` — so `0.2.0` is not a big release, it is one the
+consumers need to hear about.
+
+## 13. Later
 
 - Call lifecycle management — duration caps, reminder prompts, transfer — as a fourth
   module reading the same `core` state.

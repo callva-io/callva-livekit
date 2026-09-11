@@ -55,6 +55,7 @@ class FakeContext:
         self.shutdown_callbacks: list[Any] = []
         self._participant = participant or FakeParticipant()
         self.report: Any = None
+        self.fake_job = False
 
     def add_participant_entrypoint(self, fnc: Any, **_: Any) -> None:
         self.participant_entrypoints.append(fnc)
@@ -64,6 +65,9 @@ class FakeContext:
 
     def shutdown(self, reason: str = "") -> None:
         self.shutdown_reason = reason
+
+    def is_fake_job(self) -> bool:
+        return self.fake_job
 
     async def wait_for_participant(self, **_: Any) -> Any:
         return self._participant

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import asyncio
+import contextlib
 import time
 from pathlib import Path
 from typing import Any
@@ -14,6 +16,7 @@ from .storage import Storage
 _ATTACHED = "webhook.attached"
 _PARTICIPANT = "webhook.participant"
 _TARGET_OVERRIDE = "webhook.target_override"
+_STARTED_TASK = "webhook.started_task"
 
 FALLBACK_WARNING = (
     "sending the call.ended webhook from a shutdown callback, which the worker bounds by "
@@ -63,7 +66,20 @@ def attach(
 
     ctx.add_shutdown_callback(_shutdown)
 
+    if _nobody_will_join(ctx):
+        # A simulated job — console mode — has a mock room that no one ever joins, so the
+        # participant entrypoint would never fire and the call would only ever report its
+        # end. The session starting is the closest thing to the call going live.
+        st.extras[_STARTED_TASK] = asyncio.create_task(_on_participant(ctx, None))
+
     logger.debug("call webhooks attached")
+
+
+def _nobody_will_join(ctx: Any) -> bool:
+    try:
+        return bool(ctx.is_fake_job())
+    except Exception:
+        return False
 
 
 def resolve_target(st: _state.CallState) -> WebhookTarget | None:
@@ -91,8 +107,12 @@ def resolve_target(st: _state.CallState) -> WebhookTarget | None:
     return from_env
 
 
-async def _on_participant(ctx: Any, participant: Any) -> None:
-    """The call is live: someone is on the other end."""
+async def _on_participant(ctx: Any, participant: Any = None) -> None:
+    """The call is live.
+
+    Normally because a participant joined. On a simulated job there is no one to join, so
+    it is the session starting instead, and the call then has no parties.
+    """
     st = _state.state(ctx)
 
     if st.started_sent:
@@ -132,6 +152,13 @@ async def on_session_end(ctx: Any = None) -> None:
         return
     st.ended_sent = True
     st.ended_at = time.time()
+
+    # A short simulated session can finish while the start is still in flight; a consumer
+    # should never see a call end before it began.
+    started = st.extras.get(_STARTED_TASK)
+    if started is not None and not started.done():
+        with contextlib.suppress(Exception):
+            await started
 
     participant = st.extras.get(_PARTICIPANT)
     report, report_dict = _session_report(st)
