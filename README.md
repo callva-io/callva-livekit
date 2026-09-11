@@ -1,4 +1,4 @@
-# callva-livekit-tools
+# callva-livekit
 
 Drop-in call webhooks and per-call configuration for any LiveKit agent.
 
@@ -12,8 +12,8 @@ nothing about how your session behaves.
 ## Install
 
 ```bash
-pip install callva-livekit-tools          # webhooks + config
-pip install callva-livekit-tools[s3]      # + recording upload to S3 or R2
+pip install callva-livekit          # webhooks + config
+pip install callva-livekit[s3]      # + recording upload to S3 or R2
 ```
 
 ## Use
@@ -81,8 +81,8 @@ field the SDK adds tomorrow reaches you without a release here.
 The `call` block is the only thing reshaped, because it is the only thing LiveKit does not
 model: a stable id across both events, a direction, and a `from` and a `to`.
 
-Requests carry `X-Callva-Idempotency-Key`, and `X-Callva-Signature` when a secret is set —
-`sha256` HMAC over `{timestamp}.{body}`, with `X-Callva-Timestamp` alongside. Delivery
+Requests carry `X-Webhook-Idempotency-Key`, and `X-Webhook-Signature` when a secret is set —
+`sha256` HMAC over `{timestamp}.{body}`, with `X-Webhook-Timestamp` alongside. Delivery
 retries on 5xx and network errors and fails fast on 4xx.
 
 ## Configuration for a call
@@ -94,7 +94,7 @@ Configuration reaches the agent through **agent dispatch metadata**, read as
 { "callva": { "call_id": "…", "direction": "outbound", "config": { "prompt": "…" } } }
 ```
 
-Put a `config_url` there instead of a `config`, or set `CALLVA_CONFIG_URL`, and the agent
+Put a `config_url` there instead of a `config`, or set `CONFIG_URL`, and the agent
 follows that instead. The request is the question — it carries who is calling, which number
 they reached and the whole SIP envelope — so the endpoint can answer "this number belongs to
 that customer, here is their prompt". That is the inbound case in one hop.
@@ -135,18 +135,18 @@ in the room, so a prompt placed there is readable by any connected client.
 
 | Variable | Purpose |
 | --- | --- |
-| `CALLVA_WEBHOOK_URL` | Where call events are sent |
-| `CALLVA_WEBHOOK_SECRET` | HMAC signing secret |
-| `CALLVA_WEBHOOK_TIMEOUT` | Per-attempt timeout, seconds (default 30) |
-| `CALLVA_CONFIG_URL` | Endpoint asked for per-call configuration |
-| `CALLVA_CONFIG_API_KEY` | Sent to it as a bearer token |
-| `CALLVA_CONFIG_TIMEOUT` | Per-attempt timeout, seconds (default 10) |
-| `CALLVA_DIRECTION` | Default direction when nothing declares one |
-| `CALLVA_S3_BUCKET` | Enables recording upload |
-| `CALLVA_S3_ENDPOINT_URL` | Set this for R2 or any S3-compatible store |
-| `CALLVA_S3_REGION`, `CALLVA_S3_ACCESS_KEY_ID`, `CALLVA_S3_SECRET_ACCESS_KEY` | Credentials |
-| `CALLVA_S3_PUBLIC_BASE_URL` | Turns the object key into the URL sent in the webhook |
-| `CALLVA_S3_PREFIX` | Key prefix inside the bucket |
+| `WEBHOOK_URL` | Where call events are sent |
+| `WEBHOOK_SECRET` | HMAC signing secret |
+| `WEBHOOK_TIMEOUT` | Per-attempt timeout, seconds (default 30) |
+| `CONFIG_URL` | Endpoint asked for per-call configuration |
+| `CONFIG_API_KEY` | Sent to it as a bearer token |
+| `CONFIG_TIMEOUT` | Per-attempt timeout, seconds (default 10) |
+| `CALL_DIRECTION` | Default direction when nothing declares one |
+| `RECORDING_S3_BUCKET` | Enables recording upload |
+| `RECORDING_S3_ENDPOINT_URL` | Set this for R2 or any S3-compatible store |
+| `RECORDING_S3_REGION`, `RECORDING_S3_ACCESS_KEY_ID`, `RECORDING_S3_SECRET_ACCESS_KEY` | Credentials |
+| `RECORDING_S3_PUBLIC_BASE_URL` | Turns the object key into the URL sent in the webhook |
+| `RECORDING_S3_PREFIX` | Key prefix inside the bucket |
 
 Every value has a constructor argument that takes precedence.
 

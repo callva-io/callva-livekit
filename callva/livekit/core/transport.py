@@ -93,7 +93,7 @@ def _signature_headers(target: WebhookTarget, body: str) -> dict[str, str]:
         f"{timestamp}.{body}".encode(),
         hashlib.sha256,
     ).hexdigest()
-    return {"X-Callva-Signature": f"sha256={digest}", "X-Callva-Timestamp": timestamp}
+    return {"X-Webhook-Signature": f"sha256={digest}", "X-Webhook-Timestamp": timestamp}
 
 
 def idempotency_key(call_id: str, event: str) -> str:
@@ -164,8 +164,8 @@ async def post_json(
     body = json.dumps(payload, ensure_ascii=False, default=str)
     headers = {
         "Content-Type": "application/json",
-        "X-Callva-Event": event,
-        "X-Callva-Idempotency-Key": key,
+        "X-Webhook-Event": event,
+        "X-Webhook-Idempotency-Key": key,
         **_signature_headers(target, body),
     }
 
@@ -197,8 +197,8 @@ async def post_file(
     """
     body = json.dumps(payload, ensure_ascii=False, default=str)
     headers = {
-        "X-Callva-Event": event,
-        "X-Callva-Idempotency-Key": key,
+        "X-Webhook-Event": event,
+        "X-Webhook-Idempotency-Key": key,
         **_signature_headers(target, body),
     }
 
@@ -220,7 +220,7 @@ async def post_file(
         headers=headers,
         build_body=build,
         timeout=timeout
-        or env.get_float("UPLOAD_TIMEOUT", DEFAULT_UPLOAD_TIMEOUT)
+        or env.get_float("RECORDING_TIMEOUT", DEFAULT_UPLOAD_TIMEOUT)
         or DEFAULT_UPLOAD_TIMEOUT,
     )
 

@@ -115,11 +115,11 @@ async def test_signature_is_over_timestamp_and_body(monkeypatch):
 
     expected = hmac.new(
         b"s3cret",
-        f"{headers['X-Callva-Timestamp']}.{body}".encode(),
+        f"{headers['X-Webhook-Timestamp']}.{body}".encode(),
         hashlib.sha256,
     ).hexdigest()
 
-    assert headers["X-Callva-Signature"] == f"sha256={expected}"
+    assert headers["X-Webhook-Signature"] == f"sha256={expected}"
     assert json.loads(body) == payload
 
 
@@ -131,8 +131,8 @@ async def test_an_unsigned_target_sends_no_signature(monkeypatch):
     )
 
     headers = session.calls[0][1]["headers"]
-    assert "X-Callva-Signature" not in headers
-    assert headers["X-Callva-Idempotency-Key"] == "k"
+    assert "X-Webhook-Signature" not in headers
+    assert headers["X-Webhook-Idempotency-Key"] == "k"
 
 
 async def test_config_fetch_returns_the_decoded_body(monkeypatch):
@@ -179,8 +179,8 @@ async def test_api_key_is_sent_as_a_bearer_token(monkeypatch):
 def test_target_from_environment(monkeypatch):
     assert WebhookTarget.from_env() is None
 
-    monkeypatch.setenv("CALLVA_WEBHOOK_URL", "https://example.test/hook")
-    monkeypatch.setenv("CALLVA_WEBHOOK_SECRET", "s")
+    monkeypatch.setenv("WEBHOOK_URL", "https://example.test/hook")
+    monkeypatch.setenv("WEBHOOK_SECRET", "s")
 
     assert WebhookTarget.from_env() == WebhookTarget("https://example.test/hook", "s")
 

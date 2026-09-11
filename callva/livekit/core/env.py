@@ -1,13 +1,17 @@
+"""Environment variables.
+
+Names describe the job, not the vendor. This is an extension to the LiveKit Agents SDK;
+that a URL happens to point at CallVA is configuration, not identity.
+"""
+
 from __future__ import annotations
 
 import os
 
-PREFIX = "CALLVA_"
-
 
 def get(name: str, default: str | None = None) -> str | None:
-    """Read ``CALLVA_<name>`` from the environment, treating blanks as unset."""
-    value = os.environ.get(PREFIX + name)
+    """Read an environment variable, treating a blank value as unset."""
+    value = os.environ.get(name)
     if value is None:
         return default
     value = value.strip()

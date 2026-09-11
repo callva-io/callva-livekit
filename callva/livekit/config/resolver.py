@@ -53,7 +53,7 @@ async def load(
 
     1. a body inside ``ctx.job.metadata`` — returns immediately, before anyone has joined
     2. a pointer inside ``ctx.job.metadata`` — followed
-    3. ``CALLVA_CONFIG_URL`` (or the ``url`` argument) — followed
+    3. ``CONFIG_URL`` (or the ``url`` argument) — followed
 
     A pointer is either an endpoint, asked with the call's own context as the request body
     so the responder can answer "who called which number", or a local file — ``file://…``

@@ -94,11 +94,11 @@ def _first(source: Mapping[str, Any], keys: tuple[str, ...]) -> str | None:
 def resolve_direction(envelope: DispatchEnvelope, override: str | None = None) -> str:
     """Resolve the call direction. Never inferred from participant state.
 
-    The dispatcher's declaration wins, then an explicit override or ``CALLVA_DIRECTION``,
+    The dispatcher's declaration wins, then an explicit override or ``CALL_DIRECTION``,
     then inbound. The default is sound rather than a guess: an outbound call is always
     placed by someone, so it always arrives with dispatch metadata.
     """
-    for candidate in (envelope.direction, override, env.get("DIRECTION")):
+    for candidate in (envelope.direction, override, env.get("CALL_DIRECTION")):
         if not candidate:
             continue
         value = candidate.strip().lower()

@@ -3,11 +3,11 @@
     python examples/receiver.py
 
 Listens on ``http://localhost:878/hook``, verifies the signature when
-``CALLVA_WEBHOOK_SECRET`` is set, prints a summary of every event and writes the full
+``WEBHOOK_SECRET`` is set, prints a summary of every event and writes the full
 body — and any recording that arrives — into ``./received``.
 
 It also answers ``/config`` with a small configuration, so pointing
-``CALLVA_CONFIG_URL`` at it exercises that path too.
+``CONFIG_URL`` at it exercises that path too.
 """
 
 from __future__ import annotations
@@ -21,7 +21,7 @@ from pathlib import Path
 from aiohttp import web
 
 PORT = int(os.environ.get("PORT", "878"))
-SECRET = os.environ.get("CALLVA_WEBHOOK_SECRET")
+SECRET = os.environ.get("WEBHOOK_SECRET")
 OUTPUT = Path("received")
 
 CONFIG = {
@@ -39,8 +39,8 @@ def verify(body: bytes, headers) -> str:
     if not SECRET:
         return "unsigned"
 
-    signature = headers.get("X-Callva-Signature", "")
-    timestamp = headers.get("X-Callva-Timestamp", "")
+    signature = headers.get("X-Webhook-Signature", "")
+    timestamp = headers.get("X-Webhook-Timestamp", "")
     expected = hmac.new(
         SECRET.encode(), f"{timestamp}.{body.decode()}".encode(), hashlib.sha256
     ).hexdigest()

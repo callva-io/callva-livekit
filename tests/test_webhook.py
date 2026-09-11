@@ -35,7 +35,7 @@ def sent(monkeypatch: pytest.MonkeyPatch) -> list[dict[str, Any]]:
 
 @pytest.fixture
 def target(monkeypatch: pytest.MonkeyPatch) -> WebhookTarget:
-    monkeypatch.setenv("CALLVA_WEBHOOK_URL", "https://example.test/hook")
+    monkeypatch.setenv("WEBHOOK_URL", "https://example.test/hook")
     return WebhookTarget("https://example.test/hook")
 
 
@@ -172,7 +172,7 @@ async def test_a_session_that_never_started_still_reports_the_call(bind_context,
 
 
 def test_target_precedence(bind_context, monkeypatch):
-    monkeypatch.setenv("CALLVA_WEBHOOK_URL", "https://from-env.test/hook")
+    monkeypatch.setenv("WEBHOOK_URL", "https://from-env.test/hook")
     ctx = bind_context(
         FakeContext(envelope_metadata(webhook={"url": "https://from-dispatch.test/hook"}))
     )
@@ -185,14 +185,14 @@ def test_target_precedence(bind_context, monkeypatch):
 
 
 def test_the_environment_is_the_last_resort(bind_context, monkeypatch):
-    monkeypatch.setenv("CALLVA_WEBHOOK_URL", "https://from-env.test/hook")
+    monkeypatch.setenv("WEBHOOK_URL", "https://from-env.test/hook")
     ctx = bind_context(FakeContext())
 
     assert callva_webhook.resolve_target(_state.state(ctx)).url == "https://from-env.test/hook"
 
 
 async def test_an_explicit_target_overrides_everything(bind_context, sent, monkeypatch):
-    monkeypatch.setenv("CALLVA_WEBHOOK_URL", "https://from-env.test/hook")
+    monkeypatch.setenv("WEBHOOK_URL", "https://from-env.test/hook")
     ctx = bind_context(FakeContext())
 
     callva_webhook.attach(target=WebhookTarget("https://explicit.test/hook"))

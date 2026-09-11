@@ -28,17 +28,17 @@ class Storage:
 
     @classmethod
     def from_env(cls) -> Storage | None:
-        bucket = env.get("S3_BUCKET")
+        bucket = env.get("RECORDING_S3_BUCKET")
         if not bucket:
             return None
         return cls(
             bucket=bucket,
-            endpoint_url=env.get("S3_ENDPOINT_URL"),
-            region=env.get("S3_REGION"),
-            access_key_id=env.get("S3_ACCESS_KEY_ID"),
-            secret_access_key=env.get("S3_SECRET_ACCESS_KEY"),
-            public_base_url=env.get("S3_PUBLIC_BASE_URL"),
-            prefix=(env.get("S3_PREFIX") or "").strip("/"),
+            endpoint_url=env.get("RECORDING_S3_ENDPOINT_URL"),
+            region=env.get("RECORDING_S3_REGION"),
+            access_key_id=env.get("RECORDING_S3_ACCESS_KEY_ID"),
+            secret_access_key=env.get("RECORDING_S3_SECRET_ACCESS_KEY"),
+            public_base_url=env.get("RECORDING_S3_PUBLIC_BASE_URL"),
+            prefix=(env.get("RECORDING_S3_PREFIX") or "").strip("/"),
         )
 
     def key(self, name: str) -> str:
@@ -84,7 +84,7 @@ class Storage:
         except ImportError:
             logger.error(
                 "object storage is configured but boto3 is missing; "
-                "install callva-livekit-tools[s3]"
+                "install callva-livekit[s3]"
             )
             return False
         except Exception as exc:

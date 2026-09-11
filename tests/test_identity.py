@@ -35,20 +35,20 @@ def test_direction_defaults_to_inbound():
 
 
 def test_dispatcher_declaration_wins_over_everything(monkeypatch):
-    monkeypatch.setenv("CALLVA_DIRECTION", "inbound")
+    monkeypatch.setenv("CALL_DIRECTION", "inbound")
     envelope = parse(envelope_metadata(direction="outbound"))
 
     assert identity.resolve_direction(envelope, "inbound") == identity.OUTBOUND
 
 
 def test_explicit_override_beats_the_environment(monkeypatch):
-    monkeypatch.setenv("CALLVA_DIRECTION", "inbound")
+    monkeypatch.setenv("CALL_DIRECTION", "inbound")
 
     assert identity.resolve_direction(DispatchEnvelope(), "outbound") == identity.OUTBOUND
 
 
 def test_environment_is_the_last_word_before_the_default(monkeypatch):
-    monkeypatch.setenv("CALLVA_DIRECTION", "outbound")
+    monkeypatch.setenv("CALL_DIRECTION", "outbound")
 
     assert identity.resolve_direction(DispatchEnvelope()) == identity.OUTBOUND
 

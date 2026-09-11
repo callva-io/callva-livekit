@@ -61,7 +61,7 @@ async def test_a_pointer_in_metadata_is_followed(bind_context, no_fetch):
 async def test_the_environment_url_is_used_when_metadata_is_empty(
     bind_context, no_fetch, monkeypatch
 ):
-    monkeypatch.setenv("CALLVA_CONFIG_URL", "https://env.test/config")
+    monkeypatch.setenv("CONFIG_URL", "https://env.test/config")
     bind_context(FakeContext())
 
     config = await callva_config.load()
@@ -71,7 +71,7 @@ async def test_the_environment_url_is_used_when_metadata_is_empty(
 
 
 async def test_a_pointer_in_metadata_beats_the_environment(bind_context, no_fetch, monkeypatch):
-    monkeypatch.setenv("CALLVA_CONFIG_URL", "https://env.test/config")
+    monkeypatch.setenv("CONFIG_URL", "https://env.test/config")
     bind_context(FakeContext(envelope_metadata(config_url="https://pinned.test/config")))
 
     await callva_config.load()
@@ -90,7 +90,7 @@ async def test_no_source_at_all_is_not_an_error(bind_context, no_fetch):
 
 
 async def test_the_request_carries_the_call_context(bind_context, no_fetch, monkeypatch):
-    monkeypatch.setenv("CALLVA_CONFIG_URL", "https://env.test/config")
+    monkeypatch.setenv("CONFIG_URL", "https://env.test/config")
     ctx = FakeContext()
     ctx.job.metadata = json.dumps({"tenant": "acme"})
     bind_context(ctx)
@@ -113,7 +113,7 @@ async def test_the_request_carries_the_call_context(bind_context, no_fetch, monk
 async def test_a_webhook_in_the_response_reaches_the_shared_state(
     bind_context, no_fetch, monkeypatch
 ):
-    monkeypatch.setenv("CALLVA_CONFIG_URL", "https://env.test/config")
+    monkeypatch.setenv("CONFIG_URL", "https://env.test/config")
     ctx = bind_context(FakeContext())
 
     await callva_config.load()
@@ -122,7 +122,7 @@ async def test_a_webhook_in_the_response_reaches_the_shared_state(
 
 
 async def test_config_is_resolved_once_per_call(bind_context, no_fetch, monkeypatch):
-    monkeypatch.setenv("CALLVA_CONFIG_URL", "https://env.test/config")
+    monkeypatch.setenv("CONFIG_URL", "https://env.test/config")
     bind_context(FakeContext())
 
     first = await callva_config.load()
@@ -137,7 +137,7 @@ async def test_a_failed_request_terminates_the_call(bind_context, monkeypatch):
         raise transport.FetchError("HTTP 500: upstream is down")
 
     monkeypatch.setattr(resolver.transport, "fetch_json", boom)
-    monkeypatch.setenv("CALLVA_CONFIG_URL", "https://env.test/config")
+    monkeypatch.setenv("CONFIG_URL", "https://env.test/config")
     ctx = bind_context(FakeContext())
 
     with pytest.raises(callva_config.ConfigError, match="upstream is down"):
@@ -151,7 +151,7 @@ async def test_continuing_without_configuration_is_opt_in(bind_context, monkeypa
         raise transport.FetchError("nope")
 
     monkeypatch.setattr(resolver.transport, "fetch_json", boom)
-    monkeypatch.setenv("CALLVA_CONFIG_URL", "https://env.test/config")
+    monkeypatch.setenv("CONFIG_URL", "https://env.test/config")
     ctx = bind_context(FakeContext())
 
     config = await callva_config.load(on_error="continue")
@@ -165,7 +165,7 @@ async def test_an_empty_response_is_treated_as_a_failure(bind_context, monkeypat
         return {}
 
     monkeypatch.setattr(resolver.transport, "fetch_json", nothing)
-    monkeypatch.setenv("CALLVA_CONFIG_URL", "https://env.test/config")
+    monkeypatch.setenv("CONFIG_URL", "https://env.test/config")
     ctx = bind_context(FakeContext())
 
     with pytest.raises(callva_config.ConfigError, match="nothing usable"):
@@ -177,7 +177,7 @@ async def test_an_empty_response_is_treated_as_a_failure(bind_context, monkeypat
 async def test_a_plain_path_is_read_as_a_file(bind_context, no_fetch, monkeypatch, tmp_path):
     document = tmp_path / "agent.json"
     document.write_text(json.dumps(BODY))
-    monkeypatch.setenv("CALLVA_CONFIG_URL", str(document))
+    monkeypatch.setenv("CONFIG_URL", str(document))
     bind_context(FakeContext())
 
     config = await callva_config.load()
@@ -190,7 +190,7 @@ async def test_a_plain_path_is_read_as_a_file(bind_context, no_fetch, monkeypatc
 async def test_a_file_url_is_read_as_a_file(bind_context, no_fetch, monkeypatch, tmp_path):
     document = tmp_path / "agent.json"
     document.write_text(json.dumps(BODY))
-    monkeypatch.setenv("CALLVA_CONFIG_URL", document.as_uri())
+    monkeypatch.setenv("CONFIG_URL", document.as_uri())
     bind_context(FakeContext())
 
     assert (await callva_config.load()).source == "file"
@@ -200,7 +200,7 @@ async def test_a_file_answers_without_waiting_for_anyone(bind_context, monkeypat
     """The shortest development loop: no participant, no round trip."""
     document = tmp_path / "agent.json"
     document.write_text(json.dumps(BODY))
-    monkeypatch.setenv("CALLVA_CONFIG_URL", str(document))
+    monkeypatch.setenv("CONFIG_URL", str(document))
 
     ctx = FakeContext()
 
@@ -214,7 +214,7 @@ async def test_a_file_answers_without_waiting_for_anyone(bind_context, monkeypat
 
 
 async def test_a_missing_file_terminates_the_call(bind_context, monkeypatch, tmp_path):
-    monkeypatch.setenv("CALLVA_CONFIG_URL", str(tmp_path / "absent.json"))
+    monkeypatch.setenv("CONFIG_URL", str(tmp_path / "absent.json"))
     ctx = bind_context(FakeContext())
 
     with pytest.raises(callva_config.ConfigError, match="could not read configuration"):
@@ -226,7 +226,7 @@ async def test_a_missing_file_terminates_the_call(bind_context, monkeypatch, tmp
 async def test_a_file_that_is_not_json_terminates_the_call(bind_context, monkeypatch, tmp_path):
     document = tmp_path / "agent.json"
     document.write_text("this is not json")
-    monkeypatch.setenv("CALLVA_CONFIG_URL", str(document))
+    monkeypatch.setenv("CONFIG_URL", str(document))
     bind_context(FakeContext())
 
     with pytest.raises(callva_config.ConfigError):

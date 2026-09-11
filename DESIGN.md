@@ -1,6 +1,6 @@
 # Design
 
-Decided contracts for `callva-livekit-tools`. This is the reference the implementation
+Decided contracts for `callva-livekit`. This is the reference the implementation
 follows; every number and API name here was verified against `livekit-agents` 1.5.7,
 `livekit-protocol` 1.1.7 and the `livekit/livekit` server sources.
 
@@ -22,9 +22,27 @@ Each is armed by its own call. Installing the package activates nothing.
 - **Provider configuration.** The public config schema carries no speech-stack, model or
   voice settings. Vendor-specific material travels in the opaque `extra` field.
 - **Call lifecycle management** (duration caps, reminder prompts, transfer). A later
-  module; see §11.
+  module; see §12.
 
-## 2. Layout
+## 2. Names
+
+The distribution is `callva-livekit` and it imports as `callva.livekit`, following the
+convention LiveKit itself uses: `livekit-agents` imports as `livekit.agents`,
+`livekit-plugins-openai` as `livekit.plugins.openai`. The distribution name is the import
+path with dashes, so `pip install` and `import` never disagree. A later split keeps the
+property: `callva-livekit-webhook` would import as `callva.livekit.webhook`.
+
+Environment variables carry no vendor prefix — `WEBHOOK_URL`, `CONFIG_URL`,
+`RECORDING_S3_BUCKET`. This is an extension to the Agents SDK; that a URL points at CallVA
+is configuration, not identity. The same reasoning applies to the delivery headers
+(`X-Webhook-Signature`, `X-Webhook-Event`) and to the event names themselves
+(`call.started`, `call.ended`).
+
+The one deliberate exception is the `callva` key inside `ctx.job.metadata`. That key exists
+to keep our block from colliding with the host application's own metadata, and being
+distinctive is the entire job it does. A generic name there would defeat it.
+
+## 3. Layout
 
 ```
 callva/                     PEP 420 namespace, no __init__.py
@@ -44,7 +62,7 @@ config, the HTTP client and the logger. Modules never import each other — they
 write the per-job state that `core` owns, keyed off the ambient `JobContext`. This is how
 configuration reaches future modules without being passed by hand.
 
-## 3. Integration surface
+## 4. Integration surface
 
 Primary form, documented first:
 
@@ -75,13 +93,13 @@ cfg = await callva_config.load()
 callva_webhook.attach(session)
 ```
 
-`attach()` falls back to `ctx.add_shutdown_callback()`. That path works, but see §4 for
+`attach()` falls back to `ctx.add_shutdown_callback()`. That path works, but see §5 for
 why it is the secondary recommendation.
 
 Nothing is substituted behind the caller's back. `load()` returns an object; using the
 prompt is the caller's decision.
 
-## 4. Lifecycle and ordering
+## 5. Lifecycle and ordering
 
 Verified in `livekit/agents/ipc/job_proc_lazy_main.py:360-411`:
 
@@ -113,7 +131,7 @@ the risk and both fixes. Silent truncation is not acceptable here.
 `ctx.make_session_report()` raises if `RecorderIO` is still recording. Both hook points sit
 after `session.aclose()`, so both are safe.
 
-## 5. Call identity
+## 6. Call identity
 
 Derived by the package, not supplied by the config.
 
@@ -130,7 +148,7 @@ Derived by the package, not supplied by the config.
 
 The full `sip.*` attribute set is forwarded verbatim; it is never reshaped.
 
-## 6. Config
+## 7. Config
 
 ### Channel
 
@@ -227,7 +245,7 @@ A failed or non-2xx config request **terminates the call** with the reason logge
 without its prompt is a broken call either way; failing loudly beats failing quietly. The
 response status and body are logged. Overridable for callers who prefer to continue.
 
-## 7. Webhooks
+## 8. Webhooks
 
 One thin envelope; everything LiveKit produces is nested verbatim so that new SDK fields
 reach consumers without a release here.
@@ -261,7 +279,7 @@ never has to handle two shapes of the same event. It is absent from `call.starte
 Delivery: `POST`, HMAC signature over timestamp and body when a secret is configured, an
 idempotency key per event, retries on 5xx and network errors with backoff, fail-fast on 4xx.
 
-## 8. Recording
+## 9. Recording
 
 The SDK records locally to OGG/Opus, stereo, via PyAV, then reads the whole file into memory
 and sends it to LiveKit Cloud in a single multipart POST with no chunking and no size guard
@@ -277,13 +295,13 @@ This package:
 - The webhook is posted before the upload, so the call is closed out with a terminal status
   even if the process dies mid-upload.
 
-## 9. Logging
+## 10. Logging
 
 Module-named loggers obtained from `logging.getLogger`. The package never sets a level,
 never attaches a handler and never configures the root logger. Whatever the host has
 configured is what applies.
 
-## 10. Constraints worth knowing
+## 11. Constraints worth knowing
 
 - **Metadata limits** are server config, not constants: 512 KiB for metadata, 64 KiB for
   attributes summed across keys and values. Servers older than 2026-06-17 cap both at
@@ -304,7 +322,7 @@ configured is what applies.
 - **Shutdown callbacks are gathered concurrently**, not run in registration order. Nothing
   may depend on one running before another.
 
-## 11. Later
+## 12. Later
 
 - Call lifecycle management — duration caps, reminder prompts, transfer — as a fourth
   module reading the same `core` state.

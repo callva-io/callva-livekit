@@ -3,8 +3,8 @@
 Run the receiver in one terminal and this in another:
 
     python examples/receiver.py
-    CALLVA_WEBHOOK_URL=http://localhost:878/hook \\
-    CALLVA_WEBHOOK_SECRET=dev-secret \\
+    WEBHOOK_URL=http://localhost:878/hook \\
+    WEBHOOK_SECRET=dev-secret \\
         python examples/agent.py dev
 
 Needs ``LIVEKIT_URL``, ``LIVEKIT_API_KEY`` and ``LIVEKIT_API_SECRET``. The speech stack

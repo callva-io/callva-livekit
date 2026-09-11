@@ -26,17 +26,17 @@ async def server():
         body = await request.read()
         expected = hmac.new(
             SECRET.encode(),
-            f"{request.headers.get('X-Callva-Timestamp')}.{body.decode()}".encode(),
+            f"{request.headers.get('X-Webhook-Timestamp')}.{body.decode()}".encode(),
             hashlib.sha256,
         ).hexdigest()
 
         received.append(
             {
                 "payload": json.loads(body),
-                "event": request.headers.get("X-Callva-Event"),
-                "key": request.headers.get("X-Callva-Idempotency-Key"),
+                "event": request.headers.get("X-Webhook-Event"),
+                "key": request.headers.get("X-Webhook-Idempotency-Key"),
                 "signature_valid": hmac.compare_digest(
-                    request.headers.get("X-Callva-Signature", ""), f"sha256={expected}"
+                    request.headers.get("X-Webhook-Signature", ""), f"sha256={expected}"
                 ),
             }
         )
