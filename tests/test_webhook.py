@@ -6,7 +6,8 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from fakes import FakeContext, FakeReport, envelope_metadata
+from fakes import DEFAULT_SIP_ATTRIBUTES as DEFAULT_SIP
+from fakes import FakeContext, FakeParticipant, FakeReport, envelope_metadata
 
 from callva.livekit import webhook as callva_webhook
 from callva.livekit.core import state as _state
@@ -408,3 +409,50 @@ async def test_the_live_rooms_async_sid_is_never_read(bind_context, sent, target
     room = sent[-1]["payload"]["livekit"]["room"]
     assert room["name"] == "call-1"
     assert room["sid"] == "RM_test", "taken from the job, where it is a plain string"
+
+
+async def test_a_ringing_outbound_call_has_not_started_yet(bind_context, sent, target):
+    """An outbound participant exists from the first ring.
+
+    Reporting that as the call starting would tell the consumer somebody answered while
+    the phone is still ringing.
+    """
+    ctx = FakeContext(participant=FakeParticipant(**{**DEFAULT_SIP, "sip.callStatus": "ringing"}))
+    ctx.room.remote_participants = {"sip_x": ctx._participant}
+    bind_context(ctx)
+
+    callva_webhook.attach()
+    await asyncio.sleep(0)
+
+    assert sent == []
+
+
+async def test_the_start_is_reported_the_moment_they_pick_up(bind_context, sent, target):
+    caller = FakeParticipant(**{**DEFAULT_SIP, "sip.callStatus": "ringing"})
+    ctx = FakeContext(participant=caller)
+    ctx.room.remote_participants = {"sip_x": caller}
+    bind_context(ctx)
+
+    callva_webhook.attach()
+    await asyncio.sleep(0)
+    assert sent == []
+
+    caller.attributes["sip.callStatus"] = "active"
+    ctx.room.emit_attributes_changed({"sip.callStatus": "active"}, caller)
+    await asyncio.sleep(0)
+
+    assert [item["payload"]["event"] for item in sent] == ["call.started"]
+    assert sent[0]["payload"]["call"]["from"]["number"] == "+37255512345"
+
+
+async def test_an_answered_inbound_call_is_not_held(bind_context, sent, target):
+    """Inbound is already answered when the participant appears, so the same check lets it
+    straight through without anyone having to declare a direction."""
+    ctx = FakeContext()
+    ctx.room.remote_participants = {"sip_x": ctx._participant}
+    bind_context(ctx)
+
+    callva_webhook.attach()
+    await asyncio.sleep(0)
+
+    assert [item["payload"]["event"] for item in sent] == ["call.started"]

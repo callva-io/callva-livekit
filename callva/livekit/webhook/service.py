@@ -17,6 +17,10 @@ _ATTACHED = "webhook.attached"
 _PARTICIPANT = "webhook.participant"
 _TARGET_OVERRIDE = "webhook.target_override"
 _STARTED_TASK = "webhook.started_task"
+_PICKUP_ARMED = "webhook.pickup_armed"
+
+SIP_STATUS = "sip.callStatus"
+SIP_ACTIVE = "active"
 
 FALLBACK_WARNING = (
     "sending the call.ended webhook from a shutdown callback, which the worker bounds by "
@@ -88,6 +92,24 @@ def _nobody_will_join(ctx: Any) -> bool:
         return False
 
 
+def _arm_pickup(ctx: Any, st: _state.CallState) -> None:
+    """Wait for the ringing to be answered, once per job."""
+    if st.extras.get(_PICKUP_ARMED):
+        return
+    st.extras[_PICKUP_ARMED] = True
+
+    room = getattr(ctx, "room", None)
+    if room is None or not hasattr(room, "on"):
+        return
+
+    def on_attributes_changed(changed: dict, participant: Any) -> None:
+        if changed.get(SIP_STATUS) != SIP_ACTIVE or st.started_sent:
+            return
+        st.extras[_STARTED_TASK] = asyncio.create_task(_on_participant(ctx, participant))
+
+    room.on("participant_attributes_changed", on_attributes_changed)
+
+
 def _already_present(ctx: Any) -> Any | None:
     """The remote party, if they joined before the webhooks were armed."""
     try:
@@ -130,6 +152,19 @@ def resolve_target(st: _state.CallState) -> WebhookTarget | None:
     return from_env
 
 
+def _ringing(participant: Any) -> bool:
+    """True while a SIP participant exists but has not picked up.
+
+    An outbound call's participant materialises as soon as the phone starts ringing, and
+    reporting that as the call starting would tell the consumer somebody answered when
+    nobody has. Inbound is answered by the time the participant appears, so the same check
+    passes it straight through without having to know the direction.
+    """
+    attributes = getattr(participant, "attributes", None) or {}
+    status = attributes.get(SIP_STATUS)
+    return bool(status) and status != SIP_ACTIVE
+
+
 async def _on_participant(ctx: Any, participant: Any = None) -> None:
     """The call is live.
 
@@ -140,6 +175,15 @@ async def _on_participant(ctx: Any, participant: Any = None) -> None:
 
     if st.started_sent:
         return
+
+    if participant is not None and _ringing(participant):
+        logger.debug(
+            "%s is still ringing, holding the start",
+            getattr(participant, "identity", "?"),
+        )
+        _arm_pickup(ctx, st)
+        return
+
     st.started_sent = True
     st.started_at = time.time()
     st.extras[_PARTICIPANT] = participant

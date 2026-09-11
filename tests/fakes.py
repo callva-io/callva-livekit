@@ -36,6 +36,15 @@ class FakeRoom:
         self.name = name
         self.metadata = ""
         self.remote_participants: dict[str, Any] = {}
+        self.handlers: dict[str, Any] = {}
+
+    def on(self, event: str, handler: Any) -> None:
+        self.handlers[event] = handler
+
+    def emit_attributes_changed(self, changed: dict, participant: Any) -> None:
+        handler = self.handlers.get("participant_attributes_changed")
+        if handler:
+            handler(changed, participant)
 
     @property
     async def sid(self) -> str:

@@ -323,6 +323,11 @@ configured is what applies.
   replays already-present participants to participant entrypoints *inside* `ctx.connect()`.
   Registering an entrypoint afterwards never sees them, so `attach()` checks
   `room.remote_participants` itself.
+- **An outbound SIP participant exists from the first ring**, carrying
+  `sip.callStatus` of `dialing` or `ringing`. Reporting that as the call starting would
+  claim somebody answered while the phone is still ringing, so the start is held until the
+  status reaches `active`. Inbound is already answered when the participant appears, so the
+  same check passes it through and nothing has to declare a direction.
 - **`rtc.Room.sid` is an async property.** Reading it from synchronous code yields a
   coroutine that is never awaited. The job's copy of the room carries the same value as a
   plain string.
