@@ -145,6 +145,20 @@ every client in the room, including browsers.
 Requires explicit dispatch: the worker must have `agent_name` set. With automatic dispatch
 `job.metadata` arrives empty.
 
+### Envelope
+
+Job metadata is a free-form string the host application may already be using. The envelope
+is therefore looked for under a ``callva`` key, and a top-level object is only claimed when
+it carries keys that are unambiguously ours:
+
+```json
+{ "callva": { "call_id": "…", "direction": "outbound",
+              "config": { }, "config_url": "…", "webhook": { } } }
+```
+
+Metadata that is not JSON, or is JSON that belongs to someone else, is left alone and
+forwarded to a configuration endpoint unchanged.
+
 ### Resolution order
 
 ```
@@ -234,8 +248,9 @@ reach consumers without a release here.
 ```
 
 `livekit.session_report` is `ctx.make_session_report().to_dict()` unmodified — chat history
-with timestamps, per-provider usage, recorded events, session options, SDK version. Present
-on `call.ended` only.
+with timestamps, per-provider usage, recorded events, session options, SDK version. The key
+is present on every `call.ended`, null when the report could not be built, so a consumer
+never has to handle two shapes of the same event. It is absent from `call.started`.
 
 `tags` carries `ctx.tagger` outcome and tags.
 
@@ -278,6 +293,10 @@ configured is what applies.
   `is_given`, so any call to it silently resets both to 10s and 300s.
 - **`RoomAgentDispatch.attributes`** exists in the protocol on main but not in 1.1.7. Only
   `metadata` is safe to rely on.
+- **`core.state` must stay bound to the submodule.** Re-exporting `state()` from
+  `core/__init__.py` under that name shadows it, and every internal
+  `from ..core import state` then binds a function instead — a failure that only surfaces
+  at call time. The public alias is `core.call_state`.
 - **Shutdown callbacks are gathered concurrently**, not run in registration order. Nothing
   may depend on one running before another.
 

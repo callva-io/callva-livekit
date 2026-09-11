@@ -46,5 +46,10 @@ include = ["/callva", "/README.md", "/DESIGN.md"]
 line-length = 100
 target-version = "py310"
 
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF"]
+# Broad `except Exception` is deliberate throughout: nothing this package does to report a
+# call is worth taking the call down for, so every boundary degrades instead of raising.
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
