@@ -352,3 +352,59 @@ async def test_a_real_job_still_waits_for_someone_to_join(bind_context, sent, ta
     await asyncio.sleep(0)
 
     assert sent == [], "nothing to report until the call is actually live"
+
+
+async def test_a_caller_already_in_the_room_is_not_missed(bind_context, sent, target):
+    """An inbound call's participant joins before the job starts.
+
+    The SDK replays already-present participants to participant entrypoints inside
+    ctx.connect(), once — before attach() could have registered anything. Waiting on the
+    entrypoint would be waiting for a join that already happened, and the call would only
+    ever report its end.
+    """
+    ctx = FakeContext()
+    ctx.room.remote_participants = {"sip_+3725258198": ctx._participant}
+    ctx.report = FakeReport()
+    bind_context(ctx)
+
+    callva_webhook.attach()
+    await asyncio.sleep(0)
+
+    assert [item["payload"]["event"] for item in sent] == ["call.started"]
+    started = sent[0]["payload"]
+    assert started["call"]["from"]["number"] == "+37255512345"
+    assert started["call"]["to"]["number"] == "+3726001234"
+    assert started["livekit"]["sip"]["callID"] == "abc"
+
+
+async def test_the_recording_is_keyed_on_the_call_not_on_unknown(bind_context, sent, target):
+    """A call that never reported a start still has to key its recording on its own id."""
+    ctx = FakeContext()
+    ctx.report = FakeReport(audio_recording_path=Path(__file__))
+    bind_context(ctx)
+
+    callva_webhook.attach()
+    st = _state.state(ctx)
+    st.extras.pop("webhook.started_task", None)
+    st.started_sent = True  # as if the start was missed entirely
+
+    await callva_webhook.on_session_end(ctx)
+
+    ended = sent[-1]["payload"]
+    call_id = ended["call"]["id"]
+    assert call_id and call_id != "unknown"
+    assert ended["recording"]["filename"] == f"{call_id}.ogg"
+
+
+async def test_the_live_rooms_async_sid_is_never_read(bind_context, sent, target):
+    """rtc.Room.sid is a coroutine; reading it in a sync builder can only leak one."""
+    ctx = FakeContext()
+    ctx.report = FakeReport()
+    bind_context(ctx)
+
+    callva_webhook.attach()
+    await callva_webhook.on_session_end(ctx)
+
+    room = sent[-1]["payload"]["livekit"]["room"]
+    assert room["name"] == "call-1"
+    assert room["sid"] == "RM_test", "taken from the job, where it is a plain string"

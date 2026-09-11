@@ -20,11 +20,26 @@ class FakeParticipant:
         self.attributes = dict(attributes) if attributes else dict(DEFAULT_SIP_ATTRIBUTES)
 
 
-class FakeRoom:
+class FakeProtoRoom:
+    """The room as it arrives inside the job: plain fields, sid included."""
+
     def __init__(self, name: str = "call-1") -> None:
         self.name = name
         self.sid = "RM_test"
         self.metadata = ""
+
+
+class FakeRoom:
+    """The live room. ``sid`` is an async property here exactly as it is in rtc.Room."""
+
+    def __init__(self, name: str = "call-1") -> None:
+        self.name = name
+        self.metadata = ""
+        self.remote_participants: dict[str, Any] = {}
+
+    @property
+    async def sid(self) -> str:
+        raise AssertionError("rtc.Room.sid is a coroutine and must never be read directly")
 
 
 class FakeJob:
@@ -33,7 +48,7 @@ class FakeJob:
         self.dispatch_id = "AD_test"
         self.agent_name = "test-agent"
         self.metadata = metadata
-        self.room = FakeRoom()
+        self.room = FakeProtoRoom()
 
 
 class FakeTagger:

@@ -21,12 +21,18 @@ def _job_dict(job: Any) -> dict[str, Any] | None:
         return None
 
 
-def _room_dict(room: Any) -> dict[str, Any] | None:
+def _room_dict(room: Any, job: Any) -> dict[str, Any] | None:
+    """The live room, plus the sid from the job.
+
+    ``rtc.Room.sid`` is an async property: reading it produces a coroutine that a
+    synchronous builder can only leave un-awaited. The job's copy of the room carries the
+    same value as a plain string.
+    """
     if room is None:
         return None
     return {
         "name": getattr(room, "name", None),
-        "sid": getattr(room, "sid", None) if isinstance(getattr(room, "sid", None), str) else None,
+        "sid": getattr(getattr(job, "room", None), "sid", None) or None,
         "metadata": getattr(room, "metadata", None) or None,
     }
 
@@ -91,9 +97,10 @@ def build(
         "status": status,
     }
 
+    job = getattr(ctx, "job", None)
     livekit: dict[str, Any] = {
-        "room": _room_dict(getattr(ctx, "room", None)),
-        "job": _job_dict(getattr(ctx, "job", None)),
+        "room": _room_dict(getattr(ctx, "room", None), job),
+        "job": _job_dict(job),
         "participant": _participant_dict(participant),
         "sip": identity.sip,
     }

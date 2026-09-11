@@ -71,6 +71,12 @@ def attach(
         # participant entrypoint would never fire and the call would only ever report its
         # end. The session starting is the closest thing to the call going live.
         st.extras[_STARTED_TASK] = asyncio.create_task(_on_participant(ctx, None))
+    elif (present := _already_present(ctx)) is not None:
+        # An inbound call's participant is in the room before the job even starts, and the
+        # SDK replays them to participant entrypoints inside ctx.connect() — once, before
+        # this function could have registered anything. Waiting on the entrypoint would be
+        # waiting for a join that already happened.
+        st.extras[_STARTED_TASK] = asyncio.create_task(_on_participant(ctx, present))
 
     logger.debug("call webhooks attached")
 
@@ -80,6 +86,23 @@ def _nobody_will_join(ctx: Any) -> bool:
         return bool(ctx.is_fake_job())
     except Exception:
         return False
+
+
+def _already_present(ctx: Any) -> Any | None:
+    """The remote party, if they joined before the webhooks were armed."""
+    try:
+        from livekit.agents.job import DEFAULT_PARTICIPANT_KINDS as kinds
+    except Exception:
+        kinds = None
+
+    participants = getattr(getattr(ctx, "room", None), "remote_participants", None)
+    if not participants:
+        return None
+
+    for participant in participants.values():
+        if kinds is None or getattr(participant, "kind", None) in kinds:
+            return participant
+    return None
 
 
 def resolve_target(st: _state.CallState) -> WebhookTarget | None:
@@ -161,6 +184,10 @@ async def on_session_end(ctx: Any = None) -> None:
             await started
 
     participant = st.extras.get(_PARTICIPANT)
+    # Before anything reads it: the recording is keyed on the call id, and a call that
+    # never reported its start has no identity yet.
+    _state.ensure_identity(st, participant=participant, direction=st.extras.get("direction"))
+
     report, report_dict = _session_report(st)
 
     storage = Storage.from_env()

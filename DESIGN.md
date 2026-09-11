@@ -319,6 +319,13 @@ configured is what applies.
   `core/__init__.py` under that name shadows it, and every internal
   `from ..core import state` then binds a function instead — a failure that only surfaces
   at call time. The public alias is `core.call_state`.
+- **An inbound call's participant is already in the room** when the job starts, and the SDK
+  replays already-present participants to participant entrypoints *inside* `ctx.connect()`.
+  Registering an entrypoint afterwards never sees them, so `attach()` checks
+  `room.remote_participants` itself.
+- **`rtc.Room.sid` is an async property.** Reading it from synchronous code yields a
+  coroutine that is never awaited. The job's copy of the room carries the same value as a
+  plain string.
 - **Shutdown callbacks are gathered concurrently**, not run in registration order. Nothing
   may depend on one running before another.
 - **A simulated job — console mode — has a mock room nobody joins**, so the participant
