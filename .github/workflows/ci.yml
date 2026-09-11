@@ -19,12 +19,17 @@ jobs:
       - uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
+          python-version: ${{ matrix.python-version }}
 
+      # A virtual environment, not --system: the runner's own Python is externally
+      # managed and refuses installs into it.
       - name: Install
-        run: uv pip install --system -e ".[dev,s3]"
+        run: |
+          uv venv
+          uv pip install -e ".[dev,s3]"
 
       - name: Lint
-        run: ruff check .
+        run: uv run ruff check .
 
       - name: Test
-        run: pytest tests -q
+        run: uv run pytest tests -q
