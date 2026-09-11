@@ -279,6 +279,34 @@ never has to handle two shapes of the same event. It is absent from `call.starte
 Delivery: `POST`, HMAC signature over timestamp and body when a secret is configured, an
 idempotency key per event, retries on 5xx and network errors with backoff, fail-fast on 4xx.
 
+### Outcome
+
+`call.status` is this package's vocabulary, mapped from what LiveKit reports, never passed
+through from a carrier. A consumer must not have to change because a trunk moved from
+Twilio to Telnyx.
+
+LiveKit's `sip.callStatus` is itself normalized — five strings defined in one function in
+`livekit/sip` (`pkg/sip/participant.go`), unchanged since November 2024, with carrier
+specifics confined to separate key namespaces (`sip.twilio.*`, `sip.telnyx.*`). What it is
+not is complete: busy, declined, unavailable and no-answer are all written as *no
+attribute*, so it freezes at `ringing` and the participant disappears. That was deliberate
+on LiveKit's part.
+
+So the outcome is read from the participant's disconnect reason:
+
+| disconnect reason | `call.status` |
+| --- | --- |
+| answered at any point | `completed` |
+| `USER_UNAVAILABLE`, `CONNECTION_TIMEOUT`, unknown | `no_answer` |
+| `USER_REJECTED` | `rejected` |
+| `CLIENT_INITIATED` before an answer | `canceled` |
+| `SIP_TRUNK_FAILURE`, `MEDIA_FAILURE`, `AGENT_ERROR` | `failed` |
+
+`USER_REJECTED` covers busy, declined, auth failure and carrier block alike, so busy and
+declined are not distinguishable from inside the room and this package does not pretend
+otherwise. The exact SIP code exists only in the error returned to whoever called
+`CreateSIPParticipant` with `wait_until_answered`, which is the platform, not the agent.
+
 ## 9. Recording
 
 The SDK records locally to OGG/Opus, stereo, via PyAV, then reads the whole file into memory

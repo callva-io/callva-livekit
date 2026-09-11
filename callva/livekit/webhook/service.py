@@ -18,9 +18,31 @@ _PARTICIPANT = "webhook.participant"
 _TARGET_OVERRIDE = "webhook.target_override"
 _STARTED_TASK = "webhook.started_task"
 _PICKUP_ARMED = "webhook.pickup_armed"
+_DIALING_SENT = "webhook.dialing_sent"
 
 SIP_STATUS = "sip.callStatus"
 SIP_ACTIVE = "active"
+
+# Our own vocabulary, mapped from what LiveKit reports. It is deliberately not the
+# carrier's and not a copy of anyone's wire format: a consumer of this package should not
+# have to change when a trunk moves from one operator to another.
+#
+# The resolution is honest rather than aspirational. LiveKit's `sip.callStatus` carries no
+# terminal outcome at all — busy, declined and unavailable are written as no attribute,
+# leaving it frozen at `ringing` — so the outcome comes from the participant's disconnect
+# reason, which cannot tell busy from declined. Claiming that distinction would be
+# inventing it.
+_OUTCOMES = {
+    "USER_UNAVAILABLE": "no_answer",
+    "CONNECTION_TIMEOUT": "no_answer",
+    "USER_REJECTED": "rejected",
+    "CLIENT_INITIATED": "canceled",
+    "SIP_TRUNK_FAILURE": "failed",
+    "MEDIA_FAILURE": "failed",
+    "AGENT_ERROR": "failed",
+}
+COMPLETED = "completed"
+UNANSWERED_DEFAULT = "no_answer"
 
 FALLBACK_WARNING = (
     "sending the call.ended webhook from a shutdown callback, which the worker bounds by "
@@ -60,6 +82,7 @@ def attach(
 
     ctx = st.ctx
     ctx.add_participant_entrypoint(_on_participant)
+    _watch_disconnect(ctx, st)
 
     # The context is captured here rather than read from the SDK's contextvar at shutdown:
     # a callback runs in its own task, and nothing guarantees the ambient job is still set
@@ -90,6 +113,74 @@ def _nobody_will_join(ctx: Any) -> bool:
         return bool(ctx.is_fake_job())
     except Exception:
         return False
+
+
+async def _report_dialing(ctx: Any, st: _state.CallState, participant: Any) -> None:
+    """Say that the dial went out, once, however many rings follow.
+
+    LiveKit moves through `dialing` and then `ringing`, and on some carriers only one of
+    them ever appears. Two near-identical events seconds apart are noise to a consumer
+    registering a call, so this is one event and the exact status travels in
+    `livekit.sip.callStatus`.
+    """
+    if st.extras.get(_DIALING_SENT):
+        return
+    st.extras[_DIALING_SENT] = True
+
+    _state.ensure_identity(st, participant=participant, direction=st.extras.get("direction"))
+
+    target = resolve_target(st)
+    if target is None:
+        return
+
+    key = transport.idempotency_key(st.identity.id, _payload.DIALING)
+    body = _payload.build(
+        st,
+        event=_payload.DIALING,
+        key=key,
+        status="dialing",
+        participant=participant,
+    )
+    await transport.post_json(target, event=_payload.DIALING, payload=body, key=key)
+
+
+def _outcome(st: _state.CallState) -> str:
+    """How the call ended, in our words.
+
+    A call that was answered completed, whatever happened afterwards. One that never was
+    is described by why the other end went away.
+    """
+    if st.started_sent:
+        return COMPLETED
+    reason = st.extras.get("disconnect_reason")
+    return _OUTCOMES.get(reason, UNANSWERED_DEFAULT)
+
+
+def _watch_disconnect(ctx: Any, st: _state.CallState) -> None:
+    """Remember why the other end went away; it is the only outcome signal we get."""
+    room = getattr(ctx, "room", None)
+    if room is None or not hasattr(room, "on"):
+        return
+
+    def on_disconnected(participant: Any) -> None:
+        st.extras["disconnect_reason"] = _reason_name(
+            getattr(participant, "disconnect_reason", None)
+        )
+
+    room.on("participant_disconnected", on_disconnected)
+
+
+def _reason_name(value: Any) -> str | None:
+    if value is None:
+        return None
+    if isinstance(value, str):
+        return value
+    try:
+        from livekit.protocol import models
+
+        return str(models.DisconnectReason.Name(value))
+    except Exception:
+        return None
 
 
 def _arm_pickup(ctx: Any, st: _state.CallState) -> None:
@@ -182,6 +273,7 @@ async def _on_participant(ctx: Any, participant: Any = None) -> None:
             getattr(participant, "identity", "?"),
         )
         _arm_pickup(ctx, st)
+        await _report_dialing(ctx, st, participant)
         return
 
     st.started_sent = True
@@ -246,7 +338,7 @@ async def on_session_end(ctx: Any = None) -> None:
         key=transport.idempotency_key(st.identity.id, _payload.ENDED)
         if st.identity
         else _payload.ENDED,
-        status="completed",
+        status=_outcome(st),
         participant=participant,
         session_report=report_dict,
         recording=recording,

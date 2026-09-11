@@ -46,7 +46,25 @@ receiver that prints what arrives in [examples/receiver.py](examples/receiver.py
 
 ## What arrives
 
-`call.started` when someone is on the other end, `call.ended` when it is over.
+`call.dialing` when the dial goes out, `call.started` when someone is on the other end,
+`call.ended` when it is over — always, however it ended.
+
+| event | when | `call.status` |
+| --- | --- | --- |
+| `call.dialing` | the dial went out, the phone is ringing | `dialing` |
+| `call.started` | somebody answered | `in_progress` |
+| `call.ended` | terminal, always sent | `completed` · `no_answer` · `rejected` · `canceled` · `failed` |
+
+There is one terminal event, not two: how a call ended is a value, not a kind, so a
+consumer has exactly one thing to handle.
+
+The vocabulary is this package's own. LiveKit's `sip.callStatus` — `dialing`, `ringing`,
+`automation`, `active`, `hangup` — is normalized by LiveKit itself and does not change when
+a trunk moves between carriers, but it carries no terminal outcome at all: a refused call
+simply stops updating and the participant vanishes. The outcome therefore comes from the
+participant's disconnect reason, which cannot tell busy from declined — so this package
+does not claim to either. `rejected` means one of them. The raw signals travel untouched in
+`livekit.sip.callStatus` and `livekit.disconnect_reason`.
 
 ```json
 {

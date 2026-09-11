@@ -46,6 +46,12 @@ class FakeRoom:
         if handler:
             handler(changed, participant)
 
+    def emit_participant_disconnected(self, participant: Any, reason: Any) -> None:
+        participant.disconnect_reason = reason
+        handler = self.handlers.get("participant_disconnected")
+        if handler:
+            handler(participant)
+
     @property
     async def sid(self) -> str:
         raise AssertionError("rtc.Room.sid is a coroutine and must never be read directly")

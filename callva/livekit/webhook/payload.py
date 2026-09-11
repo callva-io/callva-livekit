@@ -6,6 +6,7 @@ from typing import Any
 from ..core import state as _state
 from ..core.log import logger
 
+DIALING = "call.dialing"
 STARTED = "call.started"
 ENDED = "call.ended"
 RECORDING = "call.recording"
@@ -104,6 +105,9 @@ def build(
         "participant": _participant_dict(participant),
         "sip": identity.sip,
     }
+    if (reason := st.extras.get("disconnect_reason")) is not None:
+        livekit["disconnect_reason"] = reason
+
     if event == ENDED:
         # Always present on a finished call, null when the report could not be built, so
         # that a consumer never has to handle two shapes of the same event.
