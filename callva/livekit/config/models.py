@@ -66,6 +66,8 @@ class CallConfig:
     greeting: str | None = None
     raw_prompt: str | None = None
     raw_greeting: str | None = None
+    call_id: str | None = None
+    """An id the responder minted for this call. Adopted unless the dispatcher named one."""
     variables: Variables = field(default_factory=Variables)
     webhook: WebhookTarget | None = None
     extra: dict[str, Any] = field(default_factory=dict)
@@ -91,12 +93,14 @@ class CallConfig:
         raw_greeting = raw_greeting if isinstance(raw_greeting, str) else None
 
         extra = payload.get("extra")
+        call_id = payload.get("call_id")
 
         return cls(
             prompt=render(raw_prompt, variables),
             greeting=render(raw_greeting, variables),
             raw_prompt=raw_prompt,
             raw_greeting=raw_greeting,
+            call_id=call_id.strip() or None if isinstance(call_id, str) else None,
             variables=variables,
             webhook=WebhookTarget.from_dict(payload.get("webhook")),
             extra=extra if isinstance(extra, dict) else {},

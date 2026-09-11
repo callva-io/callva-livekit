@@ -130,6 +130,7 @@ The response:
   "greeting":  "Hi {{ name }}, how can I help?",
   "variables": { "name": "Anna", "attempt": 2, "vip": true },
   "webhook":   { "url": "https://tenant.example/hook", "secret": "…" },
+  "call_id":   "019f0c4e-1f3a-7a55-9d21-2b0e5f77a1c3",
   "extra":     { "anything": "you like" }
 }
 ```
@@ -141,6 +142,13 @@ that is already ringing. JSON types survive: `config.variables.get_int("attempt"
 
 `webhook` in the response overrides the environment, which is what lets one worker serve
 many tenants.
+
+`call_id` files the call under an id you already hold. A responder that creates a record
+for the call before answering can name it here, and every event afterwards carries that id
+— so both sides address one record, and neither has to store a field holding the other's
+identifier. It is the only part of the call's identity configuration may decide. A
+dispatcher that named the call outranks it, and an id offered after the first event has
+gone out is refused with a warning.
 
 When configuration cannot be resolved the call is **terminated** and the reason logged. An
 agent without its prompt is a broken call either way. Pass `on_error="continue"` if you

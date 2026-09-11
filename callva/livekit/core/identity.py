@@ -137,7 +137,10 @@ def resolve(
         from_party, to_party = remote, local
 
     return CallIdentity(
-        id=envelope.call_id or uuid.uuid4().hex,
+        # Canonical form, dashes and all: this id is written into other systems' call
+        # records beside ids they generated themselves, and a bare hex run reads like
+        # something else entirely.
+        id=envelope.call_id or str(uuid.uuid4()),
         direction=resolved_direction,
         from_party=from_party,
         to_party=to_party,

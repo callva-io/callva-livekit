@@ -1,0 +1,1841 @@
+{
+  "event": "call.ended",
+  "id": "995bbd6c033743dba39a270f64aa563d:call.ended:1789140828145",
+  "timestamp": 1789140828.145813,
+  "call": {
+    "id": "995bbd6c033743dba39a270f64aa563d",
+    "direction": "inbound",
+    "from": {
+      "number": null,
+      "identity": null,
+      "name": null
+    },
+    "to": {
+      "number": null,
+      "identity": null,
+      "name": null
+    },
+    "started_at": 1789140760.798833,
+    "ended_at": 1789140828.143179,
+    "duration": 67.344,
+    "status": "completed"
+  },
+  "livekit": {
+    "room": {
+      "name": "console",
+      "sid": "SRM_8640210be30e",
+      "metadata": null
+    },
+    "job": {
+      "id": "mock-job-e492d761bcbd",
+      "room": {
+        "sid": "SRM_8640210be30e",
+        "name": "console-room"
+      }
+    },
+    "participant": null,
+    "sip": null,
+    "session_report": {
+      "job_id": "mock-job-e492d761bcbd",
+      "room_id": "SRM_8640210be30e",
+      "room": "console-room",
+      "events": [
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "item_cfcd805f1af1",
+            "type": "agent_handoff",
+            "old_agent_id": null,
+            "new_agent_id": "live_agent",
+            "created_at": 1789140760.809719
+          },
+          "created_at": 1789140760.8098938
+        },
+        {
+          "type": "agent_state_changed",
+          "old_state": "initializing",
+          "new_state": "listening",
+          "created_at": 1789140760.815409
+        },
+        {
+          "type": "session_usage_updated",
+          "usage": {
+            "model_usage": [
+              {
+                "type": "llm_usage",
+                "provider": "api.openai.com",
+                "model": "gpt-live-1",
+                "input_tokens": 0,
+                "input_cached_tokens": 0,
+                "input_cache_creation_tokens": 0,
+                "input_audio_tokens": 0,
+                "input_cached_audio_tokens": 0,
+                "input_text_tokens": 0,
+                "input_cached_text_tokens": 0,
+                "input_image_tokens": 0,
+                "input_cached_image_tokens": 0,
+                "output_tokens": 0,
+                "output_audio_tokens": 0,
+                "output_text_tokens": 0,
+                "output_reasoning_tokens": 0,
+                "session_duration": 0.0
+              }
+            ]
+          },
+          "created_at": 1789140761.4932961
+        },
+        {
+          "type": "speech_created",
+          "user_initiated": false,
+          "source": "generate_reply",
+          "created_at": 1789140763.314558
+        },
+        {
+          "type": "agent_state_changed",
+          "old_state": "listening",
+          "new_state": "speaking",
+          "created_at": 1789140763.405032
+        },
+        {
+          "type": "agent_state_changed",
+          "old_state": "speaking",
+          "new_state": "listening",
+          "created_at": 1789140767.723686
+        },
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "item_1c8699a05b63",
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              "Tere, siin on Aria ettevõttest CallVA. Kuidas saan teid aidata?"
+            ],
+            "interrupted": false,
+            "transcript_confidence": null,
+            "extra": {},
+            "metrics": {
+              "provider_request_ids": [
+                "item_1c8699a05b63"
+              ],
+              "started_speaking_at": 1789140763.40354,
+              "stopped_speaking_at": 1789140767.723764,
+              "playback_latency": 0.08539175987243652
+            },
+            "created_at": 1789140763.40354,
+            "hash": null
+          },
+          "created_at": 1789140767.725613
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "listening",
+          "new_state": "speaking",
+          "created_at": 1789140769.65429
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " O",
+          "is_final": false,
+          "item_id": "speech_7ded628c5f43",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140769.654453
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " O, sa",
+          "is_final": false,
+          "item_id": "speech_7ded628c5f43",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140769.806467
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " O, sa räägid",
+          "is_final": false,
+          "item_id": "speech_7ded628c5f43",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140770.2292721
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " O, sa räägid eesti",
+          "is_final": false,
+          "item_id": "speech_7ded628c5f43",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140770.6514912
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " O, sa räägid eesti keelt",
+          "is_final": false,
+          "item_id": "speech_7ded628c5f43",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140770.9160929
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " O, sa räägid eesti keelt nii",
+          "is_final": false,
+          "item_id": "speech_7ded628c5f43",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140771.111658
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " O, sa räägid eesti keelt nii hästi",
+          "is_final": false,
+          "item_id": "speech_7ded628c5f43",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140771.2930639
+        },
+        {
+          "type": "speech_created",
+          "user_initiated": false,
+          "source": "generate_reply",
+          "created_at": 1789140771.2935848
+        },
+        {
+          "type": "agent_state_changed",
+          "old_state": "listening",
+          "new_state": "speaking",
+          "created_at": 1789140771.304497
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " O, sa räägid eesti keelt nii hästi",
+          "is_final": true,
+          "item_id": "speech_7ded628c5f43",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140772.005236
+        },
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "speech_7ded628c5f43",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " O, sa räägid eesti keelt nii hästi"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140769.6538439
+            },
+            "created_at": 1789140769.6538439,
+            "hash": null
+          },
+          "created_at": 1789140772.007756
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "speaking",
+          "new_state": "listening",
+          "created_at": 1789140772.00793
+        },
+        {
+          "type": "agent_state_changed",
+          "old_state": "speaking",
+          "new_state": "listening",
+          "created_at": 1789140776.3126469
+        },
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "item_be28bc5cc2ff",
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              " Jah, räägin eesti keelt ja olen hea meelega abiks - mida soovite teada?"
+            ],
+            "interrupted": false,
+            "transcript_confidence": null,
+            "extra": {},
+            "metrics": {
+              "provider_request_ids": [
+                "item_be28bc5cc2ff"
+              ],
+              "started_speaking_at": 1789140771.3037271,
+              "stopped_speaking_at": 1789140776.312715,
+              "playback_latency": 0.007917165756225586
+            },
+            "created_at": 1789140771.3037271,
+            "hash": null
+          },
+          "created_at": 1789140776.314792
+        },
+        {
+          "type": "session_usage_updated",
+          "usage": {
+            "model_usage": [
+              {
+                "type": "llm_usage",
+                "provider": "api.openai.com",
+                "model": "gpt-live-1",
+                "input_tokens": 0,
+                "input_cached_tokens": 0,
+                "input_cache_creation_tokens": 0,
+                "input_audio_tokens": 0,
+                "input_cached_audio_tokens": 0,
+                "input_text_tokens": 0,
+                "input_cached_text_tokens": 0,
+                "input_image_tokens": 0,
+                "input_cached_image_tokens": 0,
+                "output_tokens": 0,
+                "output_audio_tokens": 0,
+                "output_text_tokens": 0,
+                "output_reasoning_tokens": 0,
+                "session_duration": 15.0
+              }
+            ]
+          },
+          "created_at": 1789140776.774699
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "listening",
+          "new_state": "speaking",
+          "created_at": 1789140777.592136
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " А на",
+          "is_final": false,
+          "item_id": "speech_c766d8cb9c67",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140777.5922592
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " А на русском",
+          "is_final": false,
+          "item_id": "speech_c766d8cb9c67",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140778.040428
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " А на русском тоже",
+          "is_final": false,
+          "item_id": "speech_c766d8cb9c67",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140778.20962
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " А на русском тоже можете",
+          "is_final": false,
+          "item_id": "speech_c766d8cb9c67",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140778.762629
+        },
+        {
+          "type": "speech_created",
+          "user_initiated": false,
+          "source": "generate_reply",
+          "created_at": 1789140779.1513689
+        },
+        {
+          "type": "agent_state_changed",
+          "old_state": "listening",
+          "new_state": "speaking",
+          "created_at": 1789140779.204866
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " А на русском тоже можете разговаривать",
+          "is_final": false,
+          "item_id": "speech_c766d8cb9c67",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140779.392768
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " А на русском тоже можете разговаривать",
+          "is_final": true,
+          "item_id": "speech_c766d8cb9c67",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140780.1075652
+        },
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "speech_c766d8cb9c67",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " А на русском тоже можете разговаривать"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140777.5918
+            },
+            "created_at": 1789140777.5918,
+            "hash": null
+          },
+          "created_at": 1789140780.109639
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "speaking",
+          "new_state": "listening",
+          "created_at": 1789140780.109782
+        },
+        {
+          "type": "agent_state_changed",
+          "old_state": "speaking",
+          "new_state": "listening",
+          "created_at": 1789140782.088068
+        },
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "item_5adfcd39b48a",
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              " Да, конечно, могу говорить и по-русски."
+            ],
+            "interrupted": false,
+            "transcript_confidence": null,
+            "extra": {},
+            "metrics": {
+              "provider_request_ids": [
+                "item_5adfcd39b48a"
+              ],
+              "started_speaking_at": 1789140779.203903,
+              "stopped_speaking_at": 1789140782.0881321,
+              "playback_latency": 0.04865312576293945
+            },
+            "created_at": 1789140779.203903,
+            "hash": null
+          },
+          "created_at": 1789140782.090307
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "listening",
+          "new_state": "speaking",
+          "created_at": 1789140783.799537
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Супер",
+          "is_final": false,
+          "item_id": "speech_880f6ca34b2d",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140783.799724
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Супер. Can you",
+          "is_final": false,
+          "item_id": "speech_880f6ca34b2d",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140784.439349
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Супер. Can you also",
+          "is_final": false,
+          "item_id": "speech_880f6ca34b2d",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140784.6447208
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Супер. Can you also speak",
+          "is_final": false,
+          "item_id": "speech_880f6ca34b2d",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140784.804734
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Супер. Can you also speak English",
+          "is_final": false,
+          "item_id": "speech_880f6ca34b2d",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140785.509037
+        },
+        {
+          "type": "speech_created",
+          "user_initiated": false,
+          "source": "generate_reply",
+          "created_at": 1789140785.692018
+        },
+        {
+          "type": "agent_state_changed",
+          "old_state": "listening",
+          "new_state": "speaking",
+          "created_at": 1789140785.7047732
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Супер. Can you also speak English",
+          "is_final": true,
+          "item_id": "speech_880f6ca34b2d",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140786.307455
+        },
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "speech_880f6ca34b2d",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " Супер. Can you also speak English"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140783.799048
+            },
+            "created_at": 1789140783.799048,
+            "hash": null
+          },
+          "created_at": 1789140786.3098738
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "speaking",
+          "new_state": "listening",
+          "created_at": 1789140786.310029
+        },
+        {
+          "type": "agent_state_changed",
+          "old_state": "speaking",
+          "new_state": "listening",
+          "created_at": 1789140788.4968581
+        },
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "item_6d02629b4449",
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              "Yes, I can speak English as well."
+            ],
+            "interrupted": false,
+            "transcript_confidence": null,
+            "extra": {},
+            "metrics": {
+              "provider_request_ids": [
+                "item_6d02629b4449"
+              ],
+              "started_speaking_at": 1789140785.703836,
+              "stopped_speaking_at": 1789140788.496911,
+              "playback_latency": 0.009233951568603516
+            },
+            "created_at": 1789140785.703836,
+            "hash": null
+          },
+          "created_at": 1789140788.4988108
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "listening",
+          "new_state": "speaking",
+          "created_at": 1789140789.594528
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Okay",
+          "is_final": false,
+          "item_id": "speech_629ee6d33eb7",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140789.594673
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Okay. How",
+          "is_final": false,
+          "item_id": "speech_629ee6d33eb7",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140790.0311859
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Okay. How about",
+          "is_final": false,
+          "item_id": "speech_629ee6d33eb7",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140790.210922
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Okay. How about",
+          "is_final": true,
+          "item_id": "speech_629ee6d33eb7",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140791.007974
+        },
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "speech_629ee6d33eb7",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " Okay. How about"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140789.594174
+            },
+            "created_at": 1789140789.594174,
+            "hash": null
+          },
+          "created_at": 1789140791.0087051
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "speaking",
+          "new_state": "listening",
+          "created_at": 1789140791.008759
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "listening",
+          "new_state": "speaking",
+          "created_at": 1789140791.013669
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Japanese",
+          "is_final": false,
+          "item_id": "speech_1901c42dbc08",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140791.013696
+        },
+        {
+          "type": "session_usage_updated",
+          "usage": {
+            "model_usage": [
+              {
+                "type": "llm_usage",
+                "provider": "api.openai.com",
+                "model": "gpt-live-1",
+                "input_tokens": 0,
+                "input_cached_tokens": 0,
+                "input_cache_creation_tokens": 0,
+                "input_audio_tokens": 0,
+                "input_cached_audio_tokens": 0,
+                "input_text_tokens": 0,
+                "input_cached_text_tokens": 0,
+                "input_image_tokens": 0,
+                "input_cached_image_tokens": 0,
+                "output_tokens": 0,
+                "output_audio_tokens": 0,
+                "output_text_tokens": 0,
+                "output_reasoning_tokens": 0,
+                "session_duration": 30.0
+              }
+            ]
+          },
+          "created_at": 1789140791.773395
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Japanese",
+          "is_final": true,
+          "item_id": "speech_1901c42dbc08",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140791.806734
+        },
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "speech_1901c42dbc08",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " Japanese"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140791.013605
+            },
+            "created_at": 1789140791.013605,
+            "hash": null
+          },
+          "created_at": 1789140791.8089359
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "speaking",
+          "new_state": "listening",
+          "created_at": 1789140791.809103
+        },
+        {
+          "type": "speech_created",
+          "user_initiated": false,
+          "source": "generate_reply",
+          "created_at": 1789140792.509393
+        },
+        {
+          "type": "agent_state_changed",
+          "old_state": "listening",
+          "new_state": "speaking",
+          "created_at": 1789140792.604865
+        },
+        {
+          "type": "agent_state_changed",
+          "old_state": "speaking",
+          "new_state": "listening",
+          "created_at": 1789140795.363908
+        },
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "item_4c1ec886a2b1",
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              "Jah, saan ka jaapani keeles suhelda."
+            ],
+            "interrupted": false,
+            "transcript_confidence": null,
+            "extra": {},
+            "metrics": {
+              "provider_request_ids": [
+                "item_4c1ec886a2b1"
+              ],
+              "started_speaking_at": 1789140792.604026,
+              "stopped_speaking_at": 1789140795.363982,
+              "playback_latency": 0.09287595748901367
+            },
+            "created_at": 1789140792.604026,
+            "hash": null
+          },
+          "created_at": 1789140795.3664188
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "listening",
+          "new_state": "speaking",
+          "created_at": 1789140796.4306922
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Can",
+          "is_final": false,
+          "item_id": "speech_69d29596dae3",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140796.4308538
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Can you",
+          "is_final": false,
+          "item_id": "speech_69d29596dae3",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140796.6078699
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Can you actually",
+          "is_final": false,
+          "item_id": "speech_69d29596dae3",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140797.034415
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Can you actually speak",
+          "is_final": false,
+          "item_id": "speech_69d29596dae3",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140797.190613
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Can you actually speak",
+          "is_final": true,
+          "item_id": "speech_69d29596dae3",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140797.906537
+        },
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "speech_69d29596dae3",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " Can you actually speak"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140796.430284
+            },
+            "created_at": 1789140796.430284,
+            "hash": null
+          },
+          "created_at": 1789140797.908493
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "speaking",
+          "new_state": "listening",
+          "created_at": 1789140797.908629
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "listening",
+          "new_state": "speaking",
+          "created_at": 1789140797.997621
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Japanese",
+          "is_final": false,
+          "item_id": "speech_ec096186cdd1",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140797.997749
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Japanese",
+          "is_final": true,
+          "item_id": "speech_ec096186cdd1",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140798.704652
+        },
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "speech_ec096186cdd1",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " Japanese"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140797.997303
+            },
+            "created_at": 1789140797.997303,
+            "hash": null
+          },
+          "created_at": 1789140798.706883
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "speaking",
+          "new_state": "listening",
+          "created_at": 1789140798.707056
+        },
+        {
+          "type": "speech_created",
+          "user_initiated": false,
+          "source": "generate_reply",
+          "created_at": 1789140799.539225
+        },
+        {
+          "type": "agent_state_changed",
+          "old_state": "listening",
+          "new_state": "speaking",
+          "created_at": 1789140799.606753
+        },
+        {
+          "type": "agent_state_changed",
+          "old_state": "speaking",
+          "new_state": "listening",
+          "created_at": 1789140802.114124
+        },
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "item_16571e56bd71",
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              "Jah, saan ka jaapani keeles rääkida."
+            ],
+            "interrupted": false,
+            "transcript_confidence": null,
+            "extra": {},
+            "metrics": {
+              "provider_request_ids": [
+                "item_16571e56bd71"
+              ],
+              "started_speaking_at": 1789140799.605716,
+              "stopped_speaking_at": 1789140802.114177,
+              "playback_latency": 0.06360602378845215
+            },
+            "created_at": 1789140799.605716,
+            "hash": null
+          },
+          "created_at": 1789140802.1164181
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "listening",
+          "new_state": "speaking",
+          "created_at": 1789140803.950093
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " No, I",
+          "is_final": false,
+          "item_id": "speech_32222f2fc593",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140803.950197
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " No, I mean",
+          "is_final": false,
+          "item_id": "speech_32222f2fc593",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140804.150696
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " No, I mean like",
+          "is_final": false,
+          "item_id": "speech_32222f2fc593",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140804.3181381
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " No, I mean like, can",
+          "is_final": false,
+          "item_id": "speech_32222f2fc593",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140804.767204
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " No, I mean like, can you",
+          "is_final": false,
+          "item_id": "speech_32222f2fc593",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140804.957222
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " No, I mean like, can you actually",
+          "is_final": false,
+          "item_id": "speech_32222f2fc593",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140805.321154
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " No, I mean like, can you actually",
+          "is_final": true,
+          "item_id": "speech_32222f2fc593",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140806.104915
+        },
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "speech_32222f2fc593",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " No, I mean like, can you actually"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140803.9497962
+            },
+            "created_at": 1789140803.9497962,
+            "hash": null
+          },
+          "created_at": 1789140806.107059
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "speaking",
+          "new_state": "listening",
+          "created_at": 1789140806.107222
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "listening",
+          "new_state": "speaking",
+          "created_at": 1789140806.113326
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " switch to",
+          "is_final": false,
+          "item_id": "speech_79b349f0fad3",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140806.1134038
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " switch to Japanese",
+          "is_final": false,
+          "item_id": "speech_79b349f0fad3",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140806.7516
+        },
+        {
+          "type": "session_usage_updated",
+          "usage": {
+            "model_usage": [
+              {
+                "type": "llm_usage",
+                "provider": "api.openai.com",
+                "model": "gpt-live-1",
+                "input_tokens": 0,
+                "input_cached_tokens": 0,
+                "input_cache_creation_tokens": 0,
+                "input_audio_tokens": 0,
+                "input_cached_audio_tokens": 0,
+                "input_text_tokens": 0,
+                "input_cached_text_tokens": 0,
+                "input_image_tokens": 0,
+                "input_cached_image_tokens": 0,
+                "output_tokens": 0,
+                "output_audio_tokens": 0,
+                "output_text_tokens": 0,
+                "output_reasoning_tokens": 0,
+                "session_duration": 46.0
+              }
+            ]
+          },
+          "created_at": 1789140806.778974
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " switch to Japanese and",
+          "is_final": false,
+          "item_id": "speech_79b349f0fad3",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140806.914378
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " switch to Japanese and speak",
+          "is_final": false,
+          "item_id": "speech_79b349f0fad3",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140807.309251
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " switch to Japanese and speak actual",
+          "is_final": false,
+          "item_id": "speech_79b349f0fad3",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140807.9105139
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " switch to Japanese and speak actual Japanese",
+          "is_final": false,
+          "item_id": "speech_79b349f0fad3",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140808.314739
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " switch to Japanese and speak actual Japanese words",
+          "is_final": false,
+          "item_id": "speech_79b349f0fad3",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140808.957101
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " switch to Japanese and speak actual Japanese words, not",
+          "is_final": false,
+          "item_id": "speech_79b349f0fad3",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140809.151169
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " switch to Japanese and speak actual Japanese words, not just",
+          "is_final": false,
+          "item_id": "speech_79b349f0fad3",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140809.3092759
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " switch to Japanese and speak actual Japanese words, not just confirm",
+          "is_final": false,
+          "item_id": "speech_79b349f0fad3",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140809.752411
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " switch to Japanese and speak actual Japanese words, not just confirm if you",
+          "is_final": false,
+          "item_id": "speech_79b349f0fad3",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140809.951218
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " switch to Japanese and speak actual Japanese words, not just confirm if you can",
+          "is_final": false,
+          "item_id": "speech_79b349f0fad3",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140810.149608
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " switch to Japanese and speak actual Japanese words, not just confirm if you can do",
+          "is_final": false,
+          "item_id": "speech_79b349f0fad3",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140810.351336
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " switch to Japanese and speak actual Japanese words, not just confirm if you can do that",
+          "is_final": false,
+          "item_id": "speech_79b349f0fad3",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140810.5643678
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " switch to Japanese and speak actual Japanese words, not just confirm if you can do that, but",
+          "is_final": false,
+          "item_id": "speech_79b349f0fad3",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140810.751182
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " switch to Japanese and speak actual Japanese words, not just confirm if you can do that, but can",
+          "is_final": false,
+          "item_id": "speech_79b349f0fad3",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140810.936704
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " switch to Japanese and speak actual Japanese words, not just confirm if you can do that, but can you",
+          "is_final": false,
+          "item_id": "speech_79b349f0fad3",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140811.11294
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " switch to Japanese and speak actual Japanese words, not just confirm if you can do that, but can you switch",
+          "is_final": false,
+          "item_id": "speech_79b349f0fad3",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140811.539382
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " switch to Japanese and speak actual Japanese words, not just confirm if you can do that, but can you switch over",
+          "is_final": false,
+          "item_id": "speech_79b349f0fad3",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140811.7513568
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " switch to Japanese and speak actual Japanese words, not just confirm if you can do that, but can you switch over to",
+          "is_final": false,
+          "item_id": "speech_79b349f0fad3",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140811.9100978
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " switch to Japanese and speak actual Japanese words, not just confirm if you can do that, but can you switch over to Japanese",
+          "is_final": false,
+          "item_id": "speech_79b349f0fad3",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140812.509525
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " switch to Japanese and speak actual Japanese words, not just confirm if you can do that, but can you switch over to Japanese",
+          "is_final": true,
+          "item_id": "speech_79b349f0fad3",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140813.3061671
+        },
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "speech_79b349f0fad3",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " switch to Japanese and speak actual Japanese words, not just confirm if you can do that, but can you switch over to Japanese"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140806.113112
+            },
+            "created_at": 1789140806.113112,
+            "hash": null
+          },
+          "created_at": 1789140813.308757
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "speaking",
+          "new_state": "listening",
+          "created_at": 1789140813.308887
+        },
+        {
+          "type": "speech_created",
+          "user_initiated": false,
+          "source": "generate_reply",
+          "created_at": 1789140814.477408
+        },
+        {
+          "type": "agent_state_changed",
+          "old_state": "listening",
+          "new_state": "speaking",
+          "created_at": 1789140814.505315
+        },
+        {
+          "type": "agent_state_changed",
+          "old_state": "speaking",
+          "new_state": "listening",
+          "created_at": 1789140819.0754821
+        },
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "item_ab9536b72022",
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              "はい、わかりました。日本語に切り替えてお話しします。"
+            ],
+            "interrupted": false,
+            "transcript_confidence": null,
+            "extra": {},
+            "metrics": {
+              "provider_request_ids": [
+                "item_ab9536b72022"
+              ],
+              "started_speaking_at": 1789140814.504334,
+              "stopped_speaking_at": 1789140819.075532,
+              "playback_latency": 0.02473592758178711
+            },
+            "created_at": 1789140814.504334,
+            "hash": null
+          },
+          "created_at": 1789140819.0774999
+        },
+        {
+          "type": "session_usage_updated",
+          "usage": {
+            "model_usage": [
+              {
+                "type": "llm_usage",
+                "provider": "api.openai.com",
+                "model": "gpt-live-1",
+                "input_tokens": 0,
+                "input_cached_tokens": 0,
+                "input_cache_creation_tokens": 0,
+                "input_audio_tokens": 0,
+                "input_cached_audio_tokens": 0,
+                "input_text_tokens": 0,
+                "input_cached_text_tokens": 0,
+                "input_image_tokens": 0,
+                "input_cached_image_tokens": 0,
+                "output_tokens": 0,
+                "output_audio_tokens": 0,
+                "output_text_tokens": 0,
+                "output_reasoning_tokens": 0,
+                "session_duration": 61.0
+              }
+            ]
+          },
+          "created_at": 1789140821.774213
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "listening",
+          "new_state": "speaking",
+          "created_at": 1789140821.922055
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " いただ",
+          "is_final": false,
+          "item_id": "speech_6630ecd7429c",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140821.9221199
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " いただきます",
+          "is_final": false,
+          "item_id": "speech_6630ecd7429c",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140822.510697
+        },
+        {
+          "type": "speech_created",
+          "user_initiated": false,
+          "source": "generate_reply",
+          "created_at": 1789140823.301731
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " いただきます",
+          "is_final": true,
+          "item_id": "speech_6630ecd7429c",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140823.3098261
+        },
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "speech_6630ecd7429c",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " いただきます"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140821.9218838
+            },
+            "created_at": 1789140821.9218838,
+            "hash": null
+          },
+          "created_at": 1789140823.311712
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "speaking",
+          "new_state": "listening",
+          "created_at": 1789140823.311841
+        },
+        {
+          "type": "agent_state_changed",
+          "old_state": "listening",
+          "new_state": "speaking",
+          "created_at": 1789140823.404642
+        },
+        {
+          "type": "agent_state_changed",
+          "old_state": "speaking",
+          "new_state": "listening",
+          "created_at": 1789140825.308342
+        },
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "item_80d43f1ba86a",
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              "どういたしまして。"
+            ],
+            "interrupted": false,
+            "transcript_confidence": null,
+            "extra": {},
+            "metrics": {
+              "provider_request_ids": [
+                "item_80d43f1ba86a"
+              ],
+              "started_speaking_at": 1789140823.404394,
+              "stopped_speaking_at": 1789140825.308398,
+              "playback_latency": 0.09933590888977051
+            },
+            "created_at": 1789140823.404394,
+            "hash": null
+          },
+          "created_at": 1789140825.310556
+        },
+        {
+          "type": "session_usage_updated",
+          "usage": {
+            "model_usage": [
+              {
+                "type": "llm_usage",
+                "provider": "api.openai.com",
+                "model": "gpt-live-1",
+                "input_tokens": 0,
+                "input_cached_tokens": 0,
+                "input_cache_creation_tokens": 0,
+                "input_audio_tokens": 0,
+                "input_cached_audio_tokens": 0,
+                "input_text_tokens": 0,
+                "input_cached_text_tokens": 0,
+                "input_image_tokens": 0,
+                "input_cached_image_tokens": 0,
+                "output_tokens": 0,
+                "output_audio_tokens": 0,
+                "output_text_tokens": 0,
+                "output_reasoning_tokens": 0,
+                "session_duration": 67.0
+              }
+            ]
+          },
+          "created_at": 1789140828.079315
+        },
+        {
+          "type": "close",
+          "error": null,
+          "reason": "user_initiated",
+          "created_at": 1789140828.142447
+        }
+      ],
+      "audio_recording_path": "/Users/kz/dev/callva-agent-live/console-recordings/session-09-11-183240/audio.ogg",
+      "audio_recording_started_at": 1789140760.80915,
+      "options": {
+        "allow_interruptions": true,
+        "discard_audio_if_uninterruptible": true,
+        "min_interruption_duration": 0.5,
+        "min_interruption_words": 0,
+        "min_endpointing_delay": 0.3,
+        "max_endpointing_delay": 2.5,
+        "max_tool_steps": 3,
+        "user_away_timeout": 15.0,
+        "min_consecutive_speech_delay": 0.0,
+        "preemptive_generation": {
+          "enabled": true,
+          "preemptive_tts": false,
+          "max_speech_duration": 10.0,
+          "max_retries": 3
+        },
+        "recording_options": {
+          "audio": true,
+          "traces": true,
+          "logs": true,
+          "transcript": true,
+          "redaction": false
+        }
+      },
+      "chat_history": {
+        "items": [
+          {
+            "id": "item_cfcd805f1af1",
+            "type": "agent_handoff",
+            "new_agent_id": "live_agent",
+            "created_at": 1789140760.809719
+          },
+          {
+            "id": "item_e1ba47481c9d",
+            "type": "agent_config_update",
+            "instructions": "Sa oled Aria, ettevõtte CallVA häälassistent, ja sa oled telefonikõnes. Räägi puhast, loomulikku eesti keelt nagu emakeelena kõneleja, ilma võõra aktsendita. Ole sõbralik, soe ja avatud. Vasta ühe või kahe lausega. Ära loe ette kirjavahemärke ega vormindust. Kui sa midagi ei tea, ütle seda ausalt. Räägi eesti keeles seni, kuni helistaja palub keelt vahetada. Kui helistaja küsib kellaaega, saad selle talle öelda.",
+            "tools_added": [
+              "current_time"
+            ],
+            "created_at": 1789140760.814333
+          },
+          {
+            "id": "item_1c8699a05b63",
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              "Tere, siin on Aria ettevõttest CallVA. Kuidas saan teid aidata?"
+            ],
+            "interrupted": false,
+            "extra": {},
+            "metrics": {
+              "provider_request_ids": [
+                "item_1c8699a05b63"
+              ],
+              "started_speaking_at": 1789140763.40354,
+              "stopped_speaking_at": 1789140767.723764,
+              "playback_latency": 0.08539175987243652
+            },
+            "created_at": 1789140763.40354
+          },
+          {
+            "id": "speech_7ded628c5f43",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " O, sa räägid eesti keelt nii hästi"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140769.6538439
+            },
+            "created_at": 1789140769.6538439
+          },
+          {
+            "id": "item_be28bc5cc2ff",
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              " Jah, räägin eesti keelt ja olen hea meelega abiks - mida soovite teada?"
+            ],
+            "interrupted": false,
+            "extra": {},
+            "metrics": {
+              "provider_request_ids": [
+                "item_be28bc5cc2ff"
+              ],
+              "started_speaking_at": 1789140771.3037271,
+              "stopped_speaking_at": 1789140776.312715,
+              "playback_latency": 0.007917165756225586
+            },
+            "created_at": 1789140771.3037271
+          },
+          {
+            "id": "speech_c766d8cb9c67",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " А на русском тоже можете разговаривать"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140777.5918
+            },
+            "created_at": 1789140777.5918
+          },
+          {
+            "id": "item_5adfcd39b48a",
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              " Да, конечно, могу говорить и по-русски."
+            ],
+            "interrupted": false,
+            "extra": {},
+            "metrics": {
+              "provider_request_ids": [
+                "item_5adfcd39b48a"
+              ],
+              "started_speaking_at": 1789140779.203903,
+              "stopped_speaking_at": 1789140782.0881321,
+              "playback_latency": 0.04865312576293945
+            },
+            "created_at": 1789140779.203903
+          },
+          {
+            "id": "speech_880f6ca34b2d",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " Супер. Can you also speak English"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140783.799048
+            },
+            "created_at": 1789140783.799048
+          },
+          {
+            "id": "item_6d02629b4449",
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              "Yes, I can speak English as well."
+            ],
+            "interrupted": false,
+            "extra": {},
+            "metrics": {
+              "provider_request_ids": [
+                "item_6d02629b4449"
+              ],
+              "started_speaking_at": 1789140785.703836,
+              "stopped_speaking_at": 1789140788.496911,
+              "playback_latency": 0.009233951568603516
+            },
+            "created_at": 1789140785.703836
+          },
+          {
+            "id": "speech_629ee6d33eb7",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " Okay. How about"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140789.594174
+            },
+            "created_at": 1789140789.594174
+          },
+          {
+            "id": "speech_1901c42dbc08",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " Japanese"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140791.013605
+            },
+            "created_at": 1789140791.013605
+          },
+          {
+            "id": "item_4c1ec886a2b1",
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              "Jah, saan ka jaapani keeles suhelda."
+            ],
+            "interrupted": false,
+            "extra": {},
+            "metrics": {
+              "provider_request_ids": [
+                "item_4c1ec886a2b1"
+              ],
+              "started_speaking_at": 1789140792.604026,
+              "stopped_speaking_at": 1789140795.363982,
+              "playback_latency": 0.09287595748901367
+            },
+            "created_at": 1789140792.604026
+          },
+          {
+            "id": "speech_69d29596dae3",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " Can you actually speak"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140796.430284
+            },
+            "created_at": 1789140796.430284
+          },
+          {
+            "id": "speech_ec096186cdd1",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " Japanese"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140797.997303
+            },
+            "created_at": 1789140797.997303
+          },
+          {
+            "id": "item_16571e56bd71",
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              "Jah, saan ka jaapani keeles rääkida."
+            ],
+            "interrupted": false,
+            "extra": {},
+            "metrics": {
+              "provider_request_ids": [
+                "item_16571e56bd71"
+              ],
+              "started_speaking_at": 1789140799.605716,
+              "stopped_speaking_at": 1789140802.114177,
+              "playback_latency": 0.06360602378845215
+            },
+            "created_at": 1789140799.605716
+          },
+          {
+            "id": "speech_32222f2fc593",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " No, I mean like, can you actually"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140803.9497962
+            },
+            "created_at": 1789140803.9497962
+          },
+          {
+            "id": "speech_79b349f0fad3",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " switch to Japanese and speak actual Japanese words, not just confirm if you can do that, but can you switch over to Japanese"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140806.113112
+            },
+            "created_at": 1789140806.113112
+          },
+          {
+            "id": "item_ab9536b72022",
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              "はい、わかりました。日本語に切り替えてお話しします。"
+            ],
+            "interrupted": false,
+            "extra": {},
+            "metrics": {
+              "provider_request_ids": [
+                "item_ab9536b72022"
+              ],
+              "started_speaking_at": 1789140814.504334,
+              "stopped_speaking_at": 1789140819.075532,
+              "playback_latency": 0.02473592758178711
+            },
+            "created_at": 1789140814.504334
+          },
+          {
+            "id": "speech_6630ecd7429c",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " いただきます"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140821.9218838
+            },
+            "created_at": 1789140821.9218838
+          },
+          {
+            "id": "item_80d43f1ba86a",
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              "どういたしまして。"
+            ],
+            "interrupted": false,
+            "extra": {},
+            "metrics": {
+              "provider_request_ids": [
+                "item_80d43f1ba86a"
+              ],
+              "started_speaking_at": 1789140823.404394,
+              "stopped_speaking_at": 1789140825.308398,
+              "playback_latency": 0.09933590888977051
+            },
+            "created_at": 1789140823.404394
+          }
+        ]
+      },
+      "timestamp": 1789140828.145429,
+      "usage": [
+        {
+          "provider": "api.openai.com",
+          "model": "gpt-live-1",
+          "session_duration": 67.0
+        }
+      ],
+      "sdk_version": "1.8.1"
+    }
+  },
+  "recording": {
+    "delivery": "multipart",
+    "filename": "995bbd6c033743dba39a270f64aa563d.ogg"
+  },
+  "tags": null
+}

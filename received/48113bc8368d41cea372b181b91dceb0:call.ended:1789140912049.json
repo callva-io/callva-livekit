@@ -1,0 +1,2026 @@
+{
+  "event": "call.ended",
+  "id": "48113bc8368d41cea372b181b91dceb0:call.ended:1789140912049",
+  "timestamp": 1789140912.0494132,
+  "call": {
+    "id": "48113bc8368d41cea372b181b91dceb0",
+    "direction": "inbound",
+    "from": {
+      "number": null,
+      "identity": null,
+      "name": null
+    },
+    "to": {
+      "number": null,
+      "identity": null,
+      "name": null
+    },
+    "started_at": 1789140841.737174,
+    "ended_at": 1789140912.047693,
+    "duration": 70.311,
+    "status": "completed"
+  },
+  "livekit": {
+    "room": {
+      "name": "console",
+      "sid": "SRM_84fd1a2a3154",
+      "metadata": null
+    },
+    "job": {
+      "id": "mock-job-f521625d7cda",
+      "room": {
+        "sid": "SRM_84fd1a2a3154",
+        "name": "console-room"
+      }
+    },
+    "participant": null,
+    "sip": null,
+    "session_report": {
+      "job_id": "mock-job-f521625d7cda",
+      "room_id": "SRM_84fd1a2a3154",
+      "room": "console-room",
+      "events": [
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "item_abee964b3738",
+            "type": "agent_handoff",
+            "old_agent_id": null,
+            "new_agent_id": "live_agent",
+            "created_at": 1789140841.7485282
+          },
+          "created_at": 1789140841.748713
+        },
+        {
+          "type": "agent_state_changed",
+          "old_state": "initializing",
+          "new_state": "listening",
+          "created_at": 1789140841.753622
+        },
+        {
+          "type": "session_usage_updated",
+          "usage": {
+            "model_usage": [
+              {
+                "type": "llm_usage",
+                "provider": "api.openai.com",
+                "model": "gpt-live-1",
+                "input_tokens": 0,
+                "input_cached_tokens": 0,
+                "input_cache_creation_tokens": 0,
+                "input_audio_tokens": 0,
+                "input_cached_audio_tokens": 0,
+                "input_text_tokens": 0,
+                "input_cached_text_tokens": 0,
+                "input_image_tokens": 0,
+                "input_cached_image_tokens": 0,
+                "output_tokens": 0,
+                "output_audio_tokens": 0,
+                "output_text_tokens": 0,
+                "output_reasoning_tokens": 0,
+                "session_duration": 0.0
+              }
+            ]
+          },
+          "created_at": 1789140842.452689
+        },
+        {
+          "type": "speech_created",
+          "user_initiated": false,
+          "source": "generate_reply",
+          "created_at": 1789140844.1935291
+        },
+        {
+          "type": "agent_state_changed",
+          "old_state": "listening",
+          "new_state": "speaking",
+          "created_at": 1789140844.250432
+        },
+        {
+          "type": "agent_state_changed",
+          "old_state": "speaking",
+          "new_state": "listening",
+          "created_at": 1789140849.293407
+        },
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "item_a56f6d6490b8",
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              " Tere, siin on Aria ettevõttest CallVA. Kuidas saan teid aidata?"
+            ],
+            "interrupted": false,
+            "transcript_confidence": null,
+            "extra": {},
+            "metrics": {
+              "provider_request_ids": [
+                "item_a56f6d6490b8"
+              ],
+              "started_speaking_at": 1789140844.245562,
+              "stopped_speaking_at": 1789140849.293479,
+              "playback_latency": 0.04915809631347656
+            },
+            "created_at": 1789140844.245562,
+            "hash": null
+          },
+          "created_at": 1789140849.2954812
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "listening",
+          "new_state": "speaking",
+          "created_at": 1789140851.339692
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Ты можешь",
+          "is_final": false,
+          "item_id": "speech_7e786aa32d5e",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140851.339884
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Ты можешь на",
+          "is_final": false,
+          "item_id": "speech_7e786aa32d5e",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140851.5678132
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Ты можешь на русский",
+          "is_final": false,
+          "item_id": "speech_7e786aa32d5e",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140851.752247
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Ты можешь на русский, пожалуйста",
+          "is_final": false,
+          "item_id": "speech_7e786aa32d5e",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140851.8934479
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Ты можешь на русский, пожалуйста",
+          "is_final": true,
+          "item_id": "speech_7e786aa32d5e",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140852.649919
+        },
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "speech_7e786aa32d5e",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " Ты можешь на русский, пожалуйста"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140851.339239
+            },
+            "created_at": 1789140851.339239,
+            "hash": null
+          },
+          "created_at": 1789140852.652255
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "speaking",
+          "new_state": "listening",
+          "created_at": 1789140852.652437
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "listening",
+          "new_state": "speaking",
+          "created_at": 1789140852.8709388
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " переключиться",
+          "is_final": false,
+          "item_id": "speech_d0c52c243303",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140852.871092
+        },
+        {
+          "type": "speech_created",
+          "user_initiated": false,
+          "source": "generate_reply",
+          "created_at": 1789140853.1510458
+        },
+        {
+          "type": "agent_state_changed",
+          "old_state": "listening",
+          "new_state": "speaking",
+          "created_at": 1789140853.245972
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " переключиться",
+          "is_final": true,
+          "item_id": "speech_d0c52c243303",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140853.6486888
+        },
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "speech_d0c52c243303",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " переключиться"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140852.87049
+            },
+            "created_at": 1789140852.87049,
+            "hash": null
+          },
+          "created_at": 1789140853.6515672
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "speaking",
+          "new_state": "listening",
+          "created_at": 1789140853.651746
+        },
+        {
+          "type": "agent_state_changed",
+          "old_state": "speaking",
+          "new_state": "listening",
+          "created_at": 1789140856.885865
+        },
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "item_411f4ed18cf1",
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              " Могу, давайте перейдём на русский, чем я могу помочь?"
+            ],
+            "interrupted": false,
+            "transcript_confidence": null,
+            "extra": {},
+            "metrics": {
+              "provider_request_ids": [
+                "item_411f4ed18cf1"
+              ],
+              "started_speaking_at": 1789140853.245454,
+              "stopped_speaking_at": 1789140856.8859332,
+              "playback_latency": 0.09226202964782715
+            },
+            "created_at": 1789140853.245454,
+            "hash": null
+          },
+          "created_at": 1789140856.887894
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "listening",
+          "new_state": "speaking",
+          "created_at": 1789140857.630775
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Ты",
+          "is_final": false,
+          "item_id": "speech_a9fe70a89a06",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140857.6309361
+        },
+        {
+          "type": "session_usage_updated",
+          "usage": {
+            "model_usage": [
+              {
+                "type": "llm_usage",
+                "provider": "api.openai.com",
+                "model": "gpt-live-1",
+                "input_tokens": 0,
+                "input_cached_tokens": 0,
+                "input_cache_creation_tokens": 0,
+                "input_audio_tokens": 0,
+                "input_cached_audio_tokens": 0,
+                "input_text_tokens": 0,
+                "input_cached_text_tokens": 0,
+                "input_image_tokens": 0,
+                "input_cached_image_tokens": 0,
+                "output_tokens": 0,
+                "output_audio_tokens": 0,
+                "output_text_tokens": 0,
+                "output_reasoning_tokens": 0,
+                "session_duration": 15.0
+              }
+            ]
+          },
+          "created_at": 1789140857.764758
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Ты можешь",
+          "is_final": false,
+          "item_id": "speech_a9fe70a89a06",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140858.0108979
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Ты можешь",
+          "is_final": true,
+          "item_id": "speech_a9fe70a89a06",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140858.7487512
+        },
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "speech_a9fe70a89a06",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " Ты можешь"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140857.630355
+            },
+            "created_at": 1789140857.630355,
+            "hash": null
+          },
+          "created_at": 1789140858.7510028
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "speaking",
+          "new_state": "listening",
+          "created_at": 1789140858.751172
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "listening",
+          "new_state": "speaking",
+          "created_at": 1789140858.8206878
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " смеяться",
+          "is_final": false,
+          "item_id": "speech_d145f7ed930e",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140858.8207731
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " смеяться или",
+          "is_final": false,
+          "item_id": "speech_d145f7ed930e",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140859.4987662
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " смеяться или шутки",
+          "is_final": false,
+          "item_id": "speech_d145f7ed930e",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140860.084298
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " смеяться или шутки рассказывать",
+          "is_final": false,
+          "item_id": "speech_d145f7ed930e",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140860.674291
+        },
+        {
+          "type": "speech_created",
+          "user_initiated": false,
+          "source": "generate_reply",
+          "created_at": 1789140860.858552
+        },
+        {
+          "type": "agent_state_changed",
+          "old_state": "listening",
+          "new_state": "speaking",
+          "created_at": 1789140860.946529
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " смеяться или шутки рассказывать",
+          "is_final": true,
+          "item_id": "speech_d145f7ed930e",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140861.449215
+        },
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "speech_d145f7ed930e",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " смеяться или шутки рассказывать"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140858.8204129
+            },
+            "created_at": 1789140858.8204129,
+            "hash": null
+          },
+          "created_at": 1789140861.4515042
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "speaking",
+          "new_state": "listening",
+          "created_at": 1789140861.451657
+        },
+        {
+          "type": "agent_state_changed",
+          "old_state": "speaking",
+          "new_state": "listening",
+          "created_at": 1789140864.21389
+        },
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "item_0b520da1c908",
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              " Да, могу рассмешить или рассказать шутку."
+            ],
+            "interrupted": false,
+            "transcript_confidence": null,
+            "extra": {},
+            "metrics": {
+              "provider_request_ids": [
+                "item_0b520da1c908"
+              ],
+              "started_speaking_at": 1789140860.945457,
+              "stopped_speaking_at": 1789140864.21397,
+              "playback_latency": 0.0851128101348877
+            },
+            "created_at": 1789140860.945457,
+            "hash": null
+          },
+          "created_at": 1789140864.21649
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "listening",
+          "new_state": "speaking",
+          "created_at": 1789140865.763194
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Очень",
+          "is_final": false,
+          "item_id": "speech_4556784988e8",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140865.763343
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Очень круто",
+          "is_final": false,
+          "item_id": "speech_4556784988e8",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140865.910534
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Очень круто, да",
+          "is_final": false,
+          "item_id": "speech_4556784988e8",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140866.28437
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Очень круто, да. Дава",
+          "is_final": false,
+          "item_id": "speech_4556784988e8",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140866.9370382
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Очень круто, да. Давай",
+          "is_final": false,
+          "item_id": "speech_4556784988e8",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140867.0951371
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Очень круто, да. Давай попробуй",
+          "is_final": false,
+          "item_id": "speech_4556784988e8",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140867.523475
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Очень круто, да. Давай попробуй поржать",
+          "is_final": false,
+          "item_id": "speech_4556784988e8",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140867.9628868
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Очень круто, да. Давай попробуй поржать. Дава",
+          "is_final": false,
+          "item_id": "speech_4556784988e8",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140868.1593978
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Очень круто, да. Давай попробуй поржать. Давай я",
+          "is_final": false,
+          "item_id": "speech_4556784988e8",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140868.333466
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Очень круто, да. Давай попробуй поржать. Давай я тебе",
+          "is_final": false,
+          "item_id": "speech_4556784988e8",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140868.51057
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Очень круто, да. Давай попробуй поржать. Давай я тебе расскажу",
+          "is_final": false,
+          "item_id": "speech_4556784988e8",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140868.9122539
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Очень круто, да. Давай попробуй поржать. Давай я тебе расскажу",
+          "is_final": true,
+          "item_id": "speech_4556784988e8",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140869.649587
+        },
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "speech_4556784988e8",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " Очень круто, да. Давай попробуй поржать. Давай я тебе расскажу"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140865.7627919
+            },
+            "created_at": 1789140865.7627919,
+            "hash": null
+          },
+          "created_at": 1789140869.651777
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "speaking",
+          "new_state": "listening",
+          "created_at": 1789140869.651952
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "listening",
+          "new_state": "speaking",
+          "created_at": 1789140869.935839
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " про",
+          "is_final": false,
+          "item_id": "speech_786001cdcc8f",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140869.935991
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " про одну",
+          "is_final": false,
+          "item_id": "speech_786001cdcc8f",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140870.1502452
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " про одну шутку",
+          "is_final": false,
+          "item_id": "speech_786001cdcc8f",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140870.5130491
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " про одну шутку",
+          "is_final": true,
+          "item_id": "speech_786001cdcc8f",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140871.248136
+        },
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "speech_786001cdcc8f",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " про одну шутку"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140869.9354272
+            },
+            "created_at": 1789140869.9354272,
+            "hash": null
+          },
+          "created_at": 1789140871.250817
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "speaking",
+          "new_state": "listening",
+          "created_at": 1789140871.251036
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "listening",
+          "new_state": "speaking",
+          "created_at": 1789140871.529779
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": ". Выш",
+          "is_final": false,
+          "item_id": "speech_83fadc59c03a",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140871.5299299
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": ". Вышел",
+          "is_final": false,
+          "item_id": "speech_83fadc59c03a",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140871.761515
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": ". Вышел заяц",
+          "is_final": false,
+          "item_id": "speech_83fadc59c03a",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140871.950185
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": ". Вышел заяц на",
+          "is_final": false,
+          "item_id": "speech_83fadc59c03a",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140872.192256
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": ". Вышел заяц на крыльцо",
+          "is_final": false,
+          "item_id": "speech_83fadc59c03a",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140872.32448
+        },
+        {
+          "type": "session_usage_updated",
+          "usage": {
+            "model_usage": [
+              {
+                "type": "llm_usage",
+                "provider": "api.openai.com",
+                "model": "gpt-live-1",
+                "input_tokens": 0,
+                "input_cached_tokens": 0,
+                "input_cache_creation_tokens": 0,
+                "input_audio_tokens": 0,
+                "input_cached_audio_tokens": 0,
+                "input_text_tokens": 0,
+                "input_cached_text_tokens": 0,
+                "input_image_tokens": 0,
+                "input_cached_image_tokens": 0,
+                "output_tokens": 0,
+                "output_audio_tokens": 0,
+                "output_text_tokens": 0,
+                "output_reasoning_tokens": 0,
+                "session_duration": 30.0
+              }
+            ]
+          },
+          "created_at": 1789140872.767099
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": ". Вышел заяц на крыльцо почесать",
+          "is_final": false,
+          "item_id": "speech_83fadc59c03a",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140872.9502451
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": ". Вышел заяц на крыльцо почесать свое",
+          "is_final": false,
+          "item_id": "speech_83fadc59c03a",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140873.091232
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": ". Вышел заяц на крыльцо почесать свое яйцо",
+          "is_final": false,
+          "item_id": "speech_83fadc59c03a",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140873.521112
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": ". Вышел заяц на крыльцо почесать свое яйцо. Сун",
+          "is_final": false,
+          "item_id": "speech_83fadc59c03a",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140873.97855
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": ". Вышел заяц на крыльцо почесать свое яйцо. Сунул",
+          "is_final": false,
+          "item_id": "speech_83fadc59c03a",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140874.133963
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": ". Вышел заяц на крыльцо почесать свое яйцо. Сунул руку",
+          "is_final": false,
+          "item_id": "speech_83fadc59c03a",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140874.421846
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": ". Вышел заяц на крыльцо почесать свое яйцо. Сунул руку нет",
+          "is_final": false,
+          "item_id": "speech_83fadc59c03a",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140874.51536
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": ". Вышел заяц на крыльцо почесать свое яйцо. Сунул руку нет яйца",
+          "is_final": false,
+          "item_id": "speech_83fadc59c03a",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140874.8473291
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": ". Вышел заяц на крыльцо почесать свое яйцо. Сунул руку нет яйца. А",
+          "is_final": false,
+          "item_id": "speech_83fadc59c03a",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140875.079788
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": ". Вышел заяц на крыльцо почесать свое яйцо. Сунул руку нет яйца. А так и",
+          "is_final": false,
+          "item_id": "speech_83fadc59c03a",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140875.1999948
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": ". Вышел заяц на крыльцо почесать свое яйцо. Сунул руку нет яйца. А так и ёбнулся",
+          "is_final": false,
+          "item_id": "speech_83fadc59c03a",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140875.6461482
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": ". Вышел заяц на крыльцо почесать свое яйцо. Сунул руку нет яйца. А так и ёбнулся с",
+          "is_final": false,
+          "item_id": "speech_83fadc59c03a",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140875.886873
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": ". Вышел заяц на крыльцо почесать свое яйцо. Сунул руку нет яйца. А так и ёбнулся с крыльца",
+          "is_final": false,
+          "item_id": "speech_83fadc59c03a",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140876.100499
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": ". Вышел заяц на крыльцо почесать свое яйцо. Сунул руку нет яйца. А так и ёбнулся с крыльца",
+          "is_final": true,
+          "item_id": "speech_83fadc59c03a",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140876.849786
+        },
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "speech_83fadc59c03a",
+            "type": "message",
+            "role": "user",
+            "content": [
+              ". Вышел заяц на крыльцо почесать свое яйцо. Сунул руку нет яйца. А так и ёбнулся с крыльца"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140871.529384
+            },
+            "created_at": 1789140871.529384,
+            "hash": null
+          },
+          "created_at": 1789140876.8507578
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "speaking",
+          "new_state": "listening",
+          "created_at": 1789140876.850828
+        },
+        {
+          "type": "speech_created",
+          "user_initiated": false,
+          "source": "generate_reply",
+          "created_at": 1789140876.999496
+        },
+        {
+          "type": "agent_state_changed",
+          "old_state": "listening",
+          "new_state": "speaking",
+          "created_at": 1789140877.046196
+        },
+        {
+          "type": "agent_state_changed",
+          "old_state": "speaking",
+          "new_state": "listening",
+          "created_at": 1789140879.915335
+        },
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "item_7b930fdfb1be",
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              " Ой, неожиданно, ха-ха."
+            ],
+            "interrupted": false,
+            "transcript_confidence": null,
+            "extra": {},
+            "metrics": {
+              "provider_request_ids": [
+                "item_7b930fdfb1be"
+              ],
+              "started_speaking_at": 1789140877.045629,
+              "stopped_speaking_at": 1789140879.9153972,
+              "playback_latency": 0.04485583305358887
+            },
+            "created_at": 1789140877.045629,
+            "hash": null
+          },
+          "created_at": 1789140879.9176378
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "listening",
+          "new_state": "speaking",
+          "created_at": 1789140882.996841
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Да, в",
+          "is_final": false,
+          "item_id": "speech_616bca29b2f4",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140882.996938
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Да, в смысле",
+          "is_final": false,
+          "item_id": "speech_616bca29b2f4",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140883.125685
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Да, в смысле",
+          "is_final": true,
+          "item_id": "speech_616bca29b2f4",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140883.846974
+        },
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "speech_616bca29b2f4",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " Да, в смысле"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140882.996531
+            },
+            "created_at": 1789140882.996531,
+            "hash": null
+          },
+          "created_at": 1789140883.8488371
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "speaking",
+          "new_state": "listening",
+          "created_at": 1789140883.8489861
+        },
+        {
+          "type": "speech_created",
+          "user_initiated": false,
+          "source": "generate_reply",
+          "created_at": 1789140883.926204
+        },
+        {
+          "type": "agent_state_changed",
+          "old_state": "listening",
+          "new_state": "speaking",
+          "created_at": 1789140883.946552
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "listening",
+          "new_state": "speaking",
+          "created_at": 1789140884.0210078
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " неожиданно",
+          "is_final": false,
+          "item_id": "speech_a4e8ef1d6dcb",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140884.021173
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " неожиданно, что",
+          "is_final": false,
+          "item_id": "speech_a4e8ef1d6dcb",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140884.430491
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " неожиданно, что типа",
+          "is_final": false,
+          "item_id": "speech_a4e8ef1d6dcb",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140884.622556
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " неожиданно, что типа яйца",
+          "is_final": false,
+          "item_id": "speech_a4e8ef1d6dcb",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140885.129363
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " неожиданно, что типа яйца",
+          "is_final": true,
+          "item_id": "speech_a4e8ef1d6dcb",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140885.849914
+        },
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "speech_a4e8ef1d6dcb",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " неожиданно, что типа яйца"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140884.0206132
+            },
+            "created_at": 1789140884.0206132,
+            "hash": null
+          },
+          "created_at": 1789140885.852493
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "speaking",
+          "new_state": "listening",
+          "created_at": 1789140885.852653
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "listening",
+          "new_state": "speaking",
+          "created_at": 1789140886.814616
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " появилось",
+          "is_final": false,
+          "item_id": "speech_d9042bc053ac",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140886.814773
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " появилось",
+          "is_final": true,
+          "item_id": "speech_d9042bc053ac",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140887.5488052
+        },
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "speech_d9042bc053ac",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " появилось"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140886.8142421
+            },
+            "created_at": 1789140886.8142421,
+            "hash": null
+          },
+          "created_at": 1789140887.55087
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "speaking",
+          "new_state": "listening",
+          "created_at": 1789140887.5510159
+        },
+        {
+          "type": "session_usage_updated",
+          "usage": {
+            "model_usage": [
+              {
+                "type": "llm_usage",
+                "provider": "api.openai.com",
+                "model": "gpt-live-1",
+                "input_tokens": 0,
+                "input_cached_tokens": 0,
+                "input_cache_creation_tokens": 0,
+                "input_audio_tokens": 0,
+                "input_cached_audio_tokens": 0,
+                "input_text_tokens": 0,
+                "input_cached_text_tokens": 0,
+                "input_image_tokens": 0,
+                "input_cached_image_tokens": 0,
+                "output_tokens": 0,
+                "output_audio_tokens": 0,
+                "output_text_tokens": 0,
+                "output_reasoning_tokens": 0,
+                "session_duration": 46.0
+              }
+            ]
+          },
+          "created_at": 1789140887.7659378
+        },
+        {
+          "type": "agent_state_changed",
+          "old_state": "speaking",
+          "new_state": "listening",
+          "created_at": 1789140891.728776
+        },
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "item_b03768f9c15f",
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              " Ну, просто Да, концовка резко меняет тон, я просто пытаюсь понять, как лучше отреагировать."
+            ],
+            "interrupted": false,
+            "transcript_confidence": null,
+            "extra": {},
+            "metrics": {
+              "provider_request_ids": [
+                "item_b03768f9c15f"
+              ],
+              "started_speaking_at": 1789140883.945816,
+              "stopped_speaking_at": 1789140891.728831,
+              "playback_latency": 0.0170290470123291
+            },
+            "created_at": 1789140883.945816,
+            "hash": null
+          },
+          "created_at": 1789140891.730984
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "listening",
+          "new_state": "speaking",
+          "created_at": 1789140892.4900858
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Ну",
+          "is_final": false,
+          "item_id": "speech_816b770d5520",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140892.490208
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Ну, посме",
+          "is_final": false,
+          "item_id": "speech_816b770d5520",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140893.0471182
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Ну, посмеяться",
+          "is_final": false,
+          "item_id": "speech_816b770d5520",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140893.208619
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Ну, посмеяться",
+          "is_final": true,
+          "item_id": "speech_816b770d5520",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140893.9492228
+        },
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "speech_816b770d5520",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " Ну, посмеяться"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140892.4896781
+            },
+            "created_at": 1789140892.4896781,
+            "hash": null
+          },
+          "created_at": 1789140893.951193
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "speaking",
+          "new_state": "listening",
+          "created_at": 1789140893.9513652
+        },
+        {
+          "type": "speech_created",
+          "user_initiated": false,
+          "source": "generate_reply",
+          "created_at": 1789140894.0177631
+        },
+        {
+          "type": "agent_state_changed",
+          "old_state": "listening",
+          "new_state": "speaking",
+          "created_at": 1789140894.046724
+        },
+        {
+          "type": "agent_state_changed",
+          "old_state": "speaking",
+          "new_state": "listening",
+          "created_at": 1789140897.575947
+        },
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "item_dfc59c5e7737",
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              " Ха-ха, да, смешной поворот."
+            ],
+            "interrupted": false,
+            "transcript_confidence": null,
+            "extra": {},
+            "metrics": {
+              "provider_request_ids": [
+                "item_dfc59c5e7737"
+              ],
+              "started_speaking_at": 1789140894.045869,
+              "stopped_speaking_at": 1789140897.576009,
+              "playback_latency": 0.026005029678344727
+            },
+            "created_at": 1789140894.045869,
+            "hash": null
+          },
+          "created_at": 1789140897.5780659
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "listening",
+          "new_state": "speaking",
+          "created_at": 1789140899.175243
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Не, не",
+          "is_final": false,
+          "item_id": "speech_de8c29706146",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140899.1753778
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Не, не, ты",
+          "is_final": false,
+          "item_id": "speech_de8c29706146",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140899.3507268
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Не, не, ты как-то",
+          "is_final": false,
+          "item_id": "speech_de8c29706146",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140899.494137
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Не, не, ты как-то очень",
+          "is_final": false,
+          "item_id": "speech_de8c29706146",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140899.960424
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Не, не, ты как-то очень как",
+          "is_final": false,
+          "item_id": "speech_de8c29706146",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140900.126315
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Не, не, ты как-то очень как робот",
+          "is_final": false,
+          "item_id": "speech_de8c29706146",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140900.310952
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Не, не, ты как-то очень как робот посмея",
+          "is_final": false,
+          "item_id": "speech_de8c29706146",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140900.965922
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Не, не, ты как-то очень как робот посмеялась. А",
+          "is_final": false,
+          "item_id": "speech_de8c29706146",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140901.177373
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Не, не, ты как-то очень как робот посмеялась. А можешь прям",
+          "is_final": false,
+          "item_id": "speech_de8c29706146",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140901.396194
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Не, не, ты как-то очень как робот посмеялась. А можешь прям нормально",
+          "is_final": false,
+          "item_id": "speech_de8c29706146",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140901.890979
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Не, не, ты как-то очень как робот посмеялась. А можешь прям нормально рассмеяться",
+          "is_final": false,
+          "item_id": "speech_de8c29706146",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140902.332492
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Не, не, ты как-то очень как робот посмеялась. А можешь прям нормально рассмеяться в",
+          "is_final": false,
+          "item_id": "speech_de8c29706146",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140902.511005
+        },
+        {
+          "type": "session_usage_updated",
+          "usage": {
+            "model_usage": [
+              {
+                "type": "llm_usage",
+                "provider": "api.openai.com",
+                "model": "gpt-live-1",
+                "input_tokens": 0,
+                "input_cached_tokens": 0,
+                "input_cache_creation_tokens": 0,
+                "input_audio_tokens": 0,
+                "input_cached_audio_tokens": 0,
+                "input_text_tokens": 0,
+                "input_cached_text_tokens": 0,
+                "input_image_tokens": 0,
+                "input_cached_image_tokens": 0,
+                "output_tokens": 0,
+                "output_audio_tokens": 0,
+                "output_text_tokens": 0,
+                "output_reasoning_tokens": 0,
+                "session_duration": 61.0
+              }
+            ]
+          },
+          "created_at": 1789140902.7678761
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Не, не, ты как-то очень как робот посмеялась. А можешь прям нормально рассмеяться в голос",
+          "is_final": false,
+          "item_id": "speech_de8c29706146",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140902.991585
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Не, не, ты как-то очень как робот посмеялась. А можешь прям нормально рассмеяться в голос, как",
+          "is_final": false,
+          "item_id": "speech_de8c29706146",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140903.39595
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Не, не, ты как-то очень как робот посмеялась. А можешь прям нормально рассмеяться в голос, как когда",
+          "is_final": false,
+          "item_id": "speech_de8c29706146",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140903.8376389
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Не, не, ты как-то очень как робот посмеялась. А можешь прям нормально рассмеяться в голос, как когда очень",
+          "is_final": false,
+          "item_id": "speech_de8c29706146",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140904.12743
+        },
+        {
+          "type": "speech_created",
+          "user_initiated": false,
+          "source": "generate_reply",
+          "created_at": 1789140904.411034
+        },
+        {
+          "type": "agent_state_changed",
+          "old_state": "listening",
+          "new_state": "speaking",
+          "created_at": 1789140904.4462562
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Не, не, ты как-то очень как робот посмеялась. А можешь прям нормально рассмеяться в голос, как когда очень смешно",
+          "is_final": false,
+          "item_id": "speech_de8c29706146",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140904.525592
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Не, не, ты как-то очень как робот посмеялась. А можешь прям нормально рассмеяться в голос, как когда очень смешно",
+          "is_final": true,
+          "item_id": "speech_de8c29706146",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140905.248956
+        },
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "speech_de8c29706146",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " Не, не, ты как-то очень как робот посмеялась. А можешь прям нормально рассмеяться в голос, как когда очень смешно"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140899.174939
+            },
+            "created_at": 1789140899.174939,
+            "hash": null
+          },
+          "created_at": 1789140905.252256
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "speaking",
+          "new_state": "listening",
+          "created_at": 1789140905.2524118
+        },
+        {
+          "type": "agent_state_changed",
+          "old_state": "speaking",
+          "new_state": "listening",
+          "created_at": 1789140910.476022
+        },
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "item_4eccd3624b56",
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              " Ха-ха-ха, ну да, теперь уже смешно, особенно от неожиданности."
+            ],
+            "interrupted": false,
+            "transcript_confidence": null,
+            "extra": {},
+            "metrics": {
+              "provider_request_ids": [
+                "item_4eccd3624b56"
+              ],
+              "started_speaking_at": 1789140904.446003,
+              "stopped_speaking_at": 1789140910.476086,
+              "playback_latency": 0.03417611122131348
+            },
+            "created_at": 1789140904.446003,
+            "hash": null
+          },
+          "created_at": 1789140910.478296
+        },
+        {
+          "type": "session_usage_updated",
+          "usage": {
+            "model_usage": [
+              {
+                "type": "llm_usage",
+                "provider": "api.openai.com",
+                "model": "gpt-live-1",
+                "input_tokens": 0,
+                "input_cached_tokens": 0,
+                "input_cache_creation_tokens": 0,
+                "input_audio_tokens": 0,
+                "input_cached_audio_tokens": 0,
+                "input_text_tokens": 0,
+                "input_cached_text_tokens": 0,
+                "input_image_tokens": 0,
+                "input_cached_image_tokens": 0,
+                "output_tokens": 0,
+                "output_audio_tokens": 0,
+                "output_text_tokens": 0,
+                "output_reasoning_tokens": 0,
+                "session_duration": 70.0
+              }
+            ]
+          },
+          "created_at": 1789140912.03309
+        },
+        {
+          "type": "close",
+          "error": null,
+          "reason": "user_initiated",
+          "created_at": 1789140912.047033
+        }
+      ],
+      "audio_recording_path": "/Users/kz/dev/callva-agent-live/console-recordings/session-09-11-183401/audio.ogg",
+      "audio_recording_started_at": 1789140841.7482262,
+      "options": {
+        "allow_interruptions": true,
+        "discard_audio_if_uninterruptible": true,
+        "min_interruption_duration": 0.5,
+        "min_interruption_words": 0,
+        "min_endpointing_delay": 0.3,
+        "max_endpointing_delay": 2.5,
+        "max_tool_steps": 3,
+        "user_away_timeout": 15.0,
+        "min_consecutive_speech_delay": 0.0,
+        "preemptive_generation": {
+          "enabled": true,
+          "preemptive_tts": false,
+          "max_speech_duration": 10.0,
+          "max_retries": 3
+        },
+        "recording_options": {
+          "audio": true,
+          "traces": true,
+          "logs": true,
+          "transcript": true,
+          "redaction": false
+        }
+      },
+      "chat_history": {
+        "items": [
+          {
+            "id": "item_abee964b3738",
+            "type": "agent_handoff",
+            "new_agent_id": "live_agent",
+            "created_at": 1789140841.7485282
+          },
+          {
+            "id": "item_754877a9da18",
+            "type": "agent_config_update",
+            "instructions": "Sa oled Aria, ettevõtte CallVA häälassistent, ja sa oled telefonikõnes. Räägi puhast, loomulikku eesti keelt nagu emakeelena kõneleja, ilma võõra aktsendita. Ole sõbralik, soe ja avatud. Vasta ühe või kahe lausega. Ära loe ette kirjavahemärke ega vormindust. Kui sa midagi ei tea, ütle seda ausalt. Räägi eesti keeles seni, kuni helistaja palub keelt vahetada. Kui helistaja küsib kellaaega, saad selle talle öelda.",
+            "tools_added": [
+              "current_time"
+            ],
+            "created_at": 1789140841.751971
+          },
+          {
+            "id": "item_a56f6d6490b8",
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              " Tere, siin on Aria ettevõttest CallVA. Kuidas saan teid aidata?"
+            ],
+            "interrupted": false,
+            "extra": {},
+            "metrics": {
+              "provider_request_ids": [
+                "item_a56f6d6490b8"
+              ],
+              "started_speaking_at": 1789140844.245562,
+              "stopped_speaking_at": 1789140849.293479,
+              "playback_latency": 0.04915809631347656
+            },
+            "created_at": 1789140844.245562
+          },
+          {
+            "id": "speech_7e786aa32d5e",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " Ты можешь на русский, пожалуйста"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140851.339239
+            },
+            "created_at": 1789140851.339239
+          },
+          {
+            "id": "speech_d0c52c243303",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " переключиться"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140852.87049
+            },
+            "created_at": 1789140852.87049
+          },
+          {
+            "id": "item_411f4ed18cf1",
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              " Могу, давайте перейдём на русский, чем я могу помочь?"
+            ],
+            "interrupted": false,
+            "extra": {},
+            "metrics": {
+              "provider_request_ids": [
+                "item_411f4ed18cf1"
+              ],
+              "started_speaking_at": 1789140853.245454,
+              "stopped_speaking_at": 1789140856.8859332,
+              "playback_latency": 0.09226202964782715
+            },
+            "created_at": 1789140853.245454
+          },
+          {
+            "id": "speech_a9fe70a89a06",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " Ты можешь"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140857.630355
+            },
+            "created_at": 1789140857.630355
+          },
+          {
+            "id": "speech_d145f7ed930e",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " смеяться или шутки рассказывать"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140858.8204129
+            },
+            "created_at": 1789140858.8204129
+          },
+          {
+            "id": "item_0b520da1c908",
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              " Да, могу рассмешить или рассказать шутку."
+            ],
+            "interrupted": false,
+            "extra": {},
+            "metrics": {
+              "provider_request_ids": [
+                "item_0b520da1c908"
+              ],
+              "started_speaking_at": 1789140860.945457,
+              "stopped_speaking_at": 1789140864.21397,
+              "playback_latency": 0.0851128101348877
+            },
+            "created_at": 1789140860.945457
+          },
+          {
+            "id": "speech_4556784988e8",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " Очень круто, да. Давай попробуй поржать. Давай я тебе расскажу"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140865.7627919
+            },
+            "created_at": 1789140865.7627919
+          },
+          {
+            "id": "speech_786001cdcc8f",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " про одну шутку"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140869.9354272
+            },
+            "created_at": 1789140869.9354272
+          },
+          {
+            "id": "speech_83fadc59c03a",
+            "type": "message",
+            "role": "user",
+            "content": [
+              ". Вышел заяц на крыльцо почесать свое яйцо. Сунул руку нет яйца. А так и ёбнулся с крыльца"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140871.529384
+            },
+            "created_at": 1789140871.529384
+          },
+          {
+            "id": "item_7b930fdfb1be",
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              " Ой, неожиданно, ха-ха."
+            ],
+            "interrupted": false,
+            "extra": {},
+            "metrics": {
+              "provider_request_ids": [
+                "item_7b930fdfb1be"
+              ],
+              "started_speaking_at": 1789140877.045629,
+              "stopped_speaking_at": 1789140879.9153972,
+              "playback_latency": 0.04485583305358887
+            },
+            "created_at": 1789140877.045629
+          },
+          {
+            "id": "speech_616bca29b2f4",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " Да, в смысле"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140882.996531
+            },
+            "created_at": 1789140882.996531
+          },
+          {
+            "id": "item_b03768f9c15f",
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              " Ну, просто Да, концовка резко меняет тон, я просто пытаюсь понять, как лучше отреагировать."
+            ],
+            "interrupted": false,
+            "extra": {},
+            "metrics": {
+              "provider_request_ids": [
+                "item_b03768f9c15f"
+              ],
+              "started_speaking_at": 1789140883.945816,
+              "stopped_speaking_at": 1789140891.728831,
+              "playback_latency": 0.0170290470123291
+            },
+            "created_at": 1789140883.945816
+          },
+          {
+            "id": "speech_a4e8ef1d6dcb",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " неожиданно, что типа яйца"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140884.0206132
+            },
+            "created_at": 1789140884.0206132
+          },
+          {
+            "id": "speech_d9042bc053ac",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " появилось"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140886.8142421
+            },
+            "created_at": 1789140886.8142421
+          },
+          {
+            "id": "speech_816b770d5520",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " Ну, посмеяться"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140892.4896781
+            },
+            "created_at": 1789140892.4896781
+          },
+          {
+            "id": "item_dfc59c5e7737",
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              " Ха-ха, да, смешной поворот."
+            ],
+            "interrupted": false,
+            "extra": {},
+            "metrics": {
+              "provider_request_ids": [
+                "item_dfc59c5e7737"
+              ],
+              "started_speaking_at": 1789140894.045869,
+              "stopped_speaking_at": 1789140897.576009,
+              "playback_latency": 0.026005029678344727
+            },
+            "created_at": 1789140894.045869
+          },
+          {
+            "id": "speech_de8c29706146",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " Не, не, ты как-то очень как робот посмеялась. А можешь прям нормально рассмеяться в голос, как когда очень смешно"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140899.174939
+            },
+            "created_at": 1789140899.174939
+          },
+          {
+            "id": "item_4eccd3624b56",
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              " Ха-ха-ха, ну да, теперь уже смешно, особенно от неожиданности."
+            ],
+            "interrupted": false,
+            "extra": {},
+            "metrics": {
+              "provider_request_ids": [
+                "item_4eccd3624b56"
+              ],
+              "started_speaking_at": 1789140904.446003,
+              "stopped_speaking_at": 1789140910.476086,
+              "playback_latency": 0.03417611122131348
+            },
+            "created_at": 1789140904.446003
+          }
+        ]
+      },
+      "timestamp": 1789140912.0489018,
+      "usage": [
+        {
+          "provider": "api.openai.com",
+          "model": "gpt-live-1",
+          "session_duration": 70.0
+        }
+      ],
+      "sdk_version": "1.8.1"
+    }
+  },
+  "recording": {
+    "delivery": "multipart",
+    "filename": "48113bc8368d41cea372b181b91dceb0.ogg"
+  },
+  "tags": null
+}

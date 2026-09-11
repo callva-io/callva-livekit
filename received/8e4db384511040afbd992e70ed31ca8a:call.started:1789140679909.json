@@ -1,0 +1,41 @@
+{
+  "event": "call.started",
+  "id": "8e4db384511040afbd992e70ed31ca8a:call.started:1789140679909",
+  "timestamp": 1789140679.909099,
+  "call": {
+    "id": "8e4db384511040afbd992e70ed31ca8a",
+    "direction": "inbound",
+    "from": {
+      "number": null,
+      "identity": null,
+      "name": null
+    },
+    "to": {
+      "number": null,
+      "identity": null,
+      "name": null
+    },
+    "started_at": 1789140679.907777,
+    "ended_at": null,
+    "duration": null,
+    "status": "in_progress"
+  },
+  "livekit": {
+    "room": {
+      "name": "console",
+      "sid": "SRM_5ccb73239c4d",
+      "metadata": null
+    },
+    "job": {
+      "id": "mock-job-d2b841c02e92",
+      "room": {
+        "sid": "SRM_5ccb73239c4d",
+        "name": "console-room"
+      }
+    },
+    "participant": null,
+    "sip": null
+  },
+  "recording": null,
+  "tags": null
+}

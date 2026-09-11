@@ -1,0 +1,490 @@
+{
+  "event": "call.ended",
+  "id": "8e4db384511040afbd992e70ed31ca8a:call.ended:1789140701035",
+  "timestamp": 1789140701.035626,
+  "call": {
+    "id": "8e4db384511040afbd992e70ed31ca8a",
+    "direction": "inbound",
+    "from": {
+      "number": null,
+      "identity": null,
+      "name": null
+    },
+    "to": {
+      "number": null,
+      "identity": null,
+      "name": null
+    },
+    "started_at": 1789140679.907777,
+    "ended_at": 1789140701.034531,
+    "duration": 21.127,
+    "status": "completed"
+  },
+  "livekit": {
+    "room": {
+      "name": "console",
+      "sid": "SRM_5ccb73239c4d",
+      "metadata": null
+    },
+    "job": {
+      "id": "mock-job-d2b841c02e92",
+      "room": {
+        "sid": "SRM_5ccb73239c4d",
+        "name": "console-room"
+      }
+    },
+    "participant": null,
+    "sip": null,
+    "session_report": {
+      "job_id": "mock-job-d2b841c02e92",
+      "room_id": "SRM_5ccb73239c4d",
+      "room": "console-room",
+      "events": [
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "item_3804d4e5d3fe",
+            "type": "agent_handoff",
+            "old_agent_id": null,
+            "new_agent_id": "live_agent",
+            "created_at": 1789140679.9188612
+          },
+          "created_at": 1789140679.919039
+        },
+        {
+          "type": "agent_state_changed",
+          "old_state": "initializing",
+          "new_state": "listening",
+          "created_at": 1789140679.9264178
+        },
+        {
+          "type": "session_usage_updated",
+          "usage": {
+            "model_usage": [
+              {
+                "type": "llm_usage",
+                "provider": "api.openai.com",
+                "model": "gpt-live-1",
+                "input_tokens": 0,
+                "input_cached_tokens": 0,
+                "input_cache_creation_tokens": 0,
+                "input_audio_tokens": 0,
+                "input_cached_audio_tokens": 0,
+                "input_text_tokens": 0,
+                "input_cached_text_tokens": 0,
+                "input_image_tokens": 0,
+                "input_cached_image_tokens": 0,
+                "output_tokens": 0,
+                "output_audio_tokens": 0,
+                "output_text_tokens": 0,
+                "output_reasoning_tokens": 0,
+                "session_duration": 0.0
+              }
+            ]
+          },
+          "created_at": 1789140680.632158
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "listening",
+          "new_state": "speaking",
+          "created_at": 1789140689.193323
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Allo ",
+          "is_final": false,
+          "item_id": "speech_d116e9196a0e",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140689.19342
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Allo , Tere",
+          "is_final": false,
+          "item_id": "speech_d116e9196a0e",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140689.316968
+        },
+        {
+          "type": "speech_created",
+          "user_initiated": false,
+          "source": "generate_reply",
+          "created_at": 1789140689.94777
+        },
+        {
+          "type": "agent_state_changed",
+          "old_state": "listening",
+          "new_state": "speaking",
+          "created_at": 1789140690.017463
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Allo , Tere",
+          "is_final": true,
+          "item_id": "speech_d116e9196a0e",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140690.115212
+        },
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "speech_d116e9196a0e",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " Allo , Tere"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140689.190628
+            },
+            "created_at": 1789140689.190628,
+            "hash": null
+          },
+          "created_at": 1789140690.1163461
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "speaking",
+          "new_state": "listening",
+          "created_at": 1789140690.1164281
+        },
+        {
+          "type": "agent_state_changed",
+          "old_state": "speaking",
+          "new_state": "listening",
+          "created_at": 1789140694.639919
+        },
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "item_1e3ebb65841b",
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              " Tere, siin on Aria ettevõttest CallVA. Kuidas saan teid aidata?"
+            ],
+            "interrupted": false,
+            "transcript_confidence": null,
+            "extra": {},
+            "metrics": {
+              "provider_request_ids": [
+                "item_1e3ebb65841b"
+              ],
+              "started_speaking_at": 1789140690.015969,
+              "stopped_speaking_at": 1789140694.6399791,
+              "playback_latency": 0.06649589538574219
+            },
+            "created_at": 1789140690.015969,
+            "hash": null
+          },
+          "created_at": 1789140694.642177
+        },
+        {
+          "type": "session_usage_updated",
+          "usage": {
+            "model_usage": [
+              {
+                "type": "llm_usage",
+                "provider": "api.openai.com",
+                "model": "gpt-live-1",
+                "input_tokens": 0,
+                "input_cached_tokens": 0,
+                "input_cache_creation_tokens": 0,
+                "input_audio_tokens": 0,
+                "input_cached_audio_tokens": 0,
+                "input_text_tokens": 0,
+                "input_cached_text_tokens": 0,
+                "input_image_tokens": 0,
+                "input_cached_image_tokens": 0,
+                "output_tokens": 0,
+                "output_audio_tokens": 0,
+                "output_text_tokens": 0,
+                "output_reasoning_tokens": 0,
+                "session_duration": 15.0
+              }
+            ]
+          },
+          "created_at": 1789140696.152173
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "listening",
+          "new_state": "speaking",
+          "created_at": 1789140696.488544
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Mis sa",
+          "is_final": false,
+          "item_id": "speech_2e5b848978cd",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140696.4886558
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Mis sa oskad",
+          "is_final": false,
+          "item_id": "speech_2e5b848978cd",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140696.602964
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Mis sa oskad teha",
+          "is_final": false,
+          "item_id": "speech_2e5b848978cd",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140697.149766
+        },
+        {
+          "type": "speech_created",
+          "user_initiated": false,
+          "source": "generate_reply",
+          "created_at": 1789140697.237751
+        },
+        {
+          "type": "agent_state_changed",
+          "old_state": "listening",
+          "new_state": "speaking",
+          "created_at": 1789140697.3169842
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Mis sa oskad teha",
+          "is_final": true,
+          "item_id": "speech_2e5b848978cd",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140697.918185
+        },
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "speech_2e5b848978cd",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " Mis sa oskad teha"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140696.4882429
+            },
+            "created_at": 1789140696.4882429,
+            "hash": null
+          },
+          "created_at": 1789140697.921531
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "speaking",
+          "new_state": "listening",
+          "created_at": 1789140697.921698
+        },
+        {
+          "type": "agent_state_changed",
+          "old_state": "speaking",
+          "new_state": "listening",
+          "created_at": 1789140700.123872
+        },
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "item_335ce86d984e",
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              " Ma oskan vastata küsimustele, aidata info"
+            ],
+            "interrupted": true,
+            "transcript_confidence": null,
+            "extra": {},
+            "metrics": {
+              "provider_request_ids": [
+                "item_335ce86d984e"
+              ],
+              "started_speaking_at": 1789140697.316121,
+              "stopped_speaking_at": 1789140700.1239328,
+              "playback_latency": 0.07644104957580566
+            },
+            "created_at": 1789140697.316121,
+            "hash": null
+          },
+          "created_at": 1789140700.1252968
+        },
+        {
+          "type": "session_usage_updated",
+          "usage": {
+            "model_usage": [
+              {
+                "type": "llm_usage",
+                "provider": "api.openai.com",
+                "model": "gpt-live-1",
+                "input_tokens": 0,
+                "input_cached_tokens": 0,
+                "input_cache_creation_tokens": 0,
+                "input_audio_tokens": 0,
+                "input_cached_audio_tokens": 0,
+                "input_text_tokens": 0,
+                "input_cached_text_tokens": 0,
+                "input_image_tokens": 0,
+                "input_cached_image_tokens": 0,
+                "output_tokens": 0,
+                "output_audio_tokens": 0,
+                "output_text_tokens": 0,
+                "output_reasoning_tokens": 0,
+                "session_duration": 19.0
+              }
+            ]
+          },
+          "created_at": 1789140700.932101
+        },
+        {
+          "type": "close",
+          "error": null,
+          "reason": "user_initiated",
+          "created_at": 1789140701.033979
+        }
+      ],
+      "audio_recording_path": "/Users/kz/dev/callva-agent-live/console-recordings/session-09-11-183119/audio.ogg",
+      "audio_recording_started_at": 1789140679.918292,
+      "options": {
+        "allow_interruptions": true,
+        "discard_audio_if_uninterruptible": true,
+        "min_interruption_duration": 0.5,
+        "min_interruption_words": 0,
+        "min_endpointing_delay": 0.3,
+        "max_endpointing_delay": 2.5,
+        "max_tool_steps": 3,
+        "user_away_timeout": 15.0,
+        "min_consecutive_speech_delay": 0.0,
+        "preemptive_generation": {
+          "enabled": true,
+          "preemptive_tts": false,
+          "max_speech_duration": 10.0,
+          "max_retries": 3
+        },
+        "recording_options": {
+          "audio": true,
+          "traces": true,
+          "logs": true,
+          "transcript": true,
+          "redaction": false
+        }
+      },
+      "chat_history": {
+        "items": [
+          {
+            "id": "item_3804d4e5d3fe",
+            "type": "agent_handoff",
+            "new_agent_id": "live_agent",
+            "created_at": 1789140679.9188612
+          },
+          {
+            "id": "item_69009a7da8ea",
+            "type": "agent_config_update",
+            "instructions": "Sa oled Aria, ettevõtte CallVA häälassistent, ja sa oled telefonikõnes. Räägi puhast, loomulikku eesti keelt nagu emakeelena kõneleja, ilma võõra aktsendita. Ole sõbralik, soe ja avatud. Vasta ühe või kahe lausega. Ära loe ette kirjavahemärke ega vormindust. Kui sa midagi ei tea, ütle seda ausalt. Räägi eesti keeles seni, kuni helistaja palub keelt vahetada. Kui helistaja küsib kellaaega, saad selle talle öelda.",
+            "tools_added": [
+              "current_time"
+            ],
+            "created_at": 1789140679.9233348
+          },
+          {
+            "id": "speech_d116e9196a0e",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " Allo , Tere"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140689.190628
+            },
+            "created_at": 1789140689.190628
+          },
+          {
+            "id": "item_1e3ebb65841b",
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              " Tere, siin on Aria ettevõttest CallVA. Kuidas saan teid aidata?"
+            ],
+            "interrupted": false,
+            "extra": {},
+            "metrics": {
+              "provider_request_ids": [
+                "item_1e3ebb65841b"
+              ],
+              "started_speaking_at": 1789140690.015969,
+              "stopped_speaking_at": 1789140694.6399791,
+              "playback_latency": 0.06649589538574219
+            },
+            "created_at": 1789140690.015969
+          },
+          {
+            "id": "speech_2e5b848978cd",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " Mis sa oskad teha"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140696.4882429
+            },
+            "created_at": 1789140696.4882429
+          },
+          {
+            "id": "item_335ce86d984e",
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              " Ma oskan vastata küsimustele, aidata info"
+            ],
+            "interrupted": true,
+            "extra": {},
+            "metrics": {
+              "provider_request_ids": [
+                "item_335ce86d984e"
+              ],
+              "started_speaking_at": 1789140697.316121,
+              "stopped_speaking_at": 1789140700.1239328,
+              "playback_latency": 0.07644104957580566
+            },
+            "created_at": 1789140697.316121
+          }
+        ]
+      },
+      "timestamp": 1789140701.0354261,
+      "usage": [
+        {
+          "provider": "api.openai.com",
+          "model": "gpt-live-1",
+          "session_duration": 19.0
+        }
+      ],
+      "sdk_version": "1.8.1"
+    }
+  },
+  "recording": {
+    "delivery": "multipart",
+    "filename": "8e4db384511040afbd992e70ed31ca8a.ogg"
+  },
+  "tags": null
+}

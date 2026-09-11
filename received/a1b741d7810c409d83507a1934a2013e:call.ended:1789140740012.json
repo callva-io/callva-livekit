@@ -1,0 +1,244 @@
+{
+  "event": "call.ended",
+  "id": "a1b741d7810c409d83507a1934a2013e:call.ended:1789140740012",
+  "timestamp": 1789140740.012259,
+  "call": {
+    "id": "a1b741d7810c409d83507a1934a2013e",
+    "direction": "inbound",
+    "from": {
+      "number": null,
+      "identity": null,
+      "name": null
+    },
+    "to": {
+      "number": null,
+      "identity": null,
+      "name": null
+    },
+    "started_at": 1789140730.377217,
+    "ended_at": 1789140740.010346,
+    "duration": 9.633,
+    "status": "completed"
+  },
+  "livekit": {
+    "room": {
+      "name": "console",
+      "sid": "SRM_07c3ec0266cb",
+      "metadata": null
+    },
+    "job": {
+      "id": "mock-job-42148cfffe98",
+      "room": {
+        "sid": "SRM_07c3ec0266cb",
+        "name": "console-room"
+      }
+    },
+    "participant": null,
+    "sip": null,
+    "session_report": {
+      "job_id": "mock-job-42148cfffe98",
+      "room_id": "SRM_07c3ec0266cb",
+      "room": "console-room",
+      "events": [
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "item_390c55996ad3",
+            "type": "agent_handoff",
+            "old_agent_id": null,
+            "new_agent_id": "live_agent",
+            "created_at": 1789140730.3883588
+          },
+          "created_at": 1789140730.3885598
+        },
+        {
+          "type": "agent_state_changed",
+          "old_state": "initializing",
+          "new_state": "listening",
+          "created_at": 1789140730.394022
+        },
+        {
+          "type": "session_usage_updated",
+          "usage": {
+            "model_usage": [
+              {
+                "type": "llm_usage",
+                "provider": "api.openai.com",
+                "model": "gpt-live-1",
+                "input_tokens": 0,
+                "input_cached_tokens": 0,
+                "input_cache_creation_tokens": 0,
+                "input_audio_tokens": 0,
+                "input_cached_audio_tokens": 0,
+                "input_text_tokens": 0,
+                "input_cached_text_tokens": 0,
+                "input_image_tokens": 0,
+                "input_cached_image_tokens": 0,
+                "output_tokens": 0,
+                "output_audio_tokens": 0,
+                "output_text_tokens": 0,
+                "output_reasoning_tokens": 0,
+                "session_duration": 0.0
+              }
+            ]
+          },
+          "created_at": 1789140731.214751
+        },
+        {
+          "type": "speech_created",
+          "user_initiated": false,
+          "source": "generate_reply",
+          "created_at": 1789140735.237727
+        },
+        {
+          "type": "agent_state_changed",
+          "old_state": "listening",
+          "new_state": "speaking",
+          "created_at": 1789140735.297696
+        },
+        {
+          "type": "agent_state_changed",
+          "old_state": "speaking",
+          "new_state": "listening",
+          "created_at": 1789140739.1041439
+        },
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "item_0b4cca136d4e",
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              "Tere, mina olen Aria ettevõttest CallVA. Kuidas saan teid aidata?"
+            ],
+            "interrupted": true,
+            "transcript_confidence": null,
+            "extra": {},
+            "metrics": {
+              "provider_request_ids": [
+                "item_0b4cca136d4e"
+              ],
+              "started_speaking_at": 1789140735.294079,
+              "stopped_speaking_at": 1789140739.104219,
+              "playback_latency": 0.05426311492919922
+            },
+            "created_at": 1789140735.294079,
+            "hash": null
+          },
+          "created_at": 1789140739.105713
+        },
+        {
+          "type": "session_usage_updated",
+          "usage": {
+            "model_usage": [
+              {
+                "type": "llm_usage",
+                "provider": "api.openai.com",
+                "model": "gpt-live-1",
+                "input_tokens": 0,
+                "input_cached_tokens": 0,
+                "input_cache_creation_tokens": 0,
+                "input_audio_tokens": 0,
+                "input_cached_audio_tokens": 0,
+                "input_text_tokens": 0,
+                "input_cached_text_tokens": 0,
+                "input_image_tokens": 0,
+                "input_cached_image_tokens": 0,
+                "output_tokens": 0,
+                "output_audio_tokens": 0,
+                "output_text_tokens": 0,
+                "output_reasoning_tokens": 0,
+                "session_duration": 7.0
+              }
+            ]
+          },
+          "created_at": 1789140739.888432
+        },
+        {
+          "type": "close",
+          "error": null,
+          "reason": "user_initiated",
+          "created_at": 1789140740.0098372
+        }
+      ],
+      "audio_recording_path": "/Users/kz/dev/callva-agent-live/console-recordings/session-09-11-183210/audio.ogg",
+      "audio_recording_started_at": 1789140730.387928,
+      "options": {
+        "allow_interruptions": true,
+        "discard_audio_if_uninterruptible": true,
+        "min_interruption_duration": 0.5,
+        "min_interruption_words": 0,
+        "min_endpointing_delay": 0.3,
+        "max_endpointing_delay": 2.5,
+        "max_tool_steps": 3,
+        "user_away_timeout": 15.0,
+        "min_consecutive_speech_delay": 0.0,
+        "preemptive_generation": {
+          "enabled": true,
+          "preemptive_tts": false,
+          "max_speech_duration": 10.0,
+          "max_retries": 3
+        },
+        "recording_options": {
+          "audio": true,
+          "traces": true,
+          "logs": true,
+          "transcript": true,
+          "redaction": false
+        }
+      },
+      "chat_history": {
+        "items": [
+          {
+            "id": "item_390c55996ad3",
+            "type": "agent_handoff",
+            "new_agent_id": "live_agent",
+            "created_at": 1789140730.3883588
+          },
+          {
+            "id": "item_9dc18ce5d0e0",
+            "type": "agent_config_update",
+            "instructions": "Sa oled Aria, ettevõtte CallVA häälassistent, ja sa oled telefonikõnes. Räägi puhast, loomulikku eesti keelt nagu emakeelena kõneleja, ilma võõra aktsendita. Ole sõbralik, soe ja avatud. Vasta ühe või kahe lausega. Ära loe ette kirjavahemärke ega vormindust. Kui sa midagi ei tea, ütle seda ausalt. Räägi eesti keeles seni, kuni helistaja palub keelt vahetada. Kui helistaja küsib kellaaega, saad selle talle öelda.",
+            "tools_added": [
+              "current_time"
+            ],
+            "created_at": 1789140730.393064
+          },
+          {
+            "id": "item_0b4cca136d4e",
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              "Tere, mina olen Aria ettevõttest CallVA. Kuidas saan teid aidata?"
+            ],
+            "interrupted": true,
+            "extra": {},
+            "metrics": {
+              "provider_request_ids": [
+                "item_0b4cca136d4e"
+              ],
+              "started_speaking_at": 1789140735.294079,
+              "stopped_speaking_at": 1789140739.104219,
+              "playback_latency": 0.05426311492919922
+            },
+            "created_at": 1789140735.294079
+          }
+        ]
+      },
+      "timestamp": 1789140740.0121028,
+      "usage": [
+        {
+          "provider": "api.openai.com",
+          "model": "gpt-live-1",
+          "session_duration": 7.0
+        }
+      ],
+      "sdk_version": "1.8.1"
+    }
+  },
+  "recording": {
+    "delivery": "multipart",
+    "filename": "a1b741d7810c409d83507a1934a2013e.ogg"
+  },
+  "tags": null
+}

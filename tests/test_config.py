@@ -241,3 +241,69 @@ def test_telling_a_file_from_an_endpoint():
     assert as_path("./agent.json") == Path("./agent.json")
     assert as_path("/etc/agent.json") == Path("/etc/agent.json")
     assert as_path("file:///etc/agent.json") == Path("/etc/agent.json")
+
+
+# --- A call id the responder minted ------------------------------------------
+
+
+@pytest.fixture
+def naming_fetch(monkeypatch: pytest.MonkeyPatch) -> Any:
+    """A configuration endpoint that files the call under an id of its own."""
+
+    async def fetch(url: str, **_: Any) -> Any:
+        return {**BODY, "call_id": "019f0000-0000-7000-8000-00000000beef"}
+
+    monkeypatch.setattr(resolver.transport, "fetch_json", fetch)
+
+
+async def test_the_responder_may_name_the_call(bind_context, naming_fetch, monkeypatch):
+    """So both sides address one record by one id, and neither stores the other's."""
+    monkeypatch.setenv("CONFIG_URL", "https://platform.test/config")
+    ctx = bind_context(FakeContext())
+
+    config = await callva_config.load()
+
+    assert config.call_id == "019f0000-0000-7000-8000-00000000beef"
+    assert _state.state(ctx).identity.id == "019f0000-0000-7000-8000-00000000beef"
+
+
+async def test_the_dispatcher_outranks_the_responder(bind_context, naming_fetch, monkeypatch):
+    """A call placed with an id was named before it began."""
+    monkeypatch.setenv("CONFIG_URL", "https://platform.test/config")
+    ctx = bind_context(FakeContext(envelope_metadata(call_id="placed-by-the-dispatcher")))
+
+    await callva_config.load()
+
+    assert _state.state(ctx).identity.id == "placed-by-the-dispatcher"
+
+
+async def test_a_name_that_arrives_after_the_call_was_reported_is_refused(
+    bind_context, naming_fetch, monkeypatch
+):
+    """Changing it then would split one call across two records."""
+    monkeypatch.setenv("CONFIG_URL", "https://platform.test/config")
+    ctx = bind_context(FakeContext())
+    st = _state.state(ctx)
+    _state.ensure_identity(st)
+    original = st.identity.id
+    st.started_sent = True
+
+    await callva_config.load()
+
+    assert st.identity.id == original
+
+
+async def test_a_name_from_a_file_survives_until_the_identity_exists(
+    bind_context, monkeypatch, tmp_path
+):
+    """A file answers before anyone has joined, so there is nothing to name yet."""
+    document = tmp_path / "agent.json"
+    document.write_text(json.dumps({**BODY, "call_id": "named-by-the-file"}))
+    monkeypatch.setenv("CONFIG_URL", str(document))
+    ctx = bind_context(FakeContext())
+
+    await callva_config.load()
+    st = _state.state(ctx)
+    assert st.identity is None, "a file needs no participant, so nothing resolved one"
+
+    assert _state.ensure_identity(st).id == "named-by-the-file"

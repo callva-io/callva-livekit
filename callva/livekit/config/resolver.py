@@ -147,6 +147,8 @@ def _store(st: _state.CallState, config: CallConfig) -> CallConfig:
     st.config = config
     if config.webhook is not None:
         st.webhook = config.webhook
+    if config.call_id and _state.adopt_call_id(st, config.call_id):
+        logger.debug("this call is filed as %s by the configuration source", config.call_id)
     return config
 
 

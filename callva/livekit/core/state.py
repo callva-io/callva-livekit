@@ -8,6 +8,7 @@ from livekit.agents import JobContext, get_job_context
 
 from .envelope import DispatchEnvelope, parse
 from .identity import CallIdentity
+from .log import logger
 
 
 class NoJobContext(RuntimeError):
@@ -72,6 +73,44 @@ def _job_metadata(ctx: JobContext) -> str | None:
         return None
 
 
+def adopt_call_id(st: CallState, call_id: str) -> bool:
+    """Take an id the other side minted for this call, and say whether it was taken.
+
+    A configuration endpoint that creates the call's record before answering can name it
+    here. Both sides then address one record by one id, and neither has to carry a field
+    holding the other's. It is the only thing about a call's identity that configuration
+    may decide, and it decides nothing about the call — only what to file it under.
+
+    The dispatcher outranks it: a call placed with an id was named before it began. And
+    once any event has gone out the id is what the consumer matched on, so a late change
+    would split one call across two records — exactly what naming it was meant to avoid.
+    """
+    call_id = call_id.strip()
+    if not call_id:
+        return False
+
+    if st.envelope.call_id:
+        return False
+
+    if st.started_sent or st.extras.get("webhook.dialing_sent"):
+        logger.warning(
+            "configuration named call id %r after this call was already reported as %r; "
+            "keeping the reported one",
+            call_id,
+            st.identity.id if st.identity else None,
+        )
+        return False
+
+    if st.identity is not None:
+        st.identity.id = call_id
+    else:
+        # Identity has not been built yet — a config that answered from job metadata or a
+        # file gets here first. Held until it is.
+        st.extras["call_id"] = call_id
+
+    return True
+
+
 def ensure_identity(
     st: CallState,
     *,
@@ -90,6 +129,8 @@ def ensure_identity(
         st.identity = _resolve(
             envelope=st.envelope, participant=participant, direction=direction
         )
+        if adopted := st.extras.pop("call_id", None):
+            st.identity.id = adopted
         return st.identity
 
     if participant is not None and st.identity.sip is None:

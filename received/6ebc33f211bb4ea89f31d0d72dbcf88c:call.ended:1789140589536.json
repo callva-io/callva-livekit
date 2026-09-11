@@ -1,0 +1,855 @@
+{
+  "event": "call.ended",
+  "id": "6ebc33f211bb4ea89f31d0d72dbcf88c:call.ended:1789140589536",
+  "timestamp": 1789140589.5363579,
+  "call": {
+    "id": "6ebc33f211bb4ea89f31d0d72dbcf88c",
+    "direction": "inbound",
+    "from": {
+      "number": null,
+      "identity": null,
+      "name": null
+    },
+    "to": {
+      "number": null,
+      "identity": null,
+      "name": null
+    },
+    "started_at": 1789140554.650215,
+    "ended_at": 1789140589.534935,
+    "duration": 34.885,
+    "status": "completed"
+  },
+  "livekit": {
+    "room": {
+      "name": "console",
+      "sid": "SRM_229c5092141a",
+      "metadata": null
+    },
+    "job": {
+      "id": "mock-job-558c00e43457",
+      "room": {
+        "sid": "SRM_229c5092141a",
+        "name": "console-room"
+      }
+    },
+    "participant": null,
+    "sip": null,
+    "session_report": {
+      "job_id": "mock-job-558c00e43457",
+      "room_id": "SRM_229c5092141a",
+      "room": "console-room",
+      "events": [
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "item_c58d86abc223",
+            "type": "agent_handoff",
+            "old_agent_id": null,
+            "new_agent_id": "live_agent",
+            "created_at": 1789140554.6608052
+          },
+          "created_at": 1789140554.660963
+        },
+        {
+          "type": "agent_state_changed",
+          "old_state": "initializing",
+          "new_state": "listening",
+          "created_at": 1789140554.666155
+        },
+        {
+          "type": "session_usage_updated",
+          "usage": {
+            "model_usage": [
+              {
+                "type": "llm_usage",
+                "provider": "api.openai.com",
+                "model": "gpt-live-1",
+                "input_tokens": 0,
+                "input_cached_tokens": 0,
+                "input_cache_creation_tokens": 0,
+                "input_audio_tokens": 0,
+                "input_cached_audio_tokens": 0,
+                "input_text_tokens": 0,
+                "input_cached_text_tokens": 0,
+                "input_image_tokens": 0,
+                "input_cached_image_tokens": 0,
+                "output_tokens": 0,
+                "output_audio_tokens": 0,
+                "output_text_tokens": 0,
+                "output_reasoning_tokens": 0,
+                "session_duration": 0.0
+              }
+            ]
+          },
+          "created_at": 1789140555.511327
+        },
+        {
+          "type": "speech_created",
+          "user_initiated": false,
+          "source": "generate_reply",
+          "created_at": 1789140558.448541
+        },
+        {
+          "type": "agent_state_changed",
+          "old_state": "listening",
+          "new_state": "speaking",
+          "created_at": 1789140558.4602208
+        },
+        {
+          "type": "agent_state_changed",
+          "old_state": "speaking",
+          "new_state": "listening",
+          "created_at": 1789140563.562913
+        },
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "item_272658b5625c",
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              " Tere, siin on Aria ettevõttest CallVA. Kuidas saan teid aidata?"
+            ],
+            "interrupted": false,
+            "transcript_confidence": null,
+            "extra": {},
+            "metrics": {
+              "provider_request_ids": [
+                "item_272658b5625c"
+              ],
+              "started_speaking_at": 1789140558.457036,
+              "stopped_speaking_at": 1789140563.562973,
+              "playback_latency": 0.00630497932434082
+            },
+            "created_at": 1789140558.457036,
+            "hash": null
+          },
+          "created_at": 1789140563.565002
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "listening",
+          "new_state": "speaking",
+          "created_at": 1789140565.681359
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Şu",
+          "is_final": false,
+          "item_id": "speech_cd587a981ca5",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140565.681526
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Şu saç",
+          "is_final": false,
+          "item_id": "speech_cd587a981ca5",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140565.844894
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Şu saç duyduk",
+          "is_final": false,
+          "item_id": "speech_cd587a981ca5",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140566.2461498
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Şu saç duyduk. Dua",
+          "is_final": false,
+          "item_id": "speech_cd587a981ca5",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140566.852341
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Şu saç duyduk. Dua besi problem",
+          "is_final": false,
+          "item_id": "speech_cd587a981ca5",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140567.051232
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Şu saç duyduk. Dua besi problem. Друга",
+          "is_final": false,
+          "item_id": "speech_cd587a981ca5",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140567.6903172
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Şu saç duyduk. Dua besi problem. Другая",
+          "is_final": false,
+          "item_id": "speech_cd587a981ca5",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140567.759134
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Şu saç duyduk. Dua besi problem. Другая проблема.",
+          "is_final": false,
+          "item_id": "speech_cd587a981ca5",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140568.026793
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Şu saç duyduk. Dua besi problem. Другая проблема.",
+          "is_final": true,
+          "item_id": "speech_cd587a981ca5",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140568.759618
+        },
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "speech_cd587a981ca5",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " Şu saç duyduk. Dua besi problem. Другая проблема."
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140565.680907
+            },
+            "created_at": 1789140565.680907,
+            "hash": null
+          },
+          "created_at": 1789140568.7620559
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "speaking",
+          "new_state": "listening",
+          "created_at": 1789140568.762251
+        },
+        {
+          "type": "session_usage_updated",
+          "usage": {
+            "model_usage": [
+              {
+                "type": "llm_usage",
+                "provider": "api.openai.com",
+                "model": "gpt-live-1",
+                "input_tokens": 0,
+                "input_cached_tokens": 0,
+                "input_cache_creation_tokens": 0,
+                "input_audio_tokens": 0,
+                "input_cached_audio_tokens": 0,
+                "input_text_tokens": 0,
+                "input_cached_text_tokens": 0,
+                "input_image_tokens": 0,
+                "input_cached_image_tokens": 0,
+                "output_tokens": 0,
+                "output_audio_tokens": 0,
+                "output_text_tokens": 0,
+                "output_reasoning_tokens": 0,
+                "session_duration": 15.0
+              }
+            ]
+          },
+          "created_at": 1789140570.7771819
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "listening",
+          "new_state": "speaking",
+          "created_at": 1789140571.3165288
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Um",
+          "is_final": false,
+          "item_id": "speech_a358177312d6",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140571.3166878
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Um",
+          "is_final": true,
+          "item_id": "speech_a358177312d6",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140572.058948
+        },
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "speech_a358177312d6",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " Um"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140571.316101
+            },
+            "created_at": 1789140571.316101,
+            "hash": null
+          },
+          "created_at": 1789140572.061428
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "speaking",
+          "new_state": "listening",
+          "created_at": 1789140572.0616052
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "listening",
+          "new_state": "speaking",
+          "created_at": 1789140575.471648
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": ". Kas",
+          "is_final": false,
+          "item_id": "speech_902e134fa401",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140575.471809
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": ". Kas kuuled",
+          "is_final": false,
+          "item_id": "speech_902e134fa401",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140576.112704
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": ". Kas kuuled mind",
+          "is_final": false,
+          "item_id": "speech_902e134fa401",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140576.238991
+        },
+        {
+          "type": "speech_created",
+          "user_initiated": false,
+          "source": "generate_reply",
+          "created_at": 1789140576.2978501
+        },
+        {
+          "type": "agent_state_changed",
+          "old_state": "listening",
+          "new_state": "speaking",
+          "created_at": 1789140576.359075
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": ". Kas kuuled mind",
+          "is_final": true,
+          "item_id": "speech_902e134fa401",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140576.959469
+        },
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "speech_902e134fa401",
+            "type": "message",
+            "role": "user",
+            "content": [
+              ". Kas kuuled mind"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140575.471234
+            },
+            "created_at": 1789140575.471234,
+            "hash": null
+          },
+          "created_at": 1789140576.9616508
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "speaking",
+          "new_state": "listening",
+          "created_at": 1789140576.961803
+        },
+        {
+          "type": "agent_state_changed",
+          "old_state": "speaking",
+          "new_state": "listening",
+          "created_at": 1789140578.317086
+        },
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "item_0fbcc67c9ba8",
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              " Jah, kuulen sind hästi."
+            ],
+            "interrupted": false,
+            "transcript_confidence": null,
+            "extra": {},
+            "metrics": {
+              "provider_request_ids": [
+                "item_0fbcc67c9ba8"
+              ],
+              "started_speaking_at": 1789140576.357933,
+              "stopped_speaking_at": 1789140578.317143,
+              "playback_latency": 0.05749392509460449
+            },
+            "created_at": 1789140576.357933,
+            "hash": null
+          },
+          "created_at": 1789140578.319128
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "listening",
+          "new_state": "speaking",
+          "created_at": 1789140579.929125
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Okei",
+          "is_final": false,
+          "item_id": "speech_849a4b5cc5b3",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140579.9291918
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": " Okei",
+          "is_final": true,
+          "item_id": "speech_849a4b5cc5b3",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140580.661309
+        },
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "speech_849a4b5cc5b3",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " Okei"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140579.928936
+            },
+            "created_at": 1789140579.928936,
+            "hash": null
+          },
+          "created_at": 1789140580.664305
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "speaking",
+          "new_state": "listening",
+          "created_at": 1789140580.664572
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "listening",
+          "new_state": "speaking",
+          "created_at": 1789140581.0404081
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": ". Aga",
+          "is_final": false,
+          "item_id": "speech_c487c864b1df",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140581.040566
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": ". Aga räägime",
+          "is_final": false,
+          "item_id": "speech_c487c864b1df",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140581.4315891
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": ". Aga räägime natukene",
+          "is_final": false,
+          "item_id": "speech_c487c864b1df",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140582.0693288
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": ". Aga räägime natukene siis",
+          "is_final": false,
+          "item_id": "speech_c487c864b1df",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140582.23896
+        },
+        {
+          "type": "user_input_transcribed",
+          "transcript": ". Aga räägime natukene siis",
+          "is_final": true,
+          "item_id": "speech_c487c864b1df",
+          "speaker_id": null,
+          "language": null,
+          "created_at": 1789140582.960175
+        },
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "speech_c487c864b1df",
+            "type": "message",
+            "role": "user",
+            "content": [
+              ". Aga räägime natukene siis"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140581.039978
+            },
+            "created_at": 1789140581.039978,
+            "hash": null
+          },
+          "created_at": 1789140582.962452
+        },
+        {
+          "type": "user_state_changed",
+          "old_state": "speaking",
+          "new_state": "listening",
+          "created_at": 1789140582.962625
+        },
+        {
+          "type": "speech_created",
+          "user_initiated": false,
+          "source": "generate_reply",
+          "created_at": 1789140583.306669
+        },
+        {
+          "type": "agent_state_changed",
+          "old_state": "listening",
+          "new_state": "speaking",
+          "created_at": 1789140583.358712
+        },
+        {
+          "type": "session_usage_updated",
+          "usage": {
+            "model_usage": [
+              {
+                "type": "llm_usage",
+                "provider": "api.openai.com",
+                "model": "gpt-live-1",
+                "input_tokens": 0,
+                "input_cached_tokens": 0,
+                "input_cache_creation_tokens": 0,
+                "input_audio_tokens": 0,
+                "input_cached_audio_tokens": 0,
+                "input_text_tokens": 0,
+                "input_cached_text_tokens": 0,
+                "input_image_tokens": 0,
+                "input_cached_image_tokens": 0,
+                "output_tokens": 0,
+                "output_audio_tokens": 0,
+                "output_text_tokens": 0,
+                "output_reasoning_tokens": 0,
+                "session_duration": 30.0
+              }
+            ]
+          },
+          "created_at": 1789140585.774595
+        },
+        {
+          "type": "agent_state_changed",
+          "old_state": "speaking",
+          "new_state": "listening",
+          "created_at": 1789140586.6617742
+        },
+        {
+          "type": "conversation_item_added",
+          "item": {
+            "id": "item_8fbbd6b1df70",
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              " Muidugi, räägime. Mis sul mõttes on?"
+            ],
+            "interrupted": false,
+            "transcript_confidence": null,
+            "extra": {},
+            "metrics": {
+              "provider_request_ids": [
+                "item_8fbbd6b1df70"
+              ],
+              "started_speaking_at": 1789140583.357716,
+              "stopped_speaking_at": 1789140586.661831,
+              "playback_latency": 0.04891610145568848
+            },
+            "created_at": 1789140583.357716,
+            "hash": null
+          },
+          "created_at": 1789140586.663816
+        },
+        {
+          "type": "session_usage_updated",
+          "usage": {
+            "model_usage": [
+              {
+                "type": "llm_usage",
+                "provider": "api.openai.com",
+                "model": "gpt-live-1",
+                "input_tokens": 0,
+                "input_cached_tokens": 0,
+                "input_cache_creation_tokens": 0,
+                "input_audio_tokens": 0,
+                "input_cached_audio_tokens": 0,
+                "input_text_tokens": 0,
+                "input_cached_text_tokens": 0,
+                "input_image_tokens": 0,
+                "input_cached_image_tokens": 0,
+                "output_tokens": 0,
+                "output_audio_tokens": 0,
+                "output_text_tokens": 0,
+                "output_reasoning_tokens": 0,
+                "session_duration": 34.0
+              }
+            ]
+          },
+          "created_at": 1789140589.470319
+        },
+        {
+          "type": "close",
+          "error": null,
+          "reason": "user_initiated",
+          "created_at": 1789140589.53326
+        }
+      ],
+      "audio_recording_path": "/Users/kz/dev/callva-agent-live/console-recordings/session-09-11-182914/audio.ogg",
+      "audio_recording_started_at": 1789140554.6603892,
+      "options": {
+        "allow_interruptions": true,
+        "discard_audio_if_uninterruptible": true,
+        "min_interruption_duration": 0.5,
+        "min_interruption_words": 0,
+        "min_endpointing_delay": 0.3,
+        "max_endpointing_delay": 2.5,
+        "max_tool_steps": 3,
+        "user_away_timeout": 15.0,
+        "min_consecutive_speech_delay": 0.0,
+        "preemptive_generation": {
+          "enabled": true,
+          "preemptive_tts": false,
+          "max_speech_duration": 10.0,
+          "max_retries": 3
+        },
+        "recording_options": {
+          "audio": true,
+          "traces": true,
+          "logs": true,
+          "transcript": true,
+          "redaction": false
+        }
+      },
+      "chat_history": {
+        "items": [
+          {
+            "id": "item_c58d86abc223",
+            "type": "agent_handoff",
+            "new_agent_id": "live_agent",
+            "created_at": 1789140554.6608052
+          },
+          {
+            "id": "item_a78a263456b5",
+            "type": "agent_config_update",
+            "instructions": "Sa oled Aria, ettevõtte CallVA häälassistent, ja sa oled telefonikõnes. Räägi puhast, loomulikku eesti keelt nagu emakeelena kõneleja, ilma võõra aktsendita. Ole sõbralik, soe ja avatud. Vasta ühe või kahe lausega. Ära loe ette kirjavahemärke ega vormindust. Kui sa midagi ei tea, ütle seda ausalt. Räägi eesti keeles seni, kuni helistaja palub keelt vahetada. Kui helistaja küsib kellaaega, saad selle talle öelda.",
+            "tools_added": [
+              "current_time"
+            ],
+            "created_at": 1789140554.66513
+          },
+          {
+            "id": "item_272658b5625c",
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              " Tere, siin on Aria ettevõttest CallVA. Kuidas saan teid aidata?"
+            ],
+            "interrupted": false,
+            "extra": {},
+            "metrics": {
+              "provider_request_ids": [
+                "item_272658b5625c"
+              ],
+              "started_speaking_at": 1789140558.457036,
+              "stopped_speaking_at": 1789140563.562973,
+              "playback_latency": 0.00630497932434082
+            },
+            "created_at": 1789140558.457036
+          },
+          {
+            "id": "speech_cd587a981ca5",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " Şu saç duyduk. Dua besi problem. Другая проблема."
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140565.680907
+            },
+            "created_at": 1789140565.680907
+          },
+          {
+            "id": "speech_a358177312d6",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " Um"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140571.316101
+            },
+            "created_at": 1789140571.316101
+          },
+          {
+            "id": "speech_902e134fa401",
+            "type": "message",
+            "role": "user",
+            "content": [
+              ". Kas kuuled mind"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140575.471234
+            },
+            "created_at": 1789140575.471234
+          },
+          {
+            "id": "item_0fbcc67c9ba8",
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              " Jah, kuulen sind hästi."
+            ],
+            "interrupted": false,
+            "extra": {},
+            "metrics": {
+              "provider_request_ids": [
+                "item_0fbcc67c9ba8"
+              ],
+              "started_speaking_at": 1789140576.357933,
+              "stopped_speaking_at": 1789140578.317143,
+              "playback_latency": 0.05749392509460449
+            },
+            "created_at": 1789140576.357933
+          },
+          {
+            "id": "speech_849a4b5cc5b3",
+            "type": "message",
+            "role": "user",
+            "content": [
+              " Okei"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140579.928936
+            },
+            "created_at": 1789140579.928936
+          },
+          {
+            "id": "speech_c487c864b1df",
+            "type": "message",
+            "role": "user",
+            "content": [
+              ". Aga räägime natukene siis"
+            ],
+            "interrupted": false,
+            "transcript_confidence": 1.0,
+            "extra": {},
+            "metrics": {
+              "started_speaking_at": 1789140581.039978
+            },
+            "created_at": 1789140581.039978
+          },
+          {
+            "id": "item_8fbbd6b1df70",
+            "type": "message",
+            "role": "assistant",
+            "content": [
+              " Muidugi, räägime. Mis sul mõttes on?"
+            ],
+            "interrupted": false,
+            "extra": {},
+            "metrics": {
+              "provider_request_ids": [
+                "item_8fbbd6b1df70"
+              ],
+              "started_speaking_at": 1789140583.357716,
+              "stopped_speaking_at": 1789140586.661831,
+              "playback_latency": 0.04891610145568848
+            },
+            "created_at": 1789140583.357716
+          }
+        ]
+      },
+      "timestamp": 1789140589.5360389,
+      "usage": [
+        {
+          "provider": "api.openai.com",
+          "model": "gpt-live-1",
+          "session_duration": 34.0
+        }
+      ],
+      "sdk_version": "1.8.1"
+    }
+  },
+  "recording": {
+    "delivery": "multipart",
+    "filename": "6ebc33f211bb4ea89f31d0d72dbcf88c.ogg"
+  },
+  "tags": null
+}

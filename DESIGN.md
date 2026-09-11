@@ -133,11 +133,22 @@ after `session.aclose()`, so both are safe.
 
 ## 6. Call identity
 
-Derived by the package, not supplied by the config.
+Derived by the package. Who is on the call and which way it goes are never taken from the
+config; what to file it under may be, because filing is the one part that belongs to
+whoever keeps the records.
 
-- **`call_id`** — assigned by the package as a UUID, stable across both webhooks, and used
-  as the object key for the recording and transcript. Overridable through the dispatch
-  metadata envelope when the platform wants to pin its own identifier.
+- **`call_id`** — a UUID, stable across every event, and the object key for the recording
+  and the transcript. Assigned by the package unless someone who already has a record for
+  this call names it: the dispatch metadata envelope first, then the config answer's
+  `call_id`. A config that names the call after an event has gone out is refused with a
+  warning — the consumer has already matched on the old id, and changing it then would
+  split one call across two records.
+
+  This is what lets an inbound call be one row in two systems. An outbound call is named
+  before it is placed, so its dispatcher can pin the id; an inbound call is not placed by
+  anyone, and the configuration request is the first moment a platform hears of it. A
+  responder that creates its record there can hand back the id, and from then on both
+  sides address one record by one id, with no field on either side holding the other's.
 - **`direction`** — resolved as: the dispatch metadata envelope → an explicit argument or
   environment variable → `"inbound"`. The default is sound rather than a guess: an outbound
   call is always dispatched by someone, so it always carries metadata. Never inferred from
