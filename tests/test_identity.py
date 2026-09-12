@@ -97,3 +97,33 @@ def test_identity_survives_without_a_participant():
     assert resolved.sip is None
     assert resolved.from_party.number is None
     assert resolved.to_dict()["from"]["number"] is None
+
+
+def test_the_dispatcher_names_the_numbers_when_nobody_answered():
+    """A call nobody picks up produces no participant, and so no SIP attributes at all."""
+    placed = parse(
+        envelope_metadata(
+            direction="outbound", **{"from": "+3726361029", "to": "+3725258198"}
+        )
+    )
+
+    call = identity.resolve(envelope=placed, participant=None)
+
+    assert call.direction == "outbound"
+    assert call.from_party.number == "+3726361029"
+    assert call.to_party.number == "+3725258198"
+
+
+def test_what_actually_happened_beats_what_was_declared():
+    """The SIP envelope is the call; the dispatcher's numbers only fill gaps."""
+    placed = parse(envelope_metadata(direction="outbound", to="+37200000000"))
+
+    call = identity.resolve(envelope=placed, participant=FakeParticipant(**SIP))
+
+    assert call.to_party.number == "+37255512345"
+
+
+def test_a_party_may_be_given_in_the_shape_it_is_reported_in():
+    placed = parse(envelope_metadata(to={"number": "+3725258198"}))
+
+    assert placed.to_number == "+3725258198"

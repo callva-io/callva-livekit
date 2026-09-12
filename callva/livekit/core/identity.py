@@ -83,6 +83,12 @@ def sip_attributes(attributes: Mapping[str, Any] | None) -> dict[str, Any] | Non
     return tree or None
 
 
+def _completed(party: Party, number: str | None) -> Party:
+    if party.number or not number:
+        return party
+    return Party(number=number, identity=party.identity, name=party.name)
+
+
 def _first(source: Mapping[str, Any], keys: tuple[str, ...]) -> str | None:
     for key in keys:
         value = source.get(key)
@@ -135,6 +141,11 @@ def resolve(
         from_party, to_party = local, remote
     else:
         from_party, to_party = remote, local
+
+    # What the SIP envelope says wins — it is the call that happened. The dispatcher's
+    # numbers fill the gaps, which is the whole of a call nobody ever answered.
+    from_party = _completed(from_party, envelope.from_number)
+    to_party = _completed(to_party, envelope.to_number)
 
     return CallIdentity(
         # Canonical form, dashes and all: this id is written into other systems' call

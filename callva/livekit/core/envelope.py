@@ -8,7 +8,7 @@ from .log import logger
 
 ENVELOPE_KEY = "callva"
 
-_OWN_KEYS = frozenset({"call_id", "direction", "config", "config_url", "webhook"})
+_OWN_KEYS = frozenset({"call_id", "direction", "config", "config_url", "webhook", "from", "to"})
 
 
 @dataclass
@@ -25,6 +25,14 @@ class DispatchEnvelope:
     config: dict[str, Any] | None = None
     config_url: str | None = None
     webhook: dict[str, Any] | None = None
+    from_number: str | None = None
+    to_number: str | None = None
+    """Who the dispatcher said this call is between.
+
+    A placed call knows the number it is calling before anyone picks up, and a call nobody
+    picks up never produces a participant to read it from. Without this such a call is
+    reported with no number at all, which is most of what makes it worth reporting.
+    """
     raw: str | None = None
     """The original metadata string, forwarded to a config endpoint unchanged."""
 
@@ -66,12 +74,21 @@ def parse(metadata: str | None) -> DispatchEnvelope:
         value = body.get(key)
         return value.strip() or None if isinstance(value, str) else None
 
+    def _number(key: str) -> str | None:
+        """A party is a bare number, or the same shape the webhook reports it in."""
+        value = body.get(key)
+        if isinstance(value, dict):
+            value = value.get("number")
+        return value.strip() or None if isinstance(value, str) else None
+
     return DispatchEnvelope(
         call_id=_str("call_id"),
         direction=_str("direction"),
         config=_dict("config"),
         config_url=_str("config_url"),
         webhook=_dict("webhook"),
+        from_number=_number("from"),
+        to_number=_number("to"),
         raw=metadata,
         extra={k: v for k, v in body.items() if k not in _OWN_KEYS},
     )

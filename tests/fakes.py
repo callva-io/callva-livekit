@@ -39,28 +39,30 @@ class FakeRoom:
         self.handlers: dict[str, Any] = {}
 
     def on(self, event: str, handler: Any) -> None:
-        self.handlers[event] = handler
+        self.handlers.setdefault(event, []).append(handler)
 
     def off(self, event: str, handler: Any) -> None:
-        if self.handlers.get(event) is handler:
-            del self.handlers[event]
+        listeners = self.handlers.get(event) or []
+        if handler in listeners:
+            listeners.remove(handler)
+        if not listeners:
+            self.handlers.pop(event, None)
+
+    def emit(self, event: str, *args: Any) -> None:
+        for handler in list(self.handlers.get(event) or []):
+            handler(*args)
 
     def emit_participant_connected(self, participant: Any) -> None:
         self.remote_participants[participant.identity] = participant
-        handler = self.handlers.get("participant_connected")
-        if handler:
-            handler(participant)
+        self.emit("participant_connected", participant)
 
     def emit_attributes_changed(self, changed: dict, participant: Any) -> None:
-        handler = self.handlers.get("participant_attributes_changed")
-        if handler:
-            handler(changed, participant)
+        self.emit("participant_attributes_changed", changed, participant)
 
-    def emit_participant_disconnected(self, participant: Any, reason: Any) -> None:
+    def emit_participant_disconnected(self, participant: Any, reason: Any = None) -> None:
         participant.disconnect_reason = reason
-        handler = self.handlers.get("participant_disconnected")
-        if handler:
-            handler(participant)
+        self.remote_participants.pop(participant.identity, None)
+        self.emit("participant_disconnected", participant)
 
     @property
     async def sid(self) -> str:

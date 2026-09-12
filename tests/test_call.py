@@ -303,3 +303,31 @@ async def test_our_own_shutdown_is_not_answered_with_another(bind_context, no_gr
     await asyncio.sleep(0.05)
 
     assert ctx.shutdown_reason is None
+
+
+async def test_the_room_saying_so_is_enough(bind_context, no_grace):
+    """A caller can drop while the configuration is still being fetched. No session yet."""
+    ctx = bind_context(FakeContext())
+    participant = FakeParticipant("sip_x")
+    ctx.room.remote_participants["sip_x"] = participant
+
+    call.supervise()
+    ctx.room.emit_participant_disconnected(participant)
+    await asyncio.sleep(0.05)
+
+    assert ctx.deleted_room is True
+    assert ctx.shutdown_reason == "the caller hung up"
+
+
+async def test_watching_twice_still_hangs_up_once(bind_context, no_grace):
+    """The room and the session both report it; the second must do nothing."""
+    ctx = bind_context(FakeContext())
+    session = FakeSession()
+    participant = FakeParticipant("sip_x")
+
+    call.supervise(session)
+    ctx.room.emit_participant_disconnected(participant)
+    session.close("participant_disconnected")
+    await asyncio.sleep(0.05)
+
+    assert ctx.shutdown_reason == "the caller hung up"

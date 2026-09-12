@@ -138,7 +138,8 @@ Configuration reaches the agent through **agent dispatch metadata**, read as
 `ctx.job.metadata`:
 
 ```json
-{ "callva": { "call_id": "…", "direction": "outbound", "config": { "prompt": "…" } } }
+{ "callva": { "call_id": "…", "direction": "outbound", "to": "+372…",
+              "config": { "prompt": "…" } } }
 ```
 
 Put a `config_url` there instead of a `config`, or set `CONFIG_URL`, and the agent

@@ -17,6 +17,8 @@ JOB_SHUTDOWN = "job_shutdown"
 _DURATION_TASK = "call.duration_task"
 _AWAY_TASK = "call.away_task"
 _CLOSED_TASK = "call.closed_task"
+_ALONE_TASK = "call.alone_task"
+_ALONE_HANDLER = "call.alone_handler"
 
 
 def supervise(
@@ -26,6 +28,7 @@ def supervise(
     max_duration: float | None = None,
     end_when_away: bool = False,
     end_when_closed: bool = True,
+    end_when_alone: bool = True,
 ) -> None:
     """Watch a call in progress and end it when it should not go on.
 
@@ -36,8 +39,12 @@ def supervise(
 
     And the commonest ending of all: the caller hangs up. The framework closes the session
     then, but not the job — the agent stays in the room, the report never goes out, and
-    the call is simply lost. ``end_when_closed`` is on by default for that reason: a
-    session that has closed is a call that is over, whatever closed it.
+    the call is simply lost.
+
+    That one is watched twice, on purpose. The room says a participant left, which is true
+    whether or not a session exists yet — a caller can drop while the configuration is
+    still being fetched, and there is nothing to close then. The session says it closed,
+    which also covers it ending for reasons that are not a disconnect at all.
 
     All of them hang up through the same path as anything else, so the caller is released
     and the report and recording still go out. None fires on a call already ending.
@@ -51,6 +58,9 @@ def supervise(
 
     if max_duration is not None:
         _cap_duration(st, max_duration)
+
+    if end_when_alone:
+        _end_when_alone(st)
 
     if session is None:
         if end_when_away or end_when_closed:
@@ -93,6 +103,23 @@ def _end_when_away(st: _state.CallState, session: Any) -> None:
     session.on("user_state_changed", on_user_state_changed)
 
 
+def _end_when_alone(st: _state.CallState) -> None:
+    room = getattr(st.ctx, "room", None)
+    if room is None:
+        return
+
+    def on_participant_disconnected(participant: Any) -> None:
+        if st.ending:
+            return
+        logger.info("%s left, ending the call", getattr(participant, "identity", "someone"))
+        st.extras[_ALONE_TASK] = asyncio.ensure_future(
+            end(st.ctx, reason="the caller hung up", wait=False)
+        )
+
+    st.extras[_ALONE_HANDLER] = on_participant_disconnected
+    room.on("participant_disconnected", on_participant_disconnected)
+
+
 def _end_when_closed(st: _state.CallState, session: Any) -> None:
     def on_close(event: Any) -> None:
         reason = getattr(getattr(event, "reason", None), "value", None) or "closed"
@@ -114,3 +141,9 @@ def stop(ctx: Any = None) -> None:
     task = st.extras.pop(_DURATION_TASK, None)
     if task is not None and not task.done():
         task.cancel()
+
+    handler = st.extras.pop(_ALONE_HANDLER, None)
+    room = getattr(st.ctx, "room", None)
+    if handler is not None and room is not None:
+        with contextlib.suppress(Exception):
+            room.off("participant_disconnected", handler)
