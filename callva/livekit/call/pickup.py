@@ -15,10 +15,6 @@ SIP_STATUS = "sip.callStatus"
 ACTIVE = "active"
 HANGUP = "hangup"
 
-PICKUP_FAILURE = "call.pickup_failure"
-"""Where the reason is left, for whoever reports the call."""
-
-
 async def await_pickup(
     ctx: Any = None,
     *,
@@ -114,7 +110,7 @@ async def await_pickup(
             return participant
 
         reason = answered["reason"] or "timeout"
-        st.extras[PICKUP_FAILURE] = reason
+        st.unanswered_reason = reason
         logger.info("the call was not answered: %s", reason)
         return None
     finally:

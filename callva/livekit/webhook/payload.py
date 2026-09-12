@@ -96,6 +96,8 @@ def build(
         if st.ended_at and st.started_at
         else None,
         "status": status,
+        # Only a call nobody was ever on has one: why it never began.
+        "reason": st.unanswered_reason,
     }
 
     job = getattr(ctx, "job", None)

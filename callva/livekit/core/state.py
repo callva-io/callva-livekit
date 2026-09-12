@@ -48,6 +48,10 @@ class CallState:
     ended_at: float = 0.0
     started_sent: bool = False
     ended_sent: bool = False
+    ending: bool = False
+    """Set the moment a hangup is decided, so the second one to decide does nothing."""
+    unanswered_reason: str | None = None
+    """Why nobody was ever on this call. Set by the call module, read by the webhook."""
     extras: dict[str, Any] = field(default_factory=dict)
 
 

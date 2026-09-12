@@ -158,6 +158,11 @@ class FakeSession:
         if self.handlers.get(event) is handler:
             del self.handlers[event]
 
+    def go_away(self, state: str = "away") -> None:
+        handler = self.handlers.get("user_state_changed")
+        if handler:
+            handler(type("Event", (), {"old_state": "listening", "new_state": state})())
+
     def stop_speaking(self, state: str = "listening") -> None:
         self.agent_state = state
         handler = self.handlers.get("agent_state_changed")

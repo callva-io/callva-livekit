@@ -49,7 +49,7 @@ async def test_an_outbound_call_is_not_answered_while_it_rings(bind_context):
     ctx = bind_context(outbound(**RINGING))
 
     assert await call.await_pickup(timeout=0.05) is None
-    assert _state.state(ctx).extras[call.PICKUP_FAILURE] == "timeout"
+    assert _state.state(ctx).unanswered_reason == "timeout"
 
 
 async def test_an_outbound_call_is_answered_when_the_status_says_so(bind_context):
@@ -90,7 +90,7 @@ async def test_the_reason_survives_for_whoever_reports_the_call(bind_context):
 
     assert picked is None
     st = _state.state(ctx)
-    assert st.extras[call.PICKUP_FAILURE] == "USER_REJECTED"
+    assert st.unanswered_reason == "USER_REJECTED"
     assert st.extras["disconnect_reason"] == "USER_REJECTED"
 
 
@@ -107,7 +107,7 @@ async def test_a_trunk_that_answers_and_hangs_up_does_not_slip_through(bind_cont
     picked, _ = await asyncio.gather(call.await_pickup(timeout=1.0), flicker())
 
     assert picked is None
-    assert _state.state(ctx).extras[call.PICKUP_FAILURE] == "hangup"
+    assert _state.state(ctx).unanswered_reason == "hangup"
 
 
 async def test_listeners_are_removed_either_way(bind_context):
@@ -194,3 +194,88 @@ def test_a_real_job_is_left_alone(bind_context):
     call.leave_console_when_done()
 
     assert ctx.shutdown_callbacks == []
+
+
+# --- Watching a call in progress ---------------------------------------------
+
+
+async def test_a_call_that_runs_too_long_is_ended(bind_context, no_grace):
+    ctx = bind_context(FakeContext())
+
+    call.supervise(max_duration=0.02)
+    await asyncio.sleep(0.1)
+
+    assert ctx.deleted_room is True
+    assert "limit" in (ctx.shutdown_reason or "")
+
+
+async def test_the_limit_does_not_wait_for_the_agent_to_finish(bind_context, no_grace):
+    """Waiting would put the cap wherever the agent happened to be."""
+    ctx = bind_context(FakeContext())
+    st = _state.state(ctx)
+    st.session = FakeSession(agent_state="speaking")
+
+    call.supervise(max_duration=0.02)
+    await asyncio.sleep(0.1)
+
+    assert ctx.shutdown_reason is not None
+
+
+async def test_the_limit_is_dropped_when_the_call_ends_first(bind_context, no_grace):
+    ctx = bind_context(FakeContext())
+
+    call.supervise(max_duration=0.02)
+    call.stop()
+    await asyncio.sleep(0.1)
+
+    assert ctx.shutdown_reason is None
+
+
+async def test_a_caller_who_has_gone_is_hung_up_on(bind_context, no_grace):
+    ctx = bind_context(FakeContext())
+    session = FakeSession()
+
+    call.supervise(session, end_when_away=True)
+    session.go_away()
+    await asyncio.sleep(0.05)
+
+    assert ctx.deleted_room is True
+    assert ctx.shutdown_reason == "the caller went quiet"
+
+
+async def test_a_caller_who_merely_stopped_talking_is_not(bind_context, no_grace):
+    ctx = bind_context(FakeContext())
+    session = FakeSession()
+
+    call.supervise(session, end_when_away=True)
+    session.go_away("listening")
+    await asyncio.sleep(0.05)
+
+    assert ctx.shutdown_reason is None
+
+
+async def test_only_the_first_hangup_counts(bind_context, no_grace):
+    """The agent's own tool and the supervisor can decide at the same moment."""
+    ctx = bind_context(FakeContext())
+
+    await call.end(reason="first")
+    await call.end(reason="second")
+
+    assert ctx.shutdown_reason == "first"
+
+
+# --- A call nobody was ever on -----------------------------------------------
+
+
+async def test_an_unanswered_call_is_still_reported_as_one(bind_context):
+    """The whole point of recording the reason rather than acting on it."""
+    from callva.livekit.webhook import payload as _payload
+
+    ctx = bind_context(outbound(**RINGING))
+    await call.await_pickup(timeout=0.05)
+
+    st = _state.state(ctx)
+    body = _payload.build(st, event=_payload.ENDED, key="k", status="no_answer")
+
+    assert body["call"]["reason"] == "timeout"
+    assert body["call"]["status"] == "no_answer"

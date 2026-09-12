@@ -6,16 +6,18 @@ down, which is the difference between a call that has ended and one that merely 
 agent in it.
 """
 
-from .pickup import ANSWER_TIMEOUT, PICKUP_FAILURE, await_pickup
+from .pickup import ANSWER_TIMEOUT, await_pickup
 from .release import GRACE, QUIET_TIMEOUT, end, leave_console_when_done, until_quiet
+from .supervise import stop, supervise
 
 __all__ = [
     "ANSWER_TIMEOUT",
     "GRACE",
-    "PICKUP_FAILURE",
     "QUIET_TIMEOUT",
     "await_pickup",
     "end",
     "leave_console_when_done",
+    "stop",
+    "supervise",
     "until_quiet",
 ]

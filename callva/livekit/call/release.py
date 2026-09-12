@@ -40,6 +40,13 @@ async def end(
     st = _state.state(ctx)
     ctx = st.ctx
 
+    if st.ending:
+        # Two things can decide to hang up on the same call — the agent's own tool and
+        # whatever supervises the call — and they can decide it at the same moment.
+        logger.debug("already ending this call, ignoring: %s", reason)
+        return
+    st.ending = True
+
     if wait:
         # Read at call time, not bound into the signature, so the module constant can be
         # changed by anyone who needs a different patience.
