@@ -20,6 +20,7 @@ pip install callva-livekit[s3]      # + recording upload to S3 or R2
 
 ```python
 from livekit.agents import Agent, AgentServer, AgentSession
+from callva.livekit import call as callva_call
 from callva.livekit import config as callva_config
 from callva.livekit import webhook as callva_webhook
 
@@ -28,6 +29,10 @@ server = AgentServer()
 @server.rtc_session(agent_name="my-agent", on_session_end=callva_webhook.on_session_end)
 async def entrypoint(ctx):
     await ctx.connect()
+
+    if await callva_call.await_pickup(ctx) is None:      # outbound: rang, nobody answered
+        await callva_call.end(ctx, wait=False)
+        return
 
     config = await callva_config.load()
 
@@ -102,6 +107,30 @@ model: a stable id across both events, a direction, and a `from` and a `to`.
 Requests carry `X-Webhook-Idempotency-Key`, and `X-Webhook-Signature` when a secret is set —
 `sha256` HMAC over `{timestamp}.{body}`, with `X-Webhook-Timestamp` alongside. Delivery
 retries on 5xx and network errors and fails fast on 4xx.
+
+## Being answered, and hanging up
+
+```python
+participant = await callva_call.await_pickup(ctx)   # None if nobody picked up
+await callva_call.end(reason="the agent said goodbye")
+callva_call.leave_console_when_done(ctx)            # console only; a real worker stays up
+```
+
+An **inbound** call is answered by the time a participant exists. An **outbound** one is
+not: the participant appears while the phone is still ringing, and `sip.callStatus` is
+what says otherwise. Waiting for a participant alone reports a ringing call as live, and
+reports one that was never picked up as live too. `await_pickup` waits for the real thing,
+and a trunk that answers and hangs up inside a second does not slip past it.
+
+Nothing is reported from there and nothing is torn down — the reason is left on the call's
+state, where `webhook` turns it into an outcome, and hanging up stays your decision.
+
+`end` releases the caller before it ends the job. Shutting the job down only takes the
+agent out of the room; whoever is on the other end stays connected to a room with nobody
+in it until the server's `empty_timeout` expires, which on a telephone call means it has
+not ended. It waits for the agent to stop speaking first — pass `wait=False` for a call
+being abandoned rather than finished — and the report and the recording still go out,
+because they belong to the shutdown sequence and a closed room does not interrupt it.
 
 ## Configuration for a call
 

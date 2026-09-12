@@ -41,6 +41,16 @@ class FakeRoom:
     def on(self, event: str, handler: Any) -> None:
         self.handlers[event] = handler
 
+    def off(self, event: str, handler: Any) -> None:
+        if self.handlers.get(event) is handler:
+            del self.handlers[event]
+
+    def emit_participant_connected(self, participant: Any) -> None:
+        self.remote_participants[participant.identity] = participant
+        handler = self.handlers.get("participant_connected")
+        if handler:
+            handler(participant)
+
     def emit_attributes_changed(self, changed: dict, participant: Any) -> None:
         handler = self.handlers.get("participant_attributes_changed")
         if handler:
@@ -86,6 +96,7 @@ class FakeContext:
         self._participant = participant or FakeParticipant()
         self.report: Any = None
         self.fake_job = False
+        self.deleted_room = False
 
     def add_participant_entrypoint(self, fnc: Any, **_: Any) -> None:
         self.participant_entrypoints.append(fnc)
@@ -95,6 +106,11 @@ class FakeContext:
 
     def shutdown(self, reason: str = "") -> None:
         self.shutdown_reason = reason
+
+    def delete_room(self) -> None:
+        if self.shutdown_reason is not None:
+            raise AssertionError("the caller must be released before the job shuts down")
+        self.deleted_room = True
 
     def is_fake_job(self) -> bool:
         return self.fake_job
@@ -126,3 +142,24 @@ class FakeReport:
             "usage": [],
             "sdk_version": "1.5.7",
         }
+
+
+class FakeSession:
+    """Enough of an AgentSession to be waited on."""
+
+    def __init__(self, agent_state: str = "listening") -> None:
+        self.agent_state = agent_state
+        self.handlers: dict[str, Any] = {}
+
+    def on(self, event: str, handler: Any) -> None:
+        self.handlers[event] = handler
+
+    def off(self, event: str, handler: Any) -> None:
+        if self.handlers.get(event) is handler:
+            del self.handlers[event]
+
+    def stop_speaking(self, state: str = "listening") -> None:
+        self.agent_state = state
+        handler = self.handlers.get("agent_state_changed")
+        if handler:
+            handler(type("Event", (), {"old_state": "speaking", "new_state": state})())

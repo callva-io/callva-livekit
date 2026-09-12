@@ -12,6 +12,8 @@ Two independent capabilities that any LiveKit agent can opt into:
   webhook when it finishes, carrying the transcript, usage, recording and session data.
 - **Config** — resolve per-call configuration (prompt, greeting, variables) before the
   session starts, from agent dispatch metadata or from an external endpoint.
+- **Call** — wait until an outbound call is actually answered rather than merely ringing,
+  and hang up in a way that releases the caller rather than only the agent.
 
 Each is armed by its own call. Installing the package activates nothing.
 
@@ -21,8 +23,8 @@ Each is armed by its own call. Installing the package activates nothing.
   LiveKit, and it happens before the agent process exists. Out of scope by construction.
 - **Provider configuration.** The public config schema carries no speech-stack, model or
   voice settings. Vendor-specific material travels in the opaque `extra` field.
-- **Call lifecycle management** (duration caps, reminder prompts, transfer). A later
-  module; see §13.
+- **Call supervision** (duration caps, reminder prompts, transfer). The `call` module
+  covers the two ends of a call, not what happens between them; see §13.
 
 ## 2. Names
 
@@ -50,9 +52,10 @@ callva/                     PEP 420 namespace, no __init__.py
     core/                   identity, per-job state, HTTP transport, logging
     config/                 config resolution and templating
     webhook/                event delivery, recording upload
+    call/                   being answered, and hanging up
 ```
 
-One distribution, three modules. Because `callva` and `callva.livekit` are namespace
+One distribution, four modules. Because `callva` and `callva.livekit` are namespace
 packages, a module can later be split into its own distribution without changing a single
 user-facing import. That makes the single-distribution choice reversible; starting with
 three and merging would not be.
@@ -391,7 +394,10 @@ consumers need to hear about.
 
 ## 13. Later
 
-- Call lifecycle management — duration caps, reminder prompts, transfer — as a fourth
-  module reading the same `core` state.
+- Supervising a call in progress — duration caps, reminder prompts when the caller goes
+  quiet, transfer — alongside pickup and release in `call`.
+- Ending a call the moment the caller is gone for good. The session already measures it
+  as `user_away_timeout`; what is missing is the decision, and it belongs here rather
+  than in every agent that needs it.
 - Splitting a module into its own distribution, if dependencies diverge. Import paths are
   already shaped for it.
