@@ -6,7 +6,15 @@ configuration resolved by one module reaches another.
 """
 
 from .envelope import ENVELOPE_KEY, DispatchEnvelope, parse
-from .identity import INBOUND, OUTBOUND, CallIdentity, Party, resolve, resolve_direction
+from .identity import (
+    INBOUND,
+    OUTBOUND,
+    CallIdentity,
+    Party,
+    disconnect_reason_name,
+    resolve,
+    resolve_direction,
+)
 from .log import logger
 from .state import CallState, NoJobContext, context, ensure_identity
 from .state import state as call_state
@@ -30,6 +38,7 @@ __all__ = [
     "__version__",
     "call_state",
     "context",
+    "disconnect_reason_name",
     "ensure_identity",
     "logger",
     "parse",

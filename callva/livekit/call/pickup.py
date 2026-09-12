@@ -82,7 +82,9 @@ async def await_pickup(
         examine(participant)
 
     def on_disconnected(participant: Any) -> None:
-        reason = _reason_name(getattr(participant, "disconnect_reason", None))
+        reason = _identity.disconnect_reason_name(
+            getattr(participant, "disconnect_reason", None)
+        )
         st.extras["disconnect_reason"] = reason
         fail(reason or "disconnected")
 
@@ -121,9 +123,3 @@ async def await_pickup(
         ):
             with contextlib.suppress(Exception):
                 room.off(event, handler)
-
-
-def _reason_name(reason: Any) -> str | None:
-    if reason is None:
-        return None
-    return getattr(reason, "name", None) or str(reason)

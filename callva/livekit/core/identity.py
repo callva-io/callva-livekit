@@ -83,6 +83,28 @@ def sip_attributes(attributes: Mapping[str, Any] | None) -> dict[str, Any] | Non
     return tree or None
 
 
+def disconnect_reason_name(value: Any) -> str | None:
+    """The name of a LiveKit disconnect reason, whatever shape it arrives in.
+
+    It reaches an attribute as a bare protobuf integer, and the number is useless twice
+    over: nothing downstream matches on it, and a call that was rejected is filed as
+    unanswered because the mapping silently missed. `12` is `USER_REJECTED`.
+    """
+    if value is None:
+        return None
+    if isinstance(value, str):
+        return value or None
+    name = getattr(value, "name", None)
+    if isinstance(name, str) and name:
+        return name
+    try:
+        from livekit.protocol import models
+
+        return str(models.DisconnectReason.Name(value))
+    except Exception:
+        return None
+
+
 def _completed(party: Party, number: str | None) -> Party:
     if party.number or not number:
         return party

@@ -127,3 +127,17 @@ def test_a_party_may_be_given_in_the_shape_it_is_reported_in():
     placed = parse(envelope_metadata(to={"number": "+3725258198"}))
 
     assert placed.to_number == "+3725258198"
+
+
+def test_a_disconnect_reason_arrives_as_a_number():
+    """And the number is useless: a rejected call gets filed as unanswered."""
+    assert identity.disconnect_reason_name(12) == "USER_REJECTED"
+
+
+def test_a_reason_that_is_already_a_name_is_left_alone():
+    assert identity.disconnect_reason_name("USER_UNAVAILABLE") == "USER_UNAVAILABLE"
+
+
+def test_an_unknown_reason_is_no_reason():
+    assert identity.disconnect_reason_name(None) is None
+    assert identity.disconnect_reason_name(9999) is None

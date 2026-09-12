@@ -6,6 +6,7 @@ import time
 from pathlib import Path
 from typing import Any
 
+from ..core import identity as _identity
 from ..core import state as _state
 from ..core import transport
 from ..core.log import logger
@@ -168,24 +169,11 @@ def _watch_disconnect(ctx: Any, st: _state.CallState) -> None:
         return
 
     def on_disconnected(participant: Any) -> None:
-        st.extras["disconnect_reason"] = _reason_name(
+        st.extras["disconnect_reason"] = _identity.disconnect_reason_name(
             getattr(participant, "disconnect_reason", None)
         )
 
     room.on("participant_disconnected", on_disconnected)
-
-
-def _reason_name(value: Any) -> str | None:
-    if value is None:
-        return None
-    if isinstance(value, str):
-        return value
-    try:
-        from livekit.protocol import models
-
-        return str(models.DisconnectReason.Name(value))
-    except Exception:
-        return None
 
 
 def _arm_pickup(ctx: Any, st: _state.CallState) -> None:
