@@ -13,11 +13,13 @@ from callva.livekit.core import state as _state
 from callva.livekit.core import transport
 
 BODY = {
-    "prompt": "You are talking to {{ name }}.",
-    "greeting": "Hello {{ name }}",
-    "variables": {"name": "Anna", "attempt": 2},
-    "webhook": {"url": "https://tenant.test/hook", "secret": "k"},
-    "extra": {"preset": "vertex"},
+    "agent": {
+        "prompt": "You are talking to {{ name }}.",
+        "greeting": "Hello {{ name }}",
+        "prompt_variables": {"name": "Anna", "attempt": 2},
+    },
+    "services": {"webhook": {"url": "https://tenant.test/hook", "secret": "k"}},
+    "preset": {"name": "vertex"},
 }
 
 
@@ -45,7 +47,7 @@ async def test_inline_config_is_used_without_any_request(bind_context, no_fetch)
     assert config.greeting == "Hello Anna"
     assert config.raw_prompt == "You are talking to {{ name }}."
     assert config.variables.get_int("attempt") == 2
-    assert config.extra == {"preset": "vertex"}
+    assert config.preset == {"name": "vertex"}
     assert no_fetch == [], "an inline body needs no round trip"
 
 
@@ -251,7 +253,7 @@ def naming_fetch(monkeypatch: pytest.MonkeyPatch) -> Any:
     """A configuration endpoint that files the call under an id of its own."""
 
     async def fetch(url: str, **_: Any) -> Any:
-        return {**BODY, "call_id": "019f0000-0000-7000-8000-00000000beef"}
+        return {**BODY, "call": {"id": "019f0000-0000-7000-8000-00000000beef"}}
 
     monkeypatch.setattr(resolver.transport, "fetch_json", fetch)
 
@@ -298,7 +300,7 @@ async def test_a_name_from_a_file_survives_until_the_identity_exists(
 ):
     """A file answers before anyone has joined, so there is nothing to name yet."""
     document = tmp_path / "agent.json"
-    document.write_text(json.dumps({**BODY, "call_id": "named-by-the-file"}))
+    document.write_text(json.dumps({**BODY, "call": {"id": "named-by-the-file"}}))
     monkeypatch.setenv("CONFIG_URL", str(document))
     ctx = bind_context(FakeContext())
 
@@ -307,3 +309,113 @@ async def test_a_name_from_a_file_survives_until_the_identity_exists(
     assert st.identity is None, "a file needs no participant, so nothing resolved one"
 
     assert _state.ensure_identity(st).id == "named-by-the-file"
+
+
+# --- the agent block -------------------------------------------------------
+
+
+def parse(payload: Any) -> callva_config.CallConfig:
+    return callva_config.CallConfig.parse(payload, source="url")
+
+
+def test_an_agent_that_opens_with_a_written_line():
+    config = parse(
+        {"agent": {"greeting": "Hello", "greeting_type": "message"}},
+    )
+
+    assert config.agent.speaks_first is True
+    assert config.agent.greeting_type == "message"
+    assert config.greeting == "Hello"
+
+
+def test_an_agent_that_opens_in_its_own_words():
+    """The third state: it speaks first, but the greeting is an instruction, not a line."""
+    config = parse(
+        {"agent": {"greeting": "Greet them warmly", "greeting_type": "prompt"}},
+    )
+
+    assert config.agent.speaks_first is True
+    assert config.agent.greeting_type == "prompt"
+    assert config.greeting == "Greet them warmly"
+
+
+def test_an_agent_that_waits_to_be_spoken_to():
+    config = parse({"agent": {"greeting": "Hello", "agent_waits_for_user": True}})
+
+    assert config.agent.speaks_first is False
+
+
+def test_an_agent_opens_when_the_source_does_not_say():
+    """Saying nothing must not produce a call where nobody ever speaks."""
+    assert parse({"agent": {"prompt": "Be helpful."}}).agent.speaks_first is True
+
+
+def test_the_limits_a_call_runs_under():
+    config = parse(
+        {
+            "agent": {
+                "max_duration_seconds": 600,
+                "user_silence_timeout_seconds": 15,
+                "call_silence_timeout_seconds": 30,
+                "max_prompt_attempts": 2,
+                "user_prompt_phrases": ["Are you still there?", 7],
+                "farewell_type": "message",
+                "farewell": "Goodbye",
+            }
+        }
+    )
+
+    assert config.agent.max_duration == 600.0
+    assert config.agent.user_silence_timeout == 15.0
+    assert config.agent.call_silence_timeout == 30.0
+    assert config.agent.max_prompt_attempts == 2
+    assert config.agent.prompt_phrases == ["Are you still there?"], "7 is not a phrase"
+    assert config.agent.farewell_type == "message"
+    assert config.agent.farewell == "Goodbye"
+
+
+def test_zero_is_how_the_platform_spells_no_limit():
+    config = parse(
+        {"agent": {"max_duration_seconds": 0, "user_silence_timeout_seconds": 0}},
+    )
+
+    assert config.agent.max_duration is None
+    assert config.agent.user_silence_timeout is None
+
+
+def test_the_blocks_an_agent_may_not_understand_come_through_untouched():
+    config = parse(
+        {
+            "preset": {"name": "gemini_vertex", "config": {"voice": "Aoede"}},
+            "tools": {"endCall": {"type": "end_call", "enabled": True}},
+            "call": {"id": "abc", "direction": "outbound"},
+        }
+    )
+
+    assert config.preset["config"]["voice"] == "Aoede"
+    assert config.tools["endCall"]["type"] == "end_call"
+    assert config.call["direction"] == "outbound"
+    assert config.call_id == "abc"
+
+
+def test_a_body_in_the_old_flat_shape_carries_nothing():
+    """The shape changed. A responder still sending the old one is not half-understood."""
+    config = parse(
+        {
+            "prompt": "You are helpful.",
+            "greeting": "Hello",
+            "variables": {"name": "Anna"},
+            "webhook": {"url": "https://tenant.test/hook"},
+        }
+    )
+
+    assert config.empty
+    assert config.prompt is None
+    assert config.webhook is None
+
+
+def test_nothing_is_read_from_two_places():
+    """A root-level prompt is not a fallback for the agent's own."""
+    config = parse({"prompt": "root", "agent": {"prompt": "agent"}})
+
+    assert config.prompt == "agent"

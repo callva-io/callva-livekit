@@ -6,11 +6,12 @@ environment. Room metadata is deliberately not used: it is broadcast to every pa
 in the room, so a prompt placed there is readable by any connected client.
 """
 
-from .models import CallConfig, Variables
+from .models import AgentConfig, CallConfig, Variables
 from .resolver import ConfigError, as_path, load, request_payload
 from .template import render
 
 __all__ = [
+    "AgentConfig",
     "CallConfig",
     "ConfigError",
     "Variables",

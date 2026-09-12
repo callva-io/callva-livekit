@@ -11,8 +11,9 @@ Two independent capabilities that any LiveKit agent can opt into:
 - **Webhook** — emit a `call.started` webhook when the call goes live and a `call.ended`
   webhook when it finishes, carrying the transcript, usage, recording, session data, and
   everything that went wrong along the way.
-- **Config** — resolve per-call configuration (prompt, greeting, variables) before the
-  session starts, from agent dispatch metadata or from an external endpoint.
+- **Config** — resolve per-call configuration before the session starts, from agent
+  dispatch metadata or from an external endpoint: the agent, its prompt and greeting, the
+  limits the call runs under, and the speech stack it is built from.
 - **Call** — wait until an outbound call is actually answered rather than merely ringing,
   end one that has run too long or that nobody is on any more, and hang up in a way that
   releases the caller rather than only the agent.
@@ -231,21 +232,47 @@ the main inbound scenario: choose the agent by the number that was dialled.
 
 ```json
 {
-  "prompt":    "...",
-  "greeting":  "...",
-  "variables": { "name": "Anna", "attempt": 2, "vip": true },
-  "webhook":   { "url": "...", "secret": "..." },
-  "extra":     { }
+  "call":  { "id": "...", "direction": "inbound" },
+  "agent": {
+    "id": "...", "name": "...",
+    "prompt": "...", "greeting": "...",
+    "greeting_type": "message", "agent_waits_for_user": false,
+    "prompt_variables": { "name": "Anna", "attempt": 2, "vip": true },
+    "max_duration_seconds": 600, "user_silence_timeout_seconds": 15,
+    "call_silence_timeout_seconds": 30, "max_prompt_attempts": 2,
+    "user_prompt_phrases": [ "..." ], "farewell_type": "message", "farewell": "..."
+  },
+  "preset":   { "name": "...", "config": { } },
+  "tools":    { },
+  "services": { "webhook": { "url": "...", "secret": "..." }, "metrics": { } },
+  "extra":    { }
 }
 ```
 
-Five fields, deliberately. `language` is a variable. Duration caps and voice belong to
-other concerns. Call identity is derived, not declared.
+Nested, and every value has exactly one home. Nothing is repeated at the root for the
+convenience of a reader, because two homes for one fact is a disagreement waiting to
+happen: the prompt, the greeting and the variables belong to the agent, the id belongs to
+the call, the webhook belongs to the services.
 
-`webhook` here overrides the environment, because multi-tenancy is resolved per call while
-the environment is a deployment default.
+The split that matters is `preset` against everything else. `preset` describes the speech
+stack and is the only block that changes when the stack does — native audio today, a
+plain STT/LLM/TTS pipeline tomorrow. An agent that assembles its own pipeline ignores it
+entirely and still gets a prompt, a greeting, the limits the call runs under and somewhere
+to report; an agent assembled from configuration reads all of it. That is what makes the
+shape worth standing on: the part that varies is quarantined in one block.
 
-`extra` is opaque and never interpreted.
+Opening the call is three states, not two. `agent_waits_for_user` says whether the agent
+opens at all; `greeting_type` says whether `greeting` is a line to speak or an instruction
+to compose one from. Collapsing those into "a string or nothing" loses the agent that
+should speak first in its own words.
+
+Durations are seconds, and zero means no limit — the platform's own spelling, normalised
+to `None` on the way in so a caller never has to know that.
+
+`services.webhook` overrides the environment, because multi-tenancy is resolved per call
+while the environment is a deployment default.
+
+`extra` is for what this schema does not describe. It is opaque and never interpreted.
 
 ### Templating
 

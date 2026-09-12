@@ -154,7 +154,7 @@ Configuration reaches the agent through **agent dispatch metadata**, read as
 
 ```json
 { "callva": { "call_id": "…", "direction": "outbound", "to": "+372…",
-              "config": { "prompt": "…" } } }
+              "config": { "agent": { "prompt": "…" } } } }
 ```
 
 Put a `config_url` there instead of a `config`, or set `CONFIG_URL`, and the agent
@@ -171,29 +171,50 @@ The response:
 
 ```json
 {
-  "prompt":    "You are speaking with {{ name }}.",
-  "greeting":  "Hi {{ name }}, how can I help?",
-  "variables": { "name": "Anna", "attempt": 2, "vip": true },
-  "webhook":   { "url": "https://tenant.example/hook", "secret": "…" },
-  "call_id":   "019f0c4e-1f3a-7a55-9d21-2b0e5f77a1c3",
-  "extra":     { "anything": "you like" }
+  "call":  { "id": "019f0c4e-1f3a-7a55-9d21-2b0e5f77a1c3", "direction": "inbound" },
+  "agent": {
+    "id": "…", "name": "Anna",
+    "prompt":   "You are speaking with {{ name }}.",
+    "greeting": "Hi {{ name }}, how can I help?",
+    "greeting_type": "message",
+    "agent_waits_for_user": false,
+    "prompt_variables": { "name": "Anna", "attempt": 2, "vip": true },
+    "max_duration_seconds": 600,
+    "user_silence_timeout_seconds": 15
+  },
+  "preset":   { "name": "gemini_vertex", "config": { "voice": "Aoede" } },
+  "tools":    { "endCall": { "type": "end_call", "enabled": true } },
+  "services": { "webhook": { "url": "https://tenant.example/hook", "secret": "…" } }
 }
 ```
+
+Every value has one home. The prompt, the greeting and the variables belong to the agent;
+the id belongs to the call; the webhook belongs to the services. Nothing is repeated at
+the root for convenience, so nothing can disagree with itself.
+
+`preset` is the only block that varies with the speech stack. An agent that builds its own
+pipeline ignores it and reads the rest; an agent that is assembled from configuration reads
+all of it. `tools` describes what the agent may call, not what it did.
 
 `{{ name }}` is substituted into both `prompt` and `greeting`. A placeholder with no
 variable is left exactly as it was and logged — one missing key must not take down a call
 that is already ringing. JSON types survive: `config.variables.get_int("attempt")` is `2`.
-`extra` is never interpreted.
 
-`webhook` in the response overrides the environment, which is what lets one worker serve
-many tenants.
+Opening the call is three states, not two, and `config.agent` carries all three:
+`speaks_first` says whether the agent opens at all, and `greeting_type` says whether the
+greeting is a line to speak (`message`) or an instruction to compose one from (`prompt`).
 
-`call_id` files the call under an id you already hold. A responder that creates a record
+`services.webhook` overrides the environment, which is what lets one worker serve many
+tenants.
+
+`call.id` files the call under an id you already hold. A responder that creates a record
 for the call before answering can name it here, and every event afterwards carries that id
 — so both sides address one record, and neither has to store a field holding the other's
 identifier. It is the only part of the call's identity configuration may decide. A
 dispatcher that named the call outranks it, and an id offered after the first event has
 gone out is refused with a warning.
+
+`extra` is there for what this schema does not describe, and is never interpreted.
 
 When configuration cannot be resolved the call is **terminated** and the reason logged. An
 agent without its prompt is a broken call either way. Pass `on_error="continue"` if you
