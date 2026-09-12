@@ -279,3 +279,27 @@ async def test_an_unanswered_call_is_still_reported_as_one(bind_context):
 
     assert body["call"]["reason"] == "timeout"
     assert body["call"]["status"] == "no_answer"
+
+
+async def test_a_caller_who_hangs_up_ends_the_job(bind_context, no_grace):
+    """The commonest ending there is. The framework closes the session, not the job."""
+    ctx = bind_context(FakeContext())
+    session = FakeSession()
+
+    call.supervise(session)
+    session.close("participant_disconnected")
+    await asyncio.sleep(0.05)
+
+    assert ctx.shutdown_reason == "the session closed: participant_disconnected"
+
+
+async def test_our_own_shutdown_is_not_answered_with_another(bind_context, no_grace):
+    """The job going down is what closes the session; ending again would be a loop."""
+    ctx = bind_context(FakeContext())
+    session = FakeSession()
+
+    call.supervise(session)
+    session.close("job_shutdown")
+    await asyncio.sleep(0.05)
+
+    assert ctx.shutdown_reason is None

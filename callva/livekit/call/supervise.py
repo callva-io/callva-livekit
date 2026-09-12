@@ -11,8 +11,12 @@ from .release import end
 
 AWAY = "away"
 
+JOB_SHUTDOWN = "job_shutdown"
+"""The one close reason that means the job is already on its way down."""
+
 _DURATION_TASK = "call.duration_task"
 _AWAY_TASK = "call.away_task"
+_CLOSED_TASK = "call.closed_task"
 
 
 def supervise(
@@ -21,6 +25,7 @@ def supervise(
     ctx: Any = None,
     max_duration: float | None = None,
     end_when_away: bool = False,
+    end_when_closed: bool = True,
 ) -> None:
     """Watch a call in progress and end it when it should not go on.
 
@@ -29,8 +34,13 @@ def supervise(
     simply be gone, which on a telephone line is indistinguishable from silence until
     enough of it has passed.
 
-    Both hang up through the same path as anything else, so the caller is released and the
-    report and recording still go out. Neither fires on a call already ending.
+    And the commonest ending of all: the caller hangs up. The framework closes the session
+    then, but not the job — the agent stays in the room, the report never goes out, and
+    the call is simply lost. ``end_when_closed`` is on by default for that reason: a
+    session that has closed is a call that is over, whatever closed it.
+
+    All of them hang up through the same path as anything else, so the caller is released
+    and the report and recording still go out. None fires on a call already ending.
 
     ``end_when_away`` leans on the session's own ``user_away_timeout`` rather than timing
     silence here: the framework already measures it, and measuring it twice would only
@@ -42,11 +52,16 @@ def supervise(
     if max_duration is not None:
         _cap_duration(st, max_duration)
 
+    if session is None:
+        if end_when_away or end_when_closed:
+            logger.warning("no session to watch, so nobody will notice the call ending")
+        return
+
     if end_when_away:
-        if session is None:
-            logger.warning("no session to watch, so nobody will notice the caller leaving")
-        else:
-            _end_when_away(st, session)
+        _end_when_away(st, session)
+
+    if end_when_closed:
+        _end_when_closed(st, session)
 
 
 def _cap_duration(st: _state.CallState, max_duration: float) -> None:
@@ -76,6 +91,21 @@ def _end_when_away(st: _state.CallState, session: Any) -> None:
         )
 
     session.on("user_state_changed", on_user_state_changed)
+
+
+def _end_when_closed(st: _state.CallState, session: Any) -> None:
+    def on_close(event: Any) -> None:
+        reason = getattr(getattr(event, "reason", None), "value", None) or "closed"
+        if reason == JOB_SHUTDOWN or st.ending:
+            # The job going down is what closes the session in the first place; ending it
+            # again from here would be answering our own hangup.
+            return
+        logger.info("the session closed (%s), ending the call", reason)
+        st.extras[_CLOSED_TASK] = asyncio.ensure_future(
+            end(st.ctx, reason=f"the session closed: {reason}", wait=False)
+        )
+
+    session.on("close", on_close)
 
 
 def stop(ctx: Any = None) -> None:

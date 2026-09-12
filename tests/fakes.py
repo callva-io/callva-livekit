@@ -158,6 +158,11 @@ class FakeSession:
         if self.handlers.get(event) is handler:
             del self.handlers[event]
 
+    def close(self, reason: str = "participant_disconnected") -> None:
+        handler = self.handlers.get("close")
+        if handler:
+            handler(type("Event", (), {"reason": type("R", (), {"value": reason})()})())
+
     def go_away(self, state: str = "away") -> None:
         handler = self.handlers.get("user_state_changed")
         if handler:
