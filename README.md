@@ -132,6 +132,21 @@ not ended. It waits for the agent to stop speaking first — pass `wait=False` f
 being abandoned rather than finished — and the report and the recording still go out,
 because they belong to the shutdown sequence and a closed room does not interrupt it.
 
+## When a call goes wrong
+
+```python
+callva_webhook.collect_errors()     # once, where the worker starts up
+```
+
+Every error logged anywhere in the process is kept and delivered inside `call.ended`, as
+`errors`, with the traceback where there was one. There is no separate event for a call
+that fell apart: that call still ends and still reports — what was missing was ever saying
+why.
+
+It attaches a handler to the root logger, which is a process-wide thing to do and so is
+asked for rather than assumed. Our own errors are never collected, because a failing
+delivery would report itself forever.
+
 ## Configuration for a call
 
 Configuration reaches the agent through **agent dispatch metadata**, read as

@@ -9,7 +9,8 @@ follows; every number and API name here was verified against `livekit-agents` 1.
 Two independent capabilities that any LiveKit agent can opt into:
 
 - **Webhook** — emit a `call.started` webhook when the call goes live and a `call.ended`
-  webhook when it finishes, carrying the transcript, usage, recording and session data.
+  webhook when it finishes, carrying the transcript, usage, recording, session data, and
+  everything that went wrong along the way.
 - **Config** — resolve per-call configuration (prompt, greeting, variables) before the
   session starts, from agent dispatch metadata or from an external endpoint.
 - **Call** — wait until an outbound call is actually answered rather than merely ringing,

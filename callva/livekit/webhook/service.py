@@ -10,6 +10,7 @@ from ..core import state as _state
 from ..core import transport
 from ..core.log import logger
 from ..core.transport import WebhookTarget
+from . import errors as _errors
 from . import payload as _payload
 from .storage import Storage
 
@@ -342,6 +343,7 @@ async def on_session_end(ctx: Any = None) -> None:
         participant=participant,
         session_report=report_dict,
         recording=recording,
+        errors=_errors.drain(),
     )
 
     # The webhook goes first: the call is closed out with a terminal status even if the

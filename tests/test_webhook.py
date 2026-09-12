@@ -535,3 +535,42 @@ async def test_an_unanswered_call_never_claims_it_started(bind_context, sent, ta
     await callva_webhook.on_session_end(ctx)
 
     assert [item["payload"]["event"] for item in sent] == ["call.dialing", "call.ended"]
+
+
+async def test_what_went_wrong_reaches_the_consumer(bind_context, monkeypatch):
+    """A call that failed still ends and still reports; what was missing was the reason."""
+    import logging
+
+    from callva.livekit.webhook import errors as _errors
+
+    sent: list[dict] = []
+
+    async def capture(target, *, event, payload, key, **_):
+        sent.append(payload)
+
+    monkeypatch.setattr(service.transport, "post_json", capture)
+    monkeypatch.setenv("WEBHOOK_URL", "https://tenant.test/hook")
+
+    ctx = bind_context(FakeContext())
+    _errors.collect()
+    try:
+        logging.getLogger("some.plugin").error("the model refused the session")
+        await service.on_session_end(ctx)
+    finally:
+        _errors.stop()
+
+    assert [e["message"] for e in sent[-1]["errors"]] == ["the model refused the session"]
+
+
+async def test_a_call_that_went_fine_reports_no_errors(bind_context, monkeypatch):
+    sent: list[dict] = []
+
+    async def capture(target, *, event, payload, key, **_):
+        sent.append(payload)
+
+    monkeypatch.setattr(service.transport, "post_json", capture)
+    monkeypatch.setenv("WEBHOOK_URL", "https://tenant.test/hook")
+
+    await service.on_session_end(bind_context(FakeContext()))
+
+    assert sent[-1]["errors"] is None

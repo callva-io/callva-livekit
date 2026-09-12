@@ -77,6 +77,7 @@ def build(
     participant: Any = None,
     session_report: dict[str, Any] | None = None,
     recording: dict[str, Any] | None = None,
+    errors: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Assemble one event.
 
@@ -122,5 +123,8 @@ def build(
         "call": call,
         "livekit": livekit,
         "recording": recording,
+        # Everything that went wrong during the call, in the words of whoever logged it.
+        # Null when nothing did, and when nobody asked for them to be collected.
+        "errors": errors,
         "tags": _tags_dict(ctx),
     }
