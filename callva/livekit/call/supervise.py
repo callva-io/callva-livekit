@@ -127,6 +127,10 @@ def _end_when_closed(st: _state.CallState, session: Any) -> None:
             # The job going down is what closes the session in the first place; ending it
             # again from here would be answering our own hangup.
             return
+        if reason == "error":
+            # Answered is not the same as completed when the call died of something. The
+            # outcome is the webhook's to decide; this is the fact it lacked.
+            st.failure = reason
         logger.info("the session closed (%s), ending the call", reason)
         st.extras[_CLOSED_TASK] = asyncio.ensure_future(
             end(st.ctx, reason=f"the session closed: {reason}", wait=False)

@@ -331,3 +331,35 @@ async def test_watching_twice_still_hangs_up_once(bind_context, no_grace):
     await asyncio.sleep(0.05)
 
     assert ctx.shutdown_reason == "the caller hung up"
+
+
+async def test_a_call_that_died_of_an_error_did_not_complete(bind_context, no_grace):
+    """Answered is not the same as completed when the session broke underneath it."""
+    from callva.livekit.webhook import service as _service
+
+    ctx = bind_context(FakeContext())
+    session = FakeSession()
+    st = _state.state(ctx)
+    st.started_sent = True
+
+    call.supervise(session)
+    session.close("error")
+    await asyncio.sleep(0.05)
+
+    assert st.failure == "error"
+    assert _service._outcome(st) == "failed"
+
+
+async def test_a_call_that_merely_ended_still_completed(bind_context, no_grace):
+    from callva.livekit.webhook import service as _service
+
+    ctx = bind_context(FakeContext())
+    session = FakeSession()
+    st = _state.state(ctx)
+    st.started_sent = True
+
+    call.supervise(session)
+    session.close("participant_disconnected")
+    await asyncio.sleep(0.05)
+
+    assert _service._outcome(st) == "completed"

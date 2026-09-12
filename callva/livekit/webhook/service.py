@@ -43,6 +43,7 @@ _OUTCOMES = {
     "AGENT_ERROR": "failed",
 }
 COMPLETED = "completed"
+FAILED = "failed"
 UNANSWERED_DEFAULT = "no_answer"
 
 FALLBACK_WARNING = (
@@ -148,9 +149,12 @@ async def _report_dialing(ctx: Any, st: _state.CallState, participant: Any) -> N
 def _outcome(st: _state.CallState) -> str:
     """How the call ended, in our words.
 
-    A call that was answered completed, whatever happened afterwards. One that never was
-    is described by why the other end went away.
+    A call that was answered completed — unless it died of something, which is a thing the
+    call itself knows and says. One that was never answered is described by why the other
+    end went away.
     """
+    if st.failure:
+        return FAILED
     if st.started_sent:
         return COMPLETED
     reason = st.extras.get("disconnect_reason")
