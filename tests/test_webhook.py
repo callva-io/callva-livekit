@@ -247,8 +247,9 @@ async def test_the_recording_url_is_known_before_the_bytes_move(
     assert ended["recording"]["url"] == f"https://cdn.test/recordings/{call_id}.ogg"
     assert uploads == [
         ("file", f"recordings/{call_id}.ogg"),
-        ("json", f"recordings/{call_id}.json"),
-    ], "recording and transcript share the call id"
+        ("json", f"recordings/{call_id}.session.json"),
+    ], "both are filed under the call id, and the report says which of them it is"
+    assert ended["recording"]["session_report_key"] == f"recordings/{call_id}.session.json"
 
 
 async def test_without_storage_the_recording_follows_the_webhook(

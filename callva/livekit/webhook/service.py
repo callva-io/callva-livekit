@@ -399,19 +399,22 @@ def _plan_recording(
 
     if storage is not None:
         audio_key = storage.key(f"{call_id}.ogg")
-        transcript_key = storage.key(f"{call_id}.json")
+        # Not `{call_id}.json`: this is the session report, not a transcript, and that
+        # name is one a platform is likely to have claimed for the transcript itself —
+        # ours would land on top of it and the reader would find the wrong shape.
+        report_key = storage.key(f"{call_id}.session.json")
         described = {
             "url": storage.public_url(audio_key),
             "bucket": storage.bucket,
             "audio_key": audio_key if path else None,
-            "transcript_key": transcript_key,
+            "session_report_key": report_key,
         }
 
         async def upload(_body: dict[str, Any], report_dict: dict[str, Any] | None) -> None:
             if path is not None:
                 await storage.put_file(audio_key, path, "audio/ogg")
             if report_dict is not None:
-                await storage.put_json(transcript_key, report_dict)
+                await storage.put_json(report_key, report_dict)
 
         return described, upload
 

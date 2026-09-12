@@ -245,8 +245,12 @@ Every value has a constructor argument that takes precedence.
 ## Recording
 
 With a bucket configured, the recording and the session report are written under the same
-call id — `<call_id>.ogg` and `<call_id>.json` — and the webhook carries the URL, which is
-known before the bytes move. Needs `record=True` on `session.start()` and the codecs extra
+call id — `<call_id>.ogg` and `<call_id>.session.json` — and the webhook carries the URL,
+which is known before the bytes move. The report says which key is which, in
+`recording.audio_key` and `recording.session_report_key`. The session report is not a
+transcript, and it deliberately does not take the plain `<call_id>.json` name: a platform
+that stores a transcript of its own is likely to have claimed it, and this would land on
+top of it. Needs `record=True` on `session.start()` and the codecs extra
 (`pip install "livekit-agents[codecs]"`).
 
 Without a bucket, and only if a webhook target is set, the recording follows the webhook as
