@@ -232,7 +232,9 @@ the main inbound scenario: choose the agent by the number that was dialled.
 
 ```json
 {
-  "call":  { "id": "...", "direction": "inbound" },
+  "call":  { "id": "...", "direction": "inbound",
+             "project_id": "...", "tenant_id": "...", "type": "..." },
+  "environment": "production",
   "agent": {
     "id": "...", "name": "...",
     "prompt": "...", "greeting": "...",
@@ -274,6 +276,11 @@ while the environment is a deployment default.
 
 `extra` is for what this schema does not describe. It is opaque and never interpreted.
 
+The responder's own values come back in the report — the `agent` block verbatim, the
+`environment`, and the identifiers in `call`. A platform that resolves something per call
+(which webhook a customer's report is forwarded to, say) has to read back the value that
+was in force for *that* call; its database holds the one before the override.
+
 ### Templating
 
 `{{ name }}` placeholders are substituted into **both** `prompt` and `greeting` from
@@ -302,8 +309,11 @@ reach consumers without a release here.
   "call": {
     "id": "...", "direction": "inbound",
     "from": { "number": "..." }, "to": { "number": "..." },
-    "started_at": 0, "ended_at": 0, "duration": 0, "status": "..."
+    "started_at": 0, "ended_at": 0, "duration": 0, "status": "...",
+    "project_id": "...", "tenant_id": "...", "type": "..."
   },
+  "agent": {},
+  "environment": "production",
   "livekit": {
     "room": {}, "job": {}, "participant": {}, "sip": {},
     "session_report": {}
@@ -312,6 +322,14 @@ reach consumers without a release here.
   "tags": {}
 }
 ```
+
+`agent` and `environment` are configuration's, echoed back untouched: the response's whole
+`agent` block, not the typed reading of it, and not an allowlist of the fields this package
+happens to know. The same for the identifiers configuration filed the call under, which
+join the `call` block — passed through only when they arrived, never derived. This is the
+one thing the envelope carries that is neither ours nor LiveKit's, and it is carried for
+the same reason `livekit` is nested verbatim: a field the other side adds tomorrow reaches
+it back without a release here.
 
 `livekit.session_report` is `ctx.make_session_report().to_dict()` unmodified — chat history
 with timestamps, per-provider usage, recorded events, session options, SDK version. The key
@@ -366,6 +384,12 @@ This package:
   ceiling, matching the SDK's own behaviour.
 - The webhook is posted before the upload, so the call is closed out with a terminal status
   even if the process dies mid-upload.
+- **Keys travel, not URLs.** A payload never carries a link that plays the recording to
+  whoever holds it, and never the bucket, which is deployment configuration a consumer has
+  no business acting on. Whoever holds the credentials reads the object.
+- Because the webhook goes first, `recording.delivery: "storage"` in `call.ended` states an
+  intent. `call.recording` follows a successful upload with the same keys and
+  `"stored": true`, which states the fact; a failed upload sends nothing.
 
 ## 10. Logging
 

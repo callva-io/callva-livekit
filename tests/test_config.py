@@ -419,3 +419,34 @@ def test_nothing_is_read_from_two_places():
     config = parse({"prompt": "root", "agent": {"prompt": "agent"}})
 
     assert config.prompt == "agent"
+
+
+def test_the_agent_block_is_kept_as_it_arrived():
+    """The typed reading is for the agent; the raw block is what the report echoes back."""
+    config = parse(
+        {
+            "agent": {
+                "id": "ag_1",
+                "agent_waits_for_user": True,
+                "custom_webhook_enabled": True,
+                "custom_webhook_url": "https://tenant.test/their-hook",
+            }
+        }
+    )
+
+    assert config.agent.speaks_first is False, "the typed reading is untouched"
+    assert config.raw_agent == {
+        "id": "ag_1",
+        "agent_waits_for_user": True,
+        "custom_webhook_enabled": True,
+        "custom_webhook_url": "https://tenant.test/their-hook",
+    }
+
+
+def test_an_agent_block_that_never_arrived_is_empty_rather_than_absent():
+    assert parse({"preset": {"name": "vertex"}}).raw_agent == {}
+
+
+def test_the_environment_the_sender_named_is_kept():
+    assert parse({"environment": "staging"}).environment == "staging"
+    assert parse({"agent": {"id": "ag_1"}}).environment is None

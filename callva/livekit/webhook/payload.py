@@ -68,6 +68,11 @@ def _tags_dict(ctx: Any) -> dict[str, Any] | None:
     return {"tags": tags, "outcome": outcome, "reason": reason}
 
 
+# What the platform put in the call block that is its own to keep track of, and ours only
+# to hand back. Never derived here: a value we invented would be a value they never sent.
+_PASSED_THROUGH = ("project_id", "tenant_id", "type")
+
+
 def build(
     st: _state.CallState,
     *,
@@ -85,9 +90,14 @@ def build(
     ``livekit``, so a field the SDK adds tomorrow reaches the consumer without a release
     here. The only reshaping is the ``call`` block, which carries the three things LiveKit
     does not model: a stable call id, a direction, and a ``from`` and a ``to``.
+
+    What configuration sent travels back beside it, unread: the agent block as it arrived,
+    the environment it named, and the identifiers it files this call under. A per-call
+    override changes those, so the value in force is the one that has to come back.
     """
     identity = _state.ensure_identity(st, participant=participant)
     ctx = st.ctx
+    config = st.config
 
     call: dict[str, Any] = {
         **identity.to_dict(),
@@ -100,6 +110,13 @@ def build(
         # Only a call nobody was ever on has one: why it never began.
         "reason": st.unanswered_reason,
     }
+
+    configured_call = _configured(config, "call", None)
+    if isinstance(configured_call, dict):
+        for name in _PASSED_THROUGH:
+            value = configured_call.get(name)
+            if value is not None:
+                call[name] = value
 
     job = getattr(ctx, "job", None)
     livekit: dict[str, Any] = {
@@ -121,6 +138,13 @@ def build(
         "id": key,
         "timestamp": time.time(),
         "call": call,
+        # The agent block exactly as configuration sent it, not the typed reading of it.
+        # Whoever sent it decides what it means and what is in it, and reads their own
+        # values back — including the ones a per-call override changed.
+        "agent": _configured(config, "raw_agent", None) or None,
+        # Whose deployment this call belongs to, when the sender said. Never guessed and
+        # never read from our own environment.
+        "environment": _configured(config, "environment", None),
         "livekit": livekit,
         "recording": recording,
         # Everything that went wrong during the call, in the words of whoever logged it.
@@ -128,3 +152,8 @@ def build(
         "errors": errors,
         "tags": _tags_dict(ctx),
     }
+
+
+def _configured(config: Any, name: str, default: Any) -> Any:
+    """One field of the resolved configuration, for a call that may not have any."""
+    return getattr(config, name, default) if config is not None else default

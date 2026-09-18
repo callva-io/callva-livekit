@@ -129,9 +129,15 @@ class CallConfig:
     variables: Variables = field(default_factory=Variables)
     webhook: WebhookTarget | None = None
     agent: AgentConfig = field(default_factory=AgentConfig)
+    raw_agent: dict[str, Any] = field(default_factory=dict)
+    """The agent block as it arrived. Typing it loses whatever this schema does not name,
+    and the report echoes the block back so that whoever sent it reads their own values."""
     preset: dict[str, Any] = field(default_factory=dict)
     tools: dict[str, Any] = field(default_factory=dict)
     call: dict[str, Any] = field(default_factory=dict)
+    environment: Any = None
+    """Which deployment of the sender this call belongs to, in their own words. Passed
+    through untouched; this package never decides it."""
     extra: dict[str, Any] = field(default_factory=dict)
     source: str = "none"
     """Where this came from: ``metadata``, ``file``, ``url``, or ``none``."""
@@ -175,9 +181,11 @@ class CallConfig:
             variables=variables,
             webhook=WebhookTarget.from_dict(services.get("webhook")),
             agent=AgentConfig.parse(agent_block),
+            raw_agent=agent_block,
             preset=_block(payload.get("preset")),
             tools=_block(payload.get("tools")),
             call=call_block,
+            environment=payload.get("environment"),
             extra=_block(payload.get("extra")),
             source=source,
         )

@@ -23,7 +23,6 @@ class Storage:
     region: str | None = None
     access_key_id: str | None = None
     secret_access_key: str | None = None
-    public_base_url: str | None = None
     prefix: str = ""
 
     @classmethod
@@ -37,17 +36,11 @@ class Storage:
             region=env.get("RECORDING_S3_REGION"),
             access_key_id=env.get("RECORDING_S3_ACCESS_KEY_ID"),
             secret_access_key=env.get("RECORDING_S3_SECRET_ACCESS_KEY"),
-            public_base_url=env.get("RECORDING_S3_PUBLIC_BASE_URL"),
             prefix=(env.get("RECORDING_S3_PREFIX") or "").strip("/"),
         )
 
     def key(self, name: str) -> str:
         return f"{self.prefix}/{name}" if self.prefix else name
-
-    def public_url(self, key: str) -> str | None:
-        if not self.public_base_url:
-            return None
-        return f"{self.public_base_url.rstrip('/')}/{key}"
 
     def _client(self) -> Any:
         import boto3  # imported lazily: only the [s3] extra pulls it in

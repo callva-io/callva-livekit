@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 import pytest
 from fakes import DEFAULT_SIP_ATTRIBUTES as DEFAULT_SIP
@@ -21,7 +21,9 @@ def sent(monkeypatch: pytest.MonkeyPatch) -> list[dict[str, Any]]:
     captured: list[dict[str, Any]] = []
 
     async def post_json(target: Any, *, event: str, payload: dict, key: str, **_: Any) -> bool:
-        captured.append({"kind": "json", "target": target, "event": event, "payload": payload})
+        captured.append(
+            {"kind": "json", "target": target, "event": event, "payload": payload, "key": key}
+        )
         return True
 
     async def post_file(target: Any, *, event: str, payload: dict, **kwargs: Any) -> bool:
@@ -203,36 +205,38 @@ async def test_an_explicit_target_overrides_everything(bind_context, sent, monke
     assert sent[0]["target"].url == "https://explicit.test/hook"
 
 
-async def test_the_recording_url_is_known_before_the_bytes_move(
-    bind_context, sent, target, monkeypatch, tmp_path
-):
-    audio = tmp_path / "audio.ogg"
-    audio.write_bytes(b"ogg")
-
-    uploads: list[tuple[str, Any]] = []
+@pytest.fixture
+def storage(monkeypatch: pytest.MonkeyPatch) -> Any:
+    """Object storage that records the keys it was written to, and can be told to fail."""
 
     class FakeStorage:
-        bucket = "calls"
+        ok: ClassVar[bool] = True
+        uploads: ClassVar[list[tuple[str, str]]] = []
 
         @classmethod
-        def from_env(cls) -> FakeStorage:
+        def from_env(cls) -> Any:
             return cls()
 
         def key(self, name: str) -> str:
             return f"recordings/{name}"
 
-        def public_url(self, key: str) -> str:
-            return f"https://cdn.test/{key}"
-
         async def put_file(self, key: str, path: Path, _type: str) -> bool:
-            uploads.append(("file", key))
-            return True
+            FakeStorage.uploads.append(("file", key))
+            return FakeStorage.ok
 
         async def put_json(self, key: str, document: Any) -> bool:
-            uploads.append(("json", key))
-            return True
+            FakeStorage.uploads.append(("json", key))
+            return FakeStorage.ok
 
     monkeypatch.setattr(service, "Storage", FakeStorage)
+    return FakeStorage
+
+
+async def test_the_recording_keys_are_known_before_the_bytes_move(
+    bind_context, sent, target, storage, tmp_path
+):
+    audio = tmp_path / "audio.ogg"
+    audio.write_bytes(b"ogg")
 
     ctx = bind_context(FakeContext())
     ctx.report = FakeReport(audio_recording_path=audio)
@@ -242,14 +246,84 @@ async def test_the_recording_url_is_known_before_the_bytes_move(
     await callva_webhook.on_session_end(ctx)
 
     call_id = sent[0]["payload"]["call"]["id"]
-    ended = sent[1]["payload"]
+    recording = sent[1]["payload"]["recording"]
 
-    assert ended["recording"]["url"] == f"https://cdn.test/recordings/{call_id}.ogg"
-    assert uploads == [
+    assert recording["delivery"] == "storage"
+    assert recording["audio_key"] == f"recordings/{call_id}.ogg"
+    assert recording["session_report_key"] == f"recordings/{call_id}.session.json"
+    assert storage.uploads == [
         ("file", f"recordings/{call_id}.ogg"),
         ("json", f"recordings/{call_id}.session.json"),
     ], "both are filed under the call id, and the report says which of them it is"
-    assert ended["recording"]["session_report_key"] == f"recordings/{call_id}.session.json"
+
+
+async def test_nothing_in_the_payload_plays_the_recording_to_whoever_holds_it(
+    bind_context, sent, target, storage, tmp_path
+):
+    """No fetchable link, and no bucket for a consumer to reach into."""
+    audio = tmp_path / "audio.ogg"
+    audio.write_bytes(b"ogg")
+
+    ctx = bind_context(FakeContext())
+    ctx.report = FakeReport(audio_recording_path=audio)
+    callva_webhook.attach()
+
+    await live_call(ctx)
+    await callva_webhook.on_session_end(ctx)
+
+    for delivery in sent:
+        recording = delivery["payload"]["recording"] or {}
+        assert "url" not in recording
+        assert "bucket" not in recording
+
+
+async def test_a_stored_recording_is_confirmed_once_it_is_really_there(
+    bind_context, sent, target, storage, tmp_path
+):
+    """`delivery: storage` in call.ended is intent; call.recording is the fact."""
+    audio = tmp_path / "audio.ogg"
+    audio.write_bytes(b"ogg")
+
+    ctx = bind_context(FakeContext())
+    ctx.report = FakeReport(audio_recording_path=audio)
+    callva_webhook.attach()
+
+    await live_call(ctx)
+    await callva_webhook.on_session_end(ctx)
+
+    call_id = sent[0]["payload"]["call"]["id"]
+    ended, stored = sent[1], sent[2]
+
+    assert ended["event"] == "call.ended", "the ended webhook still goes first"
+    assert "stored" not in ended["payload"]["recording"]
+
+    assert stored["event"] == "call.recording"
+    assert stored["payload"]["event"] == "call.recording"
+    assert stored["payload"]["id"] == stored["key"], "its own idempotency key, not the end's"
+    assert stored["payload"]["id"] != ended["payload"]["id"]
+    assert stored["payload"]["recording"] == {
+        "delivery": "storage",
+        "audio_key": f"recordings/{call_id}.ogg",
+        "session_report_key": f"recordings/{call_id}.session.json",
+        "stored": True,
+    }
+
+
+async def test_an_upload_that_failed_confirms_nothing(
+    bind_context, sent, target, storage, tmp_path, monkeypatch
+):
+    audio = tmp_path / "audio.ogg"
+    audio.write_bytes(b"ogg")
+    monkeypatch.setattr(storage, "ok", False)
+
+    ctx = bind_context(FakeContext())
+    ctx.report = FakeReport(audio_recording_path=audio)
+    callva_webhook.attach()
+
+    await live_call(ctx)
+    await callva_webhook.on_session_end(ctx)
+
+    assert [delivery["event"] for delivery in sent] == ["call.started", "call.ended"]
 
 
 async def test_without_storage_the_recording_follows_the_webhook(
@@ -575,3 +649,133 @@ async def test_a_call_that_went_fine_reports_no_errors(bind_context, monkeypatch
     await service.on_session_end(bind_context(FakeContext()))
 
     assert sent[-1]["errors"] is None
+
+
+CONFIGURED = {
+    "call": {
+        "id": "c_1",
+        "project_id": "pr_1",
+        "tenant_id": "tn_1",
+        "type": "outbound_campaign",
+    },
+    "agent": {
+        "id": "ag_1",
+        "name": "Anna",
+        "prompt": "You are Anna.",
+        "custom_webhook_enabled": True,
+        "custom_webhook_url": "https://tenant.test/their-hook",
+        "something_we_have_never_heard_of": {"deep": [1, 2]},
+    },
+    "environment": "staging",
+}
+
+
+def configured(ctx: FakeContext, body: dict[str, Any]) -> None:
+    """Resolve configuration for this call the way the config module would."""
+    from callva.livekit.config.models import CallConfig
+
+    _state.state(ctx).config = CallConfig.parse(body, source="url")
+
+
+async def test_every_event_echoes_the_agent_block_as_it_arrived(bind_context, sent, target):
+    """Not the typed reading of it, and not an allowlist of the fields we happen to know."""
+    ctx = bind_context(FakeContext())
+    ctx.report = FakeReport()
+    callva_webhook.attach()
+    configured(ctx, CONFIGURED)
+
+    await live_call(ctx)
+    await callva_webhook.on_session_end(ctx)
+
+    for delivery in sent:
+        assert delivery["payload"]["agent"] == CONFIGURED["agent"]
+
+
+async def test_a_per_call_override_is_what_comes_back(bind_context, sent, target):
+    """The value in force is the one the other side has to read back, not the stored one."""
+    ctx = bind_context(FakeContext())
+    callva_webhook.attach()
+    configured(ctx, {"agent": {"id": "ag_1", "custom_webhook_enabled": False}})
+
+    await live_call(ctx)
+
+    assert sent[0]["payload"]["agent"] == {"id": "ag_1", "custom_webhook_enabled": False}
+
+
+async def test_a_call_without_configuration_carries_no_agent(bind_context, sent, target):
+    ctx = bind_context(FakeContext())
+    callva_webhook.attach()
+
+    await live_call(ctx)
+
+    assert sent[0]["payload"]["agent"] is None
+    assert sent[0]["payload"]["environment"] is None
+
+
+async def test_the_identifiers_the_platform_filed_this_call_under_travel_back(
+    bind_context, sent, target
+):
+    ctx = bind_context(FakeContext())
+    callva_webhook.attach()
+    configured(ctx, CONFIGURED)
+
+    await live_call(ctx)
+
+    call = sent[0]["payload"]["call"]
+    assert call["project_id"] == "pr_1"
+    assert call["tenant_id"] == "tn_1"
+    assert call["type"] == "outbound_campaign"
+    assert call["direction"] == "inbound", "ours is still ours"
+
+
+async def test_an_identifier_that_never_arrived_is_not_invented(bind_context, sent, target):
+    ctx = bind_context(FakeContext())
+    callva_webhook.attach()
+    configured(ctx, {"call": {"tenant_id": "tn_1"}})
+
+    await live_call(ctx)
+
+    call = sent[0]["payload"]["call"]
+    assert call["tenant_id"] == "tn_1"
+    assert "project_id" not in call
+    assert "type" not in call
+
+
+async def test_the_environment_comes_from_the_sender_and_nowhere_else(
+    bind_context, sent, target, monkeypatch
+):
+    monkeypatch.setenv("ENVIRONMENT", "production")
+
+    ctx = bind_context(FakeContext())
+    callva_webhook.attach()
+    configured(ctx, CONFIGURED)
+
+    await live_call(ctx)
+
+    assert sent[0]["payload"]["environment"] == "staging"
+
+
+async def test_the_thin_envelope_is_still_thin(bind_context, sent, target):
+    """Nothing LiveKit produces is lifted out of its block by any of this."""
+    ctx = bind_context(FakeContext())
+    ctx.report = FakeReport()
+    callva_webhook.attach()
+    configured(ctx, CONFIGURED)
+
+    await live_call(ctx)
+    await callva_webhook.on_session_end(ctx)
+
+    ended = sent[1]["payload"]
+    assert set(ended) == {
+        "event",
+        "id",
+        "timestamp",
+        "call",
+        "agent",
+        "environment",
+        "livekit",
+        "recording",
+        "errors",
+        "tags",
+    }
+    assert set(ended["livekit"]) >= {"room", "job", "participant", "sip", "session_report"}

@@ -392,8 +392,13 @@ def _plan_recording(
     """Decide how the recording travels, and describe it for the webhook body.
 
     Object storage is the default because a long call does not belong in one request. The
-    key is deterministic, so the URL is known before the bytes move and the webhook can
-    carry it.
+    key is deterministic, so it is known before the bytes move and the ended webhook can
+    carry it — which makes it a statement of intent. ``call.recording`` follows once the
+    objects are actually in place, and says so.
+
+    What travels is the key, never a URL to fetch it with: a link that plays a recording
+    to whoever holds it is not something to put in a webhook body. Nor the bucket, which
+    is this deployment's own configuration and not for a consumer to act on.
     """
     call_id = st.identity.id if st.identity else "unknown"
 
@@ -404,17 +409,35 @@ def _plan_recording(
         # ours would land on top of it and the reader would find the wrong shape.
         report_key = storage.key(f"{call_id}.session.json")
         described = {
-            "url": storage.public_url(audio_key),
-            "bucket": storage.bucket,
+            "delivery": "storage",
             "audio_key": audio_key if path else None,
             "session_report_key": report_key,
         }
 
-        async def upload(_body: dict[str, Any], report_dict: dict[str, Any] | None) -> None:
+        async def upload(body: dict[str, Any], report_dict: dict[str, Any] | None) -> None:
+            stored = []
             if path is not None:
-                await storage.put_file(audio_key, path, "audio/ogg")
+                stored.append(await storage.put_file(audio_key, path, "audio/ogg"))
             if report_dict is not None:
-                await storage.put_json(report_key, report_dict)
+                stored.append(await storage.put_json(report_key, report_dict))
+
+            # Only what is really there is announced. A failed upload leaves the ended
+            # webhook's intent standing on its own, which is what it always was.
+            if not stored or not all(stored) or target is None:
+                return
+
+            key = transport.idempotency_key(call_id, _payload.RECORDING)
+            await transport.post_json(
+                target,
+                event=_payload.RECORDING,
+                payload={
+                    **body,
+                    "event": _payload.RECORDING,
+                    "id": key,
+                    "recording": {**described, "stored": True},
+                },
+                key=key,
+            )
 
         return described, upload
 

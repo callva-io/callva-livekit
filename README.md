@@ -82,8 +82,11 @@ does not claim to either. `rejected` means one of them. The raw signals travel u
     "from": { "number": "+37255512345", "identity": "sip_+37255512345", "name": null },
     "to":   { "number": "+3726001234", "identity": null, "name": null },
     "started_at": 1757599940.5, "ended_at": 1757600000.1, "duration": 59.6,
-    "status": "completed"
+    "status": "completed",
+    "project_id": "pr_…", "tenant_id": "tn_…", "type": "outbound_campaign"
   },
+  "agent": { "id": "ag_…", "name": "Anna", "…": "the agent block exactly as configured" },
+  "environment": "production",
   "livekit": {
     "room": { "name": "call-1", "sid": "RM_…", "metadata": null },
     "job":  { "id": "AJ_…", "dispatch_id": "AD_…", "agent_name": "my-agent", "…": "…" },
@@ -91,7 +94,8 @@ does not claim to either. `rejected` means one of them. The raw signals travel u
     "sip":  { "callID": "…", "phoneNumber": "…", "twilio": { "callSid": "…" } },
     "session_report": { "chat_history": {}, "usage": [], "options": {}, "…": "…" }
   },
-  "recording": { "url": "https://cdn.example/8f1c….ogg" },
+  "recording": { "delivery": "storage", "audio_key": "8f1c….ogg",
+                 "session_report_key": "8f1c….session.json" },
   "tags": { "tags": ["lk.success"], "outcome": "success", "reason": null }
 }
 ```
@@ -102,7 +106,16 @@ history with timestamps, per-provider token usage, recorded events, session opti
 field the SDK adds tomorrow reaches you without a release here.
 
 The `call` block is the only thing reshaped, because it is the only thing LiveKit does not
-model: a stable id across both events, a direction, and a `from` and a `to`.
+model: a stable id across both events, a direction, and a `from` and a `to`. Whatever the
+configuration source filed the call under — `project_id`, `tenant_id`, `type` — travels
+back in it untouched, and a key that never arrived is absent rather than null.
+
+`agent` is the configuration response's own `agent` block, echoed back on every event
+exactly as it arrived, including whatever a per-call override changed and whatever this
+schema does not name. Nothing in it is interpreted here; the sender reads its own values
+back, which is what a platform deciding per call needs. `environment` is the same
+passthrough for the response's top-level `environment`, and is null when the source named
+none — it is never read from this process's environment.
 
 Requests carry `X-Webhook-Idempotency-Key`, and `X-Webhook-Signature` when a secret is set —
 `sha256` HMAC over `{timestamp}.{body}`, with `X-Webhook-Timestamp` alongside. Delivery
@@ -171,7 +184,9 @@ The response:
 
 ```json
 {
-  "call":  { "id": "019f0c4e-1f3a-7a55-9d21-2b0e5f77a1c3", "direction": "inbound" },
+  "call":  { "id": "019f0c4e-1f3a-7a55-9d21-2b0e5f77a1c3", "direction": "inbound",
+             "project_id": "pr_…", "tenant_id": "tn_…", "type": "outbound_campaign" },
+  "environment": "production",
   "agent": {
     "id": "…", "name": "Anna",
     "prompt":   "You are speaking with {{ name }}.",
@@ -216,6 +231,11 @@ gone out is refused with a warning.
 
 `extra` is there for what this schema does not describe, and is never interpreted.
 
+What the responder sends about itself comes back in the report: the whole `agent` block,
+the `environment`, and the `project_id`, `tenant_id` and `type` it filed the call under.
+A responder that decides something per call therefore reads back the value that was in
+force for that call, not the one it has stored.
+
 When configuration cannot be resolved the call is **terminated** and the reason logged. An
 agent without its prompt is a broken call either way. Pass `on_error="continue"` if you
 would rather carry on.
@@ -237,7 +257,6 @@ in the room, so a prompt placed there is readable by any connected client.
 | `RECORDING_S3_BUCKET` | Enables recording upload |
 | `RECORDING_S3_ENDPOINT_URL` | Set this for R2 or any S3-compatible store |
 | `RECORDING_S3_REGION`, `RECORDING_S3_ACCESS_KEY_ID`, `RECORDING_S3_SECRET_ACCESS_KEY` | Credentials |
-| `RECORDING_S3_PUBLIC_BASE_URL` | Turns the object key into the URL sent in the webhook |
 | `RECORDING_S3_PREFIX` | Key prefix inside the bucket |
 
 Every value has a constructor argument that takes precedence.
@@ -245,20 +264,28 @@ Every value has a constructor argument that takes precedence.
 ## Recording
 
 With a bucket configured, the recording and the session report are written under the same
-call id — `<call_id>.ogg` and `<call_id>.session.json` — and the webhook carries the URL,
-which is known before the bytes move. The report says which key is which, in
-`recording.audio_key` and `recording.session_report_key`. The session report is not a
-transcript, and it deliberately does not take the plain `<call_id>.json` name: a platform
-that stores a transcript of its own is likely to have claimed it, and this would land on
-top of it. Needs `record=True` on `session.start()` and the codecs extra
+call id — `<call_id>.ogg` and `<call_id>.session.json` — and `call.ended` carries
+`recording.delivery: "storage"` with `recording.audio_key` and
+`recording.session_report_key`, which are known before the bytes move. The session report
+is not a transcript, and it deliberately does not take the plain `<call_id>.json` name: a
+platform that stores a transcript of its own is likely to have claimed it, and this would
+land on top of it. Needs `record=True` on `session.start()` and the codecs extra
 (`pip install "livekit-agents[codecs]"`).
+
+What travels is the key, never a URL to fetch it with. A link that plays a recording to
+whoever holds it does not belong in a webhook body, and the bucket is this deployment's own
+configuration rather than something a consumer should act on. Whoever holds the credentials
+reads the object.
 
 Without a bucket, and only if a webhook target is set, the recording follows the webhook as
 a multipart `call.recording` request. Convenient for getting started; object storage is the
 answer for long calls.
 
 The `call.ended` webhook is always sent **before** the upload, so a call is closed out with
-a terminal status even if the process does not survive the transfer.
+a terminal status even if the process does not survive the transfer. That makes
+`delivery: "storage"` a statement of intent, so a `call.recording` event follows a
+successful upload carrying the same keys plus `"stored": true` — the statement of fact. A
+failed upload sends nothing, and the call is still closed out.
 
 ## Versioning
 
