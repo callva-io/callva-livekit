@@ -154,6 +154,32 @@ def build(
     }
 
 
+#: What a confirmation carries. Everything else on a finished call was delivered by
+#: ``call.ended`` under the same call id, so repeating it here would be a second copy
+#: of a message the consumer already holds — on one measured two-minute call the
+#: session report alone was 62 KB of the 81 KB envelope, and it grows with the call.
+_CONFIRMED = ("event", "id", "timestamp", "call", "agent", "environment", "tags")
+
+
+def confirmation(body: dict[str, Any], *, key: str, recording: dict[str, Any]) -> dict[str, Any]:
+    """The ``call.recording`` envelope: the keys, and enough to know whose they are.
+
+    This event exists to say one thing - that the objects ``call.ended`` named are
+    really in place - so it carries that and the identity around it: which call, which
+    agent, which deployment, at what time. What it deliberately drops is everything
+    LiveKit produced, which reached the consumer minutes earlier and unchanged.
+
+    The agent block stays. A consumer reading only this event still has to be able to
+    tell which configuration was in force, override included, and the platform decides
+    where to forward by reading that block out of the body.
+    """
+    thin = {name: body[name] for name in _CONFIRMED if name in body}
+    thin["event"] = RECORDING
+    thin["id"] = key
+    thin["recording"] = recording
+    return thin
+
+
 def _configured(config: Any, name: str, default: Any) -> Any:
     """One field of the resolved configuration, for a call that may not have any."""
     return getattr(config, name, default) if config is not None else default

@@ -277,15 +277,22 @@ whoever holds it does not belong in a webhook body, and the bucket is this deplo
 configuration rather than something a consumer should act on. Whoever holds the credentials
 reads the object.
 
-Without a bucket, and only if a webhook target is set, the recording follows the webhook as
-a multipart `call.recording` request. Convenient for getting started; object storage is the
-answer for long calls.
+Without a bucket there is nowhere to put the audio and none is kept. That is logged as an
+error naming `RECORDING_S3_BUCKET` on every call that recorded something, because a missing
+recording is otherwise discovered weeks later from an empty field.
 
 The `call.ended` webhook is always sent **before** the upload, so a call is closed out with
 a terminal status even if the process does not survive the transfer. That makes
 `delivery: "storage"` a statement of intent, so a `call.recording` event follows a
 successful upload carrying the same keys plus `"stored": true` — the statement of fact. A
 failed upload sends nothing, and the call is still closed out.
+
+`call.recording` is deliberately thin: `event`, `id`, `timestamp`, `call`, `agent`,
+`environment`, `tags` and `recording`, and nothing else. Everything LiveKit produced
+reached the same consumer under the same call id in `call.ended` minutes earlier, and on a
+measured two-minute call the session report alone was 62 KB of an 81 KB envelope — a figure
+that grows with the call. The agent block stays, so a consumer reading only this event can
+still tell which configuration was in force.
 
 ## Versioning
 

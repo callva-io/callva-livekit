@@ -18,7 +18,7 @@ from .identity import (
 from .log import logger
 from .state import CallState, NoJobContext, context, ensure_identity
 from .state import state as call_state
-from .transport import WebhookTarget, post_file, post_json
+from .transport import WebhookTarget, post_json
 from .version import __version__
 
 # `state` deliberately stays bound to the submodule: re-exporting the function under that
@@ -42,7 +42,6 @@ __all__ = [
     "ensure_identity",
     "logger",
     "parse",
-    "post_file",
     "post_json",
     "resolve",
     "resolve_direction",

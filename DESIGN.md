@@ -380,8 +380,10 @@ This package:
 - **Default: object storage.** One S3-compatible client, configurable endpoint, so S3 and
   R2 are the same path. Recording and transcript are written under the same `call_id`.
   Requires the `s3` extra.
-- **Fallback: multipart to the webhook endpoint**, for zero-configuration use. No size
-  ceiling, matching the SDK's own behaviour.
+- **No fallback.** Without a bucket no audio is kept, and that is logged as an error rather
+  than left to be noticed later. Posting the audio in the request body was the fallback
+  until 0.1.62; it asked a consumer to accept a multi-megabyte upload on the route it
+  receives events on, and no consumer of this package did.
 - The webhook is posted before the upload, so the call is closed out with a terminal status
   even if the process dies mid-upload.
 - **Keys travel, not URLs.** A payload never carries a link that plays the recording to
@@ -389,7 +391,11 @@ This package:
   no business acting on. Whoever holds the credentials reads the object.
 - Because the webhook goes first, `recording.delivery: "storage"` in `call.ended` states an
   intent. `call.recording` follows a successful upload with the same keys and
-  `"stored": true`, which states the fact; a failed upload sends nothing.
+  `"stored": true`, which states the fact; a failed upload sends nothing. The consumer that
+  writes the recording down should write it from the fact, not from the intent.
+- That confirmation carries only what identifies it - `event`, `id`, `timestamp`, `call`,
+  `agent`, `environment`, `tags`, `recording`. The `livekit` block and `errors` are not
+  repeated: the consumer received both under the same call id when the call ended.
 
 ## 10. Logging
 

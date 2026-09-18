@@ -72,9 +72,6 @@ def summarize(event: dict) -> str:
 async def hook(request: web.Request) -> web.Response:
     OUTPUT.mkdir(exist_ok=True)
 
-    if request.content_type.startswith("multipart/"):
-        return await recording(request)
-
     body = await request.read()
     event = json.loads(body)
     name = event.get("event", "unknown")
@@ -85,26 +82,6 @@ async def hook(request: web.Request) -> web.Response:
     (OUTPUT / f"{event.get('id', name)}.json").write_text(
         json.dumps(event, indent=2, ensure_ascii=False)
     )
-    return web.json_response({"ok": True})
-
-
-async def recording(request: web.Request) -> web.Response:
-    reader = await request.multipart()
-    saved = []
-
-    async for part in reader:
-        if part.name == "event":
-            print(f"\n{json.loads(await part.text()).get('event')}  [multipart]")
-        elif part.name == "file":
-            path = OUTPUT / (part.filename or "recording.ogg")
-            with path.open("wb") as handle:
-                while chunk := await part.read_chunk():
-                    handle.write(chunk)
-            saved.append(f"{path} ({path.stat().st_size} bytes)")
-
-    for line in saved:
-        print(f"  saved   {line}")
-
     return web.json_response({"ok": True})
 
 

@@ -42,24 +42,12 @@ async def server():
         )
         return web.json_response({"ok": True})
 
-    async def upload(request: web.Request) -> web.Response:
-        reader = await request.multipart()
-        parts: dict[str, Any] = {}
-        async for part in reader:
-            parts[part.name or "?"] = (
-                json.loads(await part.text()) if part.name == "event" else await part.read()
-            )
-        received.append({"multipart": parts})
-        return web.json_response({"ok": True})
-
     async def config(request: web.Request) -> web.Response:
         received.append({"config_request": await request.json()})
         return web.json_response({"prompt": "hello {{ name }}", "variables": {"name": "Anna"}})
 
     app = web.Application()
-    app.add_routes(
-        [web.post("/hook", hook), web.post("/upload", upload), web.post("/config", config)]
-    )
+    app.add_routes([web.post("/hook", hook), web.post("/config", config)])
 
     runner = web.AppRunner(app)
     await runner.setup()
@@ -87,26 +75,6 @@ async def test_a_signed_event_arrives_intact(server):
     assert received[0]["key"] == "c1:call.started:1"
     assert received[0]["signature_valid"], "the receiver could verify what we signed"
     assert received[0]["payload"]["call"]["id"] == "c1"
-
-
-async def test_a_file_arrives_next_to_its_event(server, tmp_path):
-    base, received = server
-    audio = tmp_path / "call.ogg"
-    audio.write_bytes(b"OggS-not-really")
-
-    sent = await transport.post_file(
-        WebhookTarget(f"{base}/upload", SECRET),
-        event="call.recording",
-        payload={"event": "call.recording"},
-        key="c1:call.recording:1",
-        path=audio,
-        filename="c1.ogg",
-        content_type="audio/ogg",
-    )
-
-    assert sent
-    assert received[0]["multipart"]["event"]["event"] == "call.recording"
-    assert received[0]["multipart"]["file"] == b"OggS-not-really"
 
 
 async def test_a_config_request_round_trips(server):

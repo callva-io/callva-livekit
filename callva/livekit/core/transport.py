@@ -8,7 +8,6 @@ import json
 import time
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any
 
 import aiohttp
@@ -24,7 +23,6 @@ CONFIG_RETRY_DELAYS = (0.5, 2.0)
 
 DEFAULT_TIMEOUT = 30.0
 DEFAULT_CONFIG_TIMEOUT = 10.0
-DEFAULT_UPLOAD_TIMEOUT = 300.0
 
 
 class FetchError(RuntimeError):
@@ -175,53 +173,6 @@ async def post_json(
         headers=headers,
         build_body=lambda: {"data": body.encode("utf-8")},
         timeout=timeout or env.get_float("WEBHOOK_TIMEOUT", DEFAULT_TIMEOUT) or DEFAULT_TIMEOUT,
-    )
-
-
-async def post_file(
-    target: WebhookTarget,
-    *,
-    event: str,
-    payload: dict[str, Any],
-    key: str,
-    path: Path,
-    filename: str,
-    content_type: str,
-    timeout: float | None = None,
-) -> bool:
-    """Deliver a file alongside its event envelope as multipart form data.
-
-    The whole file is read into memory and sent in one request, which is what the LiveKit
-    SDK itself does with session recordings. There is no size ceiling for the same reason:
-    object storage is the configured path for calls large enough to need one.
-    """
-    body = json.dumps(payload, ensure_ascii=False, default=str)
-    headers = {
-        "X-Webhook-Event": event,
-        "X-Webhook-Idempotency-Key": key,
-        **_signature_headers(target, body),
-    }
-
-    try:
-        content = await asyncio.get_running_loop().run_in_executor(None, path.read_bytes)
-    except OSError as exc:
-        logger.error("cannot read %s for delivery: %s", path, exc)
-        return False
-
-    def build() -> dict[str, Any]:
-        form = aiohttp.FormData()
-        form.add_field("event", body, content_type="application/json")
-        form.add_field("file", content, filename=filename, content_type=content_type)
-        return {"data": form}
-
-    return await _deliver(
-        target,
-        event=event,
-        headers=headers,
-        build_body=build,
-        timeout=timeout
-        or env.get_float("RECORDING_TIMEOUT", DEFAULT_UPLOAD_TIMEOUT)
-        or DEFAULT_UPLOAD_TIMEOUT,
     )
 
 

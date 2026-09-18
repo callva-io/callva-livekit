@@ -391,14 +391,20 @@ def _plan_recording(
 ) -> tuple[dict[str, Any] | None, Any]:
     """Decide how the recording travels, and describe it for the webhook body.
 
-    Object storage is the default because a long call does not belong in one request. The
-    key is deterministic, so it is known before the bytes move and the ended webhook can
-    carry it — which makes it a statement of intent. ``call.recording`` follows once the
-    objects are actually in place, and says so.
+    Object storage is the only way it travels. The key is deterministic, so it is known
+    before the bytes move and the ended webhook can carry it — which makes that a
+    statement of intent. ``call.recording`` follows once the objects are actually in
+    place, and is the only thing that says they are.
 
     What travels is the key, never a URL to fetch it with: a link that plays a recording
     to whoever holds it is not something to put in a webhook body. Nor the bucket, which
     is this deployment's own configuration and not for a consumer to act on.
+
+    A deployment with no bucket configured records nothing anywhere. It is told so
+    loudly rather than left to discover it from an empty field weeks later: the
+    alternative — posting the audio in the request body — asks a consumer to accept a
+    multi-megabyte upload on the same route as its events, and no consumer of this
+    package does.
     """
     call_id = st.identity.id if st.identity else "unknown"
 
@@ -430,30 +436,19 @@ def _plan_recording(
             await transport.post_json(
                 target,
                 event=_payload.RECORDING,
-                payload={
-                    **body,
-                    "event": _payload.RECORDING,
-                    "id": key,
-                    "recording": {**described, "stored": True},
-                },
+                payload=_payload.confirmation(
+                    body, key=key, recording={**described, "stored": True}
+                ),
                 key=key,
             )
 
         return described, upload
 
-    if path is not None and target is not None:
-
-        async def upload(body: dict[str, Any], _report: dict[str, Any] | None) -> None:
-            await transport.post_file(
-                target,
-                event=_payload.RECORDING,
-                payload={**body, "event": _payload.RECORDING},
-                key=transport.idempotency_key(call_id, _payload.RECORDING),
-                path=path,
-                filename=f"{call_id}.ogg",
-                content_type="audio/ogg",
-            )
-
-        return {"delivery": "multipart", "filename": f"{call_id}.ogg"}, upload
+    if path is not None:
+        logger.error(
+            "a recording was made for call %s and there is nowhere to put it: "
+            "set RECORDING_S3_BUCKET and its credentials, or this call keeps no audio",
+            call_id,
+        )
 
     return None, None

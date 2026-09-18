@@ -26,14 +26,7 @@ def sent(monkeypatch: pytest.MonkeyPatch) -> list[dict[str, Any]]:
         )
         return True
 
-    async def post_file(target: Any, *, event: str, payload: dict, **kwargs: Any) -> bool:
-        captured.append(
-            {"kind": "file", "target": target, "event": event, "payload": payload, **kwargs}
-        )
-        return True
-
     monkeypatch.setattr(service.transport, "post_json", post_json)
-    monkeypatch.setattr(service.transport, "post_file", post_file)
     return captured
 
 
@@ -309,6 +302,42 @@ async def test_a_stored_recording_is_confirmed_once_it_is_really_there(
     }
 
 
+async def test_the_confirmation_repeats_nothing_the_end_already_delivered(
+    bind_context, sent, target, storage, tmp_path
+):
+    """A confirmation is one fact plus whose it is, not a second copy of the call."""
+    audio = tmp_path / "audio.ogg"
+    audio.write_bytes(b"ogg")
+
+    ctx = bind_context(FakeContext())
+    ctx.report = FakeReport(audio_recording_path=audio)
+    callva_webhook.attach()
+
+    await live_call(ctx)
+    await callva_webhook.on_session_end(ctx)
+
+    ended, stored = sent[1]["payload"], sent[2]["payload"]
+
+    assert "livekit" in ended, "the end still carries everything LiveKit produced"
+    assert "livekit" not in stored
+    assert "errors" not in stored
+
+    assert set(stored) == {
+        "event",
+        "id",
+        "timestamp",
+        "call",
+        "agent",
+        "environment",
+        "tags",
+        "recording",
+    }
+    # Identity survives: a consumer reading only this event knows whose keys these are,
+    # and the platform decides where to forward it by reading the agent block.
+    assert stored["call"]["id"] == ended["call"]["id"]
+    assert stored["agent"] == ended["agent"]
+
+
 async def test_an_upload_that_failed_confirms_nothing(
     bind_context, sent, target, storage, tmp_path, monkeypatch
 ):
@@ -326,9 +355,10 @@ async def test_an_upload_that_failed_confirms_nothing(
     assert [delivery["event"] for delivery in sent] == ["call.started", "call.ended"]
 
 
-async def test_without_storage_the_recording_follows_the_webhook(
-    bind_context, sent, target, tmp_path
+async def test_without_storage_the_recording_goes_nowhere_and_says_so(
+    bind_context, sent, target, tmp_path, caplog
 ):
+    """No bucket means no audio is kept. The one thing that must not happen is silence."""
     audio = tmp_path / "audio.ogg"
     audio.write_bytes(b"ogg")
 
@@ -336,13 +366,13 @@ async def test_without_storage_the_recording_follows_the_webhook(
     ctx.report = FakeReport(audio_recording_path=audio)
     callva_webhook.attach()
 
-    await live_call(ctx)
-    await callva_webhook.on_session_end(ctx)
+    with caplog.at_level("ERROR"):
+        await live_call(ctx)
+        await callva_webhook.on_session_end(ctx)
 
-    assert sent[1]["payload"]["recording"]["delivery"] == "multipart"
-    assert sent[2]["kind"] == "file"
-    assert sent[2]["event"] == "call.recording"
-    assert sent[2]["path"] == audio
+    assert sent[1]["payload"]["recording"] is None
+    assert [s["event"] for s in sent] == ["call.started", "call.ended"]
+    assert "RECORDING_S3_BUCKET" in caplog.text
 
 
 async def test_no_recording_at_all(bind_context, sent, target):
@@ -453,7 +483,9 @@ async def test_a_caller_already_in_the_room_is_not_missed(bind_context, sent, ta
     assert started["livekit"]["sip"]["callID"] == "abc"
 
 
-async def test_the_recording_is_keyed_on_the_call_not_on_unknown(bind_context, sent, target):
+async def test_the_recording_is_keyed_on_the_call_not_on_unknown(
+    bind_context, sent, target, storage
+):
     """A call that never reported a start still has to key its recording on its own id."""
     ctx = FakeContext()
     ctx.report = FakeReport(audio_recording_path=Path(__file__))
@@ -469,7 +501,7 @@ async def test_the_recording_is_keyed_on_the_call_not_on_unknown(bind_context, s
     ended = sent[-1]["payload"]
     call_id = ended["call"]["id"]
     assert call_id and call_id != "unknown"
-    assert ended["recording"]["filename"] == f"{call_id}.ogg"
+    assert ended["recording"]["audio_key"].endswith(f"{call_id}.ogg")
 
 
 async def test_the_live_rooms_async_sid_is_never_read(bind_context, sent, target):
