@@ -450,3 +450,104 @@ def test_an_agent_block_that_never_arrived_is_empty_rather_than_absent():
 def test_the_environment_the_sender_named_is_kept():
     assert parse({"environment": "staging"}).environment == "staging"
     assert parse({"agent": {"id": "ag_1"}}).environment is None
+
+
+# --- An endpoint that answers no ---------------------------------------------
+
+
+def refusal() -> transport.ConfigRefused:
+    return transport.ConfigRefused(
+        status=402,
+        action="terminate",
+        reason_code="insufficient_balance",
+        caller_message="Sorry, this service is unavailable right now.",
+        error="Balance exhausted.",
+    )
+
+
+@pytest.fixture
+def refusing_fetch(monkeypatch: pytest.MonkeyPatch) -> Any:
+    async def refuse(*_: Any, **__: Any) -> Any:
+        raise refusal()
+
+    monkeypatch.setattr(resolver.transport, "fetch_json", refuse)
+
+
+async def test_a_refusal_reaches_the_caller_whole(bind_context, refusing_fetch, monkeypatch):
+    """The caller-facing message is why this is an object and not a truncated log line."""
+    monkeypatch.setenv("CONFIG_URL", "https://platform.test/config")
+    bind_context(FakeContext())
+
+    with pytest.raises(callva_config.ConfigRefused) as raised:
+        await callva_config.load()
+
+    assert raised.value.status == 402
+    assert raised.value.reason_code == "insufficient_balance"
+    assert raised.value.caller_message == "Sorry, this service is unavailable right now."
+
+
+async def test_continuing_still_continues_past_a_refusal(bind_context, refusing_fetch, monkeypatch):
+    """A caller who asked to carry on without configuration is short of one here too."""
+    monkeypatch.setenv("CONFIG_URL", "https://platform.test/config")
+    ctx = bind_context(FakeContext())
+
+    config = await callva_config.load(on_error="continue")
+
+    assert config.empty
+    assert ctx.shutdown_reason is None
+
+
+async def test_a_refusal_leaves_the_hangup_to_the_caller(bind_context, refusing_fetch, monkeypatch):
+    """Tearing the call down here would discard the message it was sent to deliver."""
+    monkeypatch.setenv("CONFIG_URL", "https://platform.test/config")
+    ctx = bind_context(FakeContext())
+
+    with pytest.raises(callva_config.ConfigRefused):
+        await callva_config.load()
+
+    assert ctx.shutdown_reason is None
+
+
+async def test_code_written_before_refusals_existed_still_catches_one(
+    bind_context, refusing_fetch, monkeypatch
+):
+    """The whole of an agent written against 0.1.62: one handler, every outcome."""
+    monkeypatch.setenv("CONFIG_URL", "https://platform.test/config")
+    bind_context(FakeContext())
+
+    caught: Exception | None = None
+    try:
+        await callva_config.load()
+    except callva_config.ConfigError as exc:
+        caught = exc
+
+    assert isinstance(caught, callva_config.ConfigRefused), "and it is still the refusal"
+
+
+async def test_the_specific_case_is_caught_ahead_of_the_general_one(
+    bind_context, refusing_fetch, monkeypatch
+):
+    """Which is ordinary Python, and all that new code has to do differently."""
+    monkeypatch.setenv("CONFIG_URL", "https://platform.test/config")
+    bind_context(FakeContext())
+
+    try:
+        await callva_config.load()
+    except callva_config.ConfigRefused as refused:
+        assert refused.caller_message == "Sorry, this service is unavailable right now."
+    except callva_config.ConfigError:  # pragma: no cover - the ordering is the point
+        raise AssertionError("the refusal must reach its own handler first") from None
+
+
+async def test_a_refusal_is_still_not_a_transport_failure(
+    bind_context, refusing_fetch, monkeypatch
+):
+    """Could not be asked, and was asked and said no, stay two different situations."""
+    monkeypatch.setenv("CONFIG_URL", "https://platform.test/config")
+    bind_context(FakeContext())
+
+    with pytest.raises(callva_config.ConfigRefused):
+        try:
+            await callva_config.load()
+        except transport.FetchError as exc:  # pragma: no cover - the point of the test
+            raise AssertionError("a refusal is not a failure to fetch") from exc

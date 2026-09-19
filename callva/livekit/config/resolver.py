@@ -10,13 +10,10 @@ from urllib.request import url2pathname
 from ..core import env, transport
 from ..core import state as _state
 from ..core.log import logger
+from ..core.transport import ConfigError, ConfigRefused
 from .models import CallConfig
 
 OnError = Literal["terminate", "continue"]
-
-
-class ConfigError(RuntimeError):
-    """Configuration for this call could not be resolved."""
 
 
 def as_path(endpoint: str) -> Path | None:
@@ -65,6 +62,22 @@ async def load(
     When configuration cannot be resolved the call is terminated and the reason logged: an
     agent without its prompt is a broken call either way, and failing quietly hides it.
     Pass ``on_error="continue"`` to receive an empty config instead.
+
+    A responder may also answer no. That raises :class:`ConfigRefused`, which carries the
+    status, an opaque code and whatever the responder wrote for the person on the phone:
+    a refusal is an answer rather than a failure to get one, and flattening it into the
+    unavailable-configuration path would throw the message away. It is a
+    :class:`ConfigError` all the same — an agent that was refused is as short of a prompt
+    as one that could not ask — so a caller handling configuration failing handles this
+    too, and one that wants the specific case catches :class:`ConfigRefused` first.
+
+    ``on_error="continue"`` covers it like anything else: a caller who asked to carry on
+    without configuration carries on, and the refusal is logged.
+
+    Nothing is torn down for a refusal. It may carry a message composed for the person on
+    the phone, and hanging up here would discard the one thing it was sent to deliver. Say
+    whatever it asks and then end the call — ``call.end()`` — which keeps every ending in
+    this package the caller's decision.
     """
     st = _state.state()
 
@@ -109,6 +122,15 @@ async def load(
             api_key=api_key or env.get("CONFIG_API_KEY"),
             timeout=timeout,
         )
+    except ConfigRefused as refusal:
+        if on_error == "continue":
+            # A caller who asked to carry on without configuration is as short of one
+            # here as anywhere else, and said what to do about that.
+            return _fail(st, on_error, f"{endpoint} refused this call: {refusal}")
+        # An answered "no" travels whole. Routing it through the unavailable-configuration
+        # path would flatten it into a log line and lose the code and the message with it.
+        logger.info("%s refused this call: %s", endpoint, refusal)
+        raise
     except transport.FetchError as exc:
         return _fail(st, on_error, f"configuration request to {endpoint} failed: {exc}")
 

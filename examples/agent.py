@@ -18,6 +18,7 @@ import logging
 
 from livekit.agents import Agent, AgentServer, AgentSession, JobContext, cli
 
+from callva.livekit import call as callva_call
 from callva.livekit import config as callva_config
 from callva.livekit import webhook as callva_webhook
 
@@ -38,9 +39,19 @@ server = AgentServer()
 async def entrypoint(ctx: JobContext) -> None:
     await ctx.connect()
 
-    # `continue` keeps this example runnable with no configuration source at all. A real
-    # agent leaves the default, which ends the call when its prompt cannot be resolved.
-    config = await callva_config.load(on_error="continue")
+    # The default: a prompt that cannot be resolved ends the call, because an agent
+    # without one is a broken call either way. With no configuration source set at all
+    # nothing fails — there is simply nothing to resolve — so this example still runs.
+    #
+    # A refusal is the other outcome, and the only one with something to say first.
+    try:
+        config = await callva_config.load()
+    except callva_config.ConfigRefused as refused:
+        await _refuse(ctx, refused)
+        return
+    except callva_config.ConfigError:
+        logging.warning("no configuration for this call; it has already been ended")
+        return
 
     session = AgentSession(
         stt="deepgram/nova-3",
@@ -59,6 +70,23 @@ async def entrypoint(ctx: JobContext) -> None:
     await session.generate_reply(
         instructions=config.greeting or "Greet the caller and ask how you can help."
     )
+
+
+async def _refuse(ctx: JobContext, refused: callva_config.ConfigRefused) -> None:
+    """The endpoint said this call must not go ahead. Say so, then hang up.
+
+    The message is the responder's, not ours, and saying it is the only reason the
+    refusal travels as an object. What the code means is the responder's business too:
+    it is logged and never matched on.
+    """
+    logging.info("refused (%s): %s", refused.reason_code, refused.error)
+
+    if refused.caller_message:
+        session = AgentSession(tts="cartesia/sonic-2")
+        await session.start(agent=Agent(instructions=""), room=ctx.room)
+        await session.say(refused.caller_message)
+
+    await callva_call.end(ctx, reason=refused.reason_code or "the call was refused")
 
 
 if __name__ == "__main__":

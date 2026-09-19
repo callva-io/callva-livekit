@@ -7,12 +7,15 @@ from typing import Any
 
 from ..core import state as _state
 from ..core.log import logger
-from .release import end
+from .release import DURATION, SILENCE, USER, end
 
 AWAY = "away"
 
 JOB_SHUTDOWN = "job_shutdown"
 """The one close reason that means the job is already on its way down."""
+
+PARTICIPANT_DISCONNECTED = "participant_disconnected"
+"""The one close reason that names who ended the call. The rest do not say."""
 
 _DURATION_TASK = "call.duration_task"
 _AWAY_TASK = "call.away_task"
@@ -84,7 +87,12 @@ def _cap_duration(st: _state.CallState, max_duration: float) -> None:
             logger.info("the call reached its limit of %ss", max_duration)
             # Mid-sentence on purpose: the limit is the point, and waiting for the agent
             # to finish would put the cap wherever the agent happened to be.
-            await end(st.ctx, reason=f"the call reached its limit of {max_duration}s", wait=False)
+            await end(
+                st.ctx,
+                reason=f"the call reached its limit of {max_duration}s",
+                wait=False,
+                ended_by=DURATION,
+            )
 
     st.extras[_DURATION_TASK] = asyncio.ensure_future(expire())
 
@@ -97,7 +105,7 @@ def _end_when_away(st: _state.CallState, session: Any) -> None:
         # Held on the call's state: a task nobody holds can be collected before it runs,
         # and this one is the hangup.
         st.extras[_AWAY_TASK] = asyncio.ensure_future(
-            end(st.ctx, reason="the caller went quiet")
+            end(st.ctx, reason="the caller went quiet", ended_by=SILENCE)
         )
 
     session.on("user_state_changed", on_user_state_changed)
@@ -113,7 +121,7 @@ def _end_when_alone(st: _state.CallState) -> None:
             return
         logger.info("%s left, ending the call", getattr(participant, "identity", "someone"))
         st.extras[_ALONE_TASK] = asyncio.ensure_future(
-            end(st.ctx, reason="the caller hung up", wait=False)
+            end(st.ctx, reason="the caller hung up", wait=False, ended_by=USER)
         )
 
     st.extras[_ALONE_HANDLER] = on_participant_disconnected
@@ -133,7 +141,14 @@ def _end_when_closed(st: _state.CallState, session: Any) -> None:
             st.failure = reason
         logger.info("the session closed (%s), ending the call", reason)
         st.extras[_CLOSED_TASK] = asyncio.ensure_future(
-            end(st.ctx, reason=f"the session closed: {reason}", wait=False)
+            end(
+                st.ctx,
+                reason=f"the session closed: {reason}",
+                wait=False,
+                # Only one close reason says who ended the call. The others report
+                # that it closed, not why, and a guess would be worse than silence.
+                ended_by=USER if reason == PARTICIPANT_DISCONNECTED else None,
+            )
         )
 
     session.on("close", on_close)

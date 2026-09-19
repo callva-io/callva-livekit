@@ -292,9 +292,53 @@ provided. Substitution uses the string form at render time.
 
 ### Failure
 
-A failed or non-2xx config request **terminates the call** with the reason logged. An agent
-without its prompt is a broken call either way; failing loudly beats failing quietly. The
-response status and body are logged. Overridable for callers who prefer to continue.
+A failed config request **terminates the call** with the reason logged. An agent without
+its prompt is a broken call either way; failing loudly beats failing quietly. The response
+status and body are logged. Overridable for callers who prefer to continue.
+
+### Refusal
+
+A responder can also answer no — the number is disabled, the balance is spent, too many
+calls are already up. That is not a failed request. It is a completed one whose answer is
+that this call must not go ahead, and it arrives as `ConfigRefused`: a typed object
+carrying the status, the action, the code and the message, not a truncated string in a log
+line.
+
+The body is flat and top-level, with nothing wrapped around it:
+
+```json
+{ "error": "…", "action": "terminate", "reason_code": "…", "caller_message": "…" }
+```
+
+A wrapper key would be one vendor's envelope, and this package knows none. `action` is the
+only field that decides: a body asking for the call to end is a refusal whatever status it
+came with, and one that does not ask is not a refusal however it is spelled. `reason_code`
+is opaque — carried and never matched on, for the same reason `environment` is passed
+through untouched: which codes mean what is the responder's vocabulary, not ours.
+`caller_message` is what the responder composed for the person on the phone, and it is the
+reason a refusal is an object at all. A message compiled, transmitted and then discarded
+was never worth sending.
+
+The body is read on **every** status, and a refusal is raised on the first response and
+never retried. A refusal spelled as a 5xx is still an answer; sitting through the backoff
+would only hammer an endpoint that is already struggling, on a call that was never going
+to proceed.
+
+`ConfigRefused` is a `ConfigError`: an agent that was refused is as short of a prompt as
+one that could not ask, so a caller that already handles configuration failing handles
+this too, and code that wants the difference catches `ConfigRefused` ahead of it. The
+conceptual point — that a refusal is an answer and not a failure to get one — is the
+type's identity and its docstring, and does not need an unrelated base class to make it.
+What it is deliberately *not* is a `FetchError`: a responder that could not be asked and a
+responder that was asked and said no are two situations.
+
+`on_error` covers it exactly as it covers the rest. Asking to continue without
+configuration continues, with the refusal logged; the default raises, which is where a
+caller meets the refusal whole.
+
+Nothing is torn down for it either. The refusal may carry a message meant to be spoken,
+and hanging up here would discard the one thing it was sent to deliver. Say what it asks
+and then end the call, which keeps every ending in this package the caller's decision.
 
 ## 8. Webhooks
 
@@ -310,6 +354,7 @@ reach consumers without a release here.
     "id": "...", "direction": "inbound",
     "from": { "number": "..." }, "to": { "number": "..." },
     "started_at": 0, "ended_at": 0, "duration": 0, "status": "...",
+    "ended_by": "agent",
     "project_id": "...", "tenant_id": "...", "type": "..."
   },
   "agent": {},
@@ -368,6 +413,36 @@ So the outcome is read from the participant's disconnect reason:
 declined are not distinguishable from inside the room and this package does not pretend
 otherwise. The exact SIP code exists only in the error returned to whoever called
 `CreateSIPParticipant` with `wait_until_answered`, which is the platform, not the agent.
+
+### Who ended it
+
+`call.ended_by` is a different question from `call.status`: the status says how the call
+came out, this says who brought it about. A completed call that was cut short by a
+duration limit and one the caller rang off from are the same status and not the same
+event.
+
+| `ended_by` | who decided |
+| --- | --- |
+| `agent` | this side — a tool, a farewell, any `end()` that names nothing else |
+| `user` | the other end hung up or left the room |
+| `silence` | nobody spoke for long enough that the call was ended over it |
+| `duration` | the call reached the limit it was placed under |
+| `no_answer` | nobody ever answered, so nobody ended it |
+
+The package writes only what it can observe on paths it already owns: the pickup path
+knows nobody answered before anything hangs up, the supervisor knows which of its own
+watches fired, and `end()` defaults to the agent because calling it is the agent deciding.
+A session that closed for a reason naming nobody claims nothing — a guess here would be
+worse than silence.
+
+**First writer wins.** An ending has one cause, and the first observer of it is the closest
+to it: by the time a second one notices, what it is seeing is the consequence of the first.
+A caller who drops is reported by the room and then by the session closing, and both are
+right — but only one of them is why.
+
+An ending the package cannot see is the caller's to claim — a transfer, a supervisor
+pulling the call — and the claim takes any word and interprets none of them. The key is on
+every event and null until something claims it, so a consumer has one shape to handle.
 
 ## 9. Recording
 
@@ -448,9 +523,14 @@ the entire product here. LiveKit itself is on SemVer, and this package declares 
 against it, so the schemes match.
 
 The bump follows a rule rather than taste: additive payload fields and fixes are patches,
-anything a receiver could choke on is a minor. In `0.x` the minor is the breaking position —
-`^0.1.0` admits `0.1.x` and not `0.2.0` — so `0.2.0` is not a big release, it is one the
-consumers need to hear about.
+anything a receiver could choke on is a minor. An exception is read the same way as a
+field — a new type that lands under one a caller already catches is additive, and one
+that escapes every handler written against the last release is not.
+
+In `0.x` the minor is the breaking position — `^0.1.0` admits `0.1.x` and not `0.2.0` — so
+`0.2.0` is not a big release, it is one the consumers need to hear about. Which is why it
+is spent deliberately and never as a side effect: a change that can be shaped to land
+under a handler callers already have is shaped that way instead.
 
 ## 13. Later
 

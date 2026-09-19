@@ -7,6 +7,7 @@ from typing import Any
 from ..core import identity as _identity
 from ..core import state as _state
 from ..core.log import logger
+from .release import NO_ANSWER
 
 ANSWER_TIMEOUT = 30.0
 """How long an outbound call may ring before it counts as unanswered."""
@@ -113,6 +114,9 @@ async def await_pickup(
 
         reason = answered["reason"] or "timeout"
         st.unanswered_reason = reason
+        # Nobody ended this call, because nobody was ever on it. This path is the only
+        # one that knows that, and it knows it before anything hangs up.
+        _state.claim_ending(st, NO_ANSWER)
         logger.info("the call was not answered: %s", reason)
         return None
     finally:

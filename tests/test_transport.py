@@ -191,3 +191,120 @@ def test_target_from_a_mapping():
     )
     assert WebhookTarget.from_dict({"url": "   "}) is None
     assert WebhookTarget.from_dict(None) is None
+
+
+# --- A configuration endpoint that says no -----------------------------------
+
+REFUSED = json.dumps(
+    {
+        "error": "This number is disabled.",
+        "action": "terminate",
+        "reason_code": "number_disabled",
+        "caller_message": "Sorry, this number is not in service.",
+    }
+)
+
+
+async def test_a_refusal_is_one_request_and_carries_what_it_said(monkeypatch, no_sleep):
+    """402 and not a cent left. The reason is the whole point of asking."""
+    session = use(monkeypatch, FakeSession(FakeResponse(402, REFUSED)))
+
+    with pytest.raises(transport.ConfigRefused) as raised:
+        await transport.fetch_json("https://example.test/config", payload={})
+
+    refusal = raised.value
+    assert refusal.status == 402
+    assert refusal.action == "terminate"
+    assert refusal.reason_code == "number_disabled"
+    assert refusal.caller_message == "Sorry, this number is not in service."
+    assert refusal.error == "This number is disabled."
+    assert len(session.calls) == 1, "an answer is not a hiccup"
+
+
+async def test_a_refusal_spelled_as_a_server_error_is_still_not_retried(monkeypatch, no_sleep):
+    """Retrying it would hammer an endpoint already struggling, for a call it refused."""
+    session = use(monkeypatch, FakeSession(FakeResponse(503, REFUSED)))
+
+    with pytest.raises(transport.ConfigRefused):
+        await transport.fetch_json("https://example.test/config", payload={})
+
+    assert len(session.calls) == 1
+
+
+async def test_a_refusal_is_not_a_failure_to_fetch(monkeypatch, no_sleep):
+    """The two are different answers, and only one of them has anything to say."""
+    use(monkeypatch, FakeSession(FakeResponse(402, REFUSED)))
+
+    with pytest.raises(transport.ConfigRefused):
+        try:
+            await transport.fetch_json("https://example.test/config", payload={})
+        except transport.FetchError as exc:  # pragma: no cover - the assertion is the point
+            raise AssertionError("a refusal must not arrive as a FetchError") from exc
+
+
+def test_a_refusal_is_a_configuration_error():
+    """So an agent that handles configuration failing needs no new handler for this."""
+    refusal = transport.ConfigRefused(status=402, action="terminate")
+
+    assert isinstance(refusal, transport.ConfigError)
+    assert not isinstance(refusal, transport.FetchError)
+
+
+async def test_a_client_error_that_asks_for_nothing_is_still_a_fetch_error(monkeypatch, no_sleep):
+    session = use(monkeypatch, FakeSession(FakeResponse(422, '{"error": "bad shape"}')))
+
+    with pytest.raises(transport.FetchError, match="422"):
+        await transport.fetch_json("https://example.test/config", payload={})
+
+    assert len(session.calls) == 1
+
+
+async def test_a_server_error_that_asks_for_nothing_is_still_retried(monkeypatch, no_sleep):
+    session = use(
+        monkeypatch,
+        FakeSession(*(FakeResponse(500, '{"error": "down"}') for _ in range(3))),
+    )
+
+    with pytest.raises(transport.FetchError):
+        await transport.fetch_json("https://example.test/config", payload={})
+
+    assert len(session.calls) == 3
+
+
+async def test_an_error_body_that_is_not_json_is_read_no_further(monkeypatch, no_sleep):
+    session = use(monkeypatch, FakeSession(FakeResponse(404, "<html>no such agent</html>")))
+
+    with pytest.raises(transport.FetchError, match="404"):
+        await transport.fetch_json("https://example.test/config", payload={})
+
+    assert len(session.calls) == 1
+
+
+async def test_a_refusal_answered_with_a_good_status_is_still_a_refusal(monkeypatch, no_sleep):
+    """The action decides, not the status: a responder that says no at 200 means it."""
+    use(monkeypatch, FakeSession(FakeResponse(200, REFUSED)))
+
+    with pytest.raises(transport.ConfigRefused):
+        await transport.fetch_json("https://example.test/config", payload={})
+
+
+async def test_a_configuration_is_not_mistaken_for_a_refusal(monkeypatch):
+    body = {"agent": {"prompt": "hello"}, "preset": {"name": "vertex"}}
+    use(monkeypatch, FakeSession(FakeResponse(200, json.dumps(body))))
+
+    assert await transport.fetch_json("https://example.test/config", payload={}) == body
+
+
+def test_only_the_action_makes_a_body_a_refusal():
+    """No wrapper key, and nothing else read: a wrapper would be one vendor's envelope."""
+    assert transport.ConfigRefused.parse({"error": "nope"}, status=402) is None
+    assert transport.ConfigRefused.parse({"action": "continue"}, status=402) is None
+    assert transport.ConfigRefused.parse({"data": {"action": "terminate"}}, status=402) is None
+    assert transport.ConfigRefused.parse("terminate", status=402) is None
+    assert transport.ConfigRefused.parse(None, status=402) is None
+
+    refusal = transport.ConfigRefused.parse({"action": " Terminate "}, status=429)
+    assert refusal is not None
+    assert refusal.action == "terminate"
+    assert refusal.reason_code is None
+    assert refusal.caller_message is None

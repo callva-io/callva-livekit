@@ -363,3 +363,117 @@ async def test_a_call_that_merely_ended_still_completed(bind_context, no_grace):
     await asyncio.sleep(0.05)
 
     assert _service._outcome(st) == "completed"
+
+
+# --- Who ended the call ------------------------------------------------------
+
+
+def ended_by(ctx: FakeContext) -> str | None:
+    return _state.state(ctx).ended_by
+
+
+async def test_the_agent_hanging_up_is_the_agent(bind_context, no_grace):
+    ctx = bind_context(FakeContext())
+
+    await call.end(reason="the agent said goodbye")
+
+    assert ended_by(ctx) == call.AGENT
+
+
+async def test_the_other_end_leaving_owns_the_ending(bind_context, no_grace):
+    ctx = bind_context(FakeContext())
+    participant = FakeParticipant("sip_x")
+    ctx.room.remote_participants["sip_x"] = participant
+
+    call.supervise()
+    ctx.room.emit_participant_disconnected(participant)
+    await asyncio.sleep(0.05)
+
+    assert ended_by(ctx) == call.USER
+
+
+async def test_a_duration_limit_owns_the_ending(bind_context, no_grace):
+    ctx = bind_context(FakeContext())
+
+    call.supervise(max_duration=0.02)
+    await asyncio.sleep(0.1)
+
+    assert ended_by(ctx) == call.DURATION
+
+
+async def test_silence_owns_the_ending(bind_context, no_grace):
+    ctx = bind_context(FakeContext())
+    session = FakeSession()
+
+    call.supervise(session, end_when_away=True)
+    session.go_away()
+    await asyncio.sleep(0.05)
+
+    assert ended_by(ctx) == call.SILENCE
+
+
+async def test_a_call_nobody_answered_was_ended_by_nobody(bind_context):
+    """This path knows it before anything hangs up, which is why it claims it."""
+    ctx = bind_context(outbound(**RINGING))
+
+    await call.await_pickup(timeout=0.05)
+
+    assert ended_by(ctx) == call.NO_ANSWER
+
+
+async def test_the_first_claim_is_the_one_that_stands(bind_context, no_grace):
+    """An ending has one cause, and the first observer is the closest to it."""
+    ctx = bind_context(outbound(**RINGING))
+
+    await call.await_pickup(timeout=0.05)
+    await call.end(reason="nobody picked up", wait=False)
+
+    assert ended_by(ctx) == call.NO_ANSWER, "hanging up afterwards is not the ending"
+
+
+async def test_a_claim_of_its_own_is_the_caller_s_to_make(bind_context, no_grace):
+    """A transfer, a tool, a supervisor pulling the call: not ours to name."""
+    ctx = bind_context(FakeContext())
+
+    assert call.ended_by("transfer") is True
+    assert call.ended_by("agent") is False, "first writer wins"
+
+    await call.end()
+
+    assert _state.state(ctx).ended_by == "transfer"
+
+
+async def test_a_session_closing_for_a_reason_that_names_nobody_claims_nothing(
+    bind_context, no_grace
+):
+    """A guess about who ended it would be worse than saying nothing."""
+    ctx = bind_context(FakeContext())
+    session = FakeSession()
+
+    call.supervise(session, end_when_alone=False)
+    session.close("error")
+    await asyncio.sleep(0.05)
+
+    assert ctx.shutdown_reason is not None
+    assert ended_by(ctx) is None
+
+
+async def test_the_ending_reaches_the_report(bind_context, no_grace):
+    from callva.livekit.webhook import payload as _payload
+
+    ctx = bind_context(FakeContext())
+    await call.end(reason="done")
+
+    body = _payload.build(_state.state(ctx), event=_payload.ENDED, key="k", status="completed")
+
+    assert body["call"]["ended_by"] == call.AGENT
+
+
+async def test_a_report_for_a_call_nobody_ended_says_so(bind_context):
+    from callva.livekit.webhook import payload as _payload
+
+    ctx = bind_context(FakeContext())
+
+    body = _payload.build(_state.state(ctx), event=_payload.ENDED, key="k", status="completed")
+
+    assert body["call"]["ended_by"] is None, "present always, so there is one shape to handle"

@@ -15,6 +15,30 @@ GRACE = 1.0
 
 SPEAKING = "speaking"
 
+AGENT = "agent"
+"""The agent decided: a tool call, a farewell, anything on this side of the call."""
+USER = "user"
+"""The other end decided: they hung up, or their client left the room."""
+SILENCE = "silence"
+"""Nobody said anything for long enough that the call was ended over it."""
+DURATION = "duration"
+"""The call reached the limit it was placed under."""
+NO_ANSWER = "no_answer"
+"""Nobody ever answered, so nobody ended it: it never began."""
+
+
+def ended_by(who: str, ctx: Any = None) -> bool:
+    """Claim who ended this call. ``True`` if the claim was taken.
+
+    The package claims what it can see for itself — a call nobody answered, a duration
+    limit reached, the other end leaving, silence, and its own :func:`end` — and anything
+    else is yours to name: a tool the agent ran, a transfer, a supervisor pulling the
+    call. Claim it before ending the call, and it reaches the report.
+
+    First writer wins, so claiming late over something already claimed does nothing.
+    """
+    return _state.claim_ending(_state.state(ctx), who)
+
 
 async def end(
     ctx: Any = None,
@@ -22,6 +46,7 @@ async def end(
     reason: str = "the agent ended the call",
     session: Any = None,
     wait: bool = True,
+    ended_by: str | None = AGENT,
 ) -> None:
     """Hang up: let the caller go, then end the job.
 
@@ -36,6 +61,11 @@ async def end(
 
     Pass ``wait=False`` to hang up mid-sentence, for a call that is being abandoned rather
     than finished.
+
+    ``ended_by`` is who this hangup is on behalf of, and it reaches the report. The
+    default is the agent, because calling this is the agent deciding; whatever supervises
+    the call passes its own. Pass ``None`` to hang up without claiming the ending, for an
+    ending whose cause is somebody else's to name.
     """
     st = _state.state(ctx)
     ctx = st.ctx
@@ -46,6 +76,9 @@ async def end(
         logger.debug("already ending this call, ignoring: %s", reason)
         return
     st.ending = True
+
+    if ended_by is not None:
+        _state.claim_ending(st, ended_by)
 
     if wait:
         # Read at call time, not bound into the signature, so the module constant can be

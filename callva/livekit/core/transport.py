@@ -29,6 +29,95 @@ class FetchError(RuntimeError):
     """A request for configuration could not be completed."""
 
 
+class ConfigError(RuntimeError):
+    """Configuration for this call could not be resolved.
+
+    Defined here rather than beside :func:`~callva.livekit.config.load` because the
+    refusal below is one of these and is raised from this module. The public name is
+    ``callva.livekit.config.ConfigError``, which is where a caller meets it.
+    """
+
+
+TERMINATE = "terminate"
+"""The one action this package acts on. Anything else is left to whoever reads it."""
+
+
+class ConfigRefused(ConfigError):
+    """A configuration endpoint answered, and the answer was no.
+
+    Not a failure to reach it. The request completed and the responder decided this call
+    must not go ahead — the number is disabled, the balance is spent, too many calls are
+    already up. Which of those it is belongs to the responder's own vocabulary: it travels
+    here as an opaque ``reason_code`` and is never interpreted, exactly as ``environment``
+    is passed through untouched.
+
+    ``caller_message`` is what the responder composed for whoever is on the phone. It is
+    the reason this is an object and not a log line: a message that is compiled,
+    transmitted and then discarded was never worth sending.
+
+    A :class:`ConfigError`, because an agent that was refused has no configuration either
+    and a caller that already handles that handles this. What it is *not* is a
+    :class:`FetchError`: a responder that could not be asked and a responder that was
+    asked and said no are two situations, and only the second one has anything to say.
+    Code that wants the difference catches this ahead of :class:`ConfigError`.
+    """
+
+    def __init__(
+        self,
+        *,
+        status: int,
+        action: str,
+        reason_code: str | None = None,
+        caller_message: str | None = None,
+        error: str | None = None,
+    ) -> None:
+        self.status = status
+        """The HTTP status the refusal arrived with. A refusal is an answer at any of them."""
+        self.action = action
+        """What the responder asked for. ``terminate`` is the one this package acts on."""
+        self.reason_code = reason_code
+        """The responder's machine code for why. Opaque here, and never matched on."""
+        self.caller_message = caller_message
+        """What to say to whoever is on the phone, in the responder's words, if anything."""
+        self.error = error
+        """The responder's own description of the refusal, for a log and for a human."""
+        super().__init__(
+            f"HTTP {status}: {error or caller_message or reason_code or action}"
+        )
+
+    @classmethod
+    def parse(cls, body: Any, *, status: int) -> ConfigRefused | None:
+        """Read a refusal out of a response body, or ``None`` if this is not one.
+
+        The shape is flat and top-level — ``{error, action, reason_code, caller_message}``
+        — with nothing wrapped around it. A wrapper key would be one vendor's envelope,
+        and this package knows none.
+
+        Only ``action`` decides. A body that does not ask for the call to end is not a
+        refusal however it is spelled, and a configuration response has no top-level
+        ``action`` at all.
+        """
+        if not isinstance(body, dict):
+            return None
+
+        action = _text(body.get("action"))
+        if action is None or action.lower() != TERMINATE:
+            return None
+
+        return cls(
+            status=status,
+            action=action.lower(),
+            reason_code=_text(body.get("reason_code")),
+            caller_message=_text(body.get("caller_message")),
+            error=_text(body.get("error")),
+        )
+
+
+def _text(value: Any) -> str | None:
+    """A non-empty string, or nothing at all."""
+    return value.strip() or None if isinstance(value, str) else None
+
+
 @dataclass(frozen=True)
 class WebhookTarget:
     """Where call events go, and what signs them."""
@@ -187,6 +276,14 @@ async def fetch_json(
 
     Raises :class:`FetchError` when every attempt fails or the response is not usable.
     Retries are deliberately short and few because a call is ringing while this runs.
+
+    The body is read on every status, not only on a good one. A responder that refuses a
+    call says why in it, and that reason is the one thing worth having: reducing it to
+    ``HTTP 402: …`` in a log line throws away a message the responder composed for the
+    person on the phone. So a body asking for the call to end raises
+    :class:`ConfigRefused` and is never retried — whatever status it came with. A refusal
+    spelled as a 5xx is still an answer, and sitting through the backoff only hammers an
+    endpoint that is already struggling on a call that was never going to proceed.
     """
     body = json.dumps(payload, ensure_ascii=False, default=str)
     headers = {"Content-Type": "application/json"}
@@ -205,17 +302,30 @@ async def fetch_json(
                     url, data=body.encode("utf-8"), headers=headers, timeout=client_timeout
                 ) as response:
                     text = await response.text()
+                    try:
+                        decoded: Any = json.loads(text) if text.strip() else None
+                        malformed: ValueError | None = None
+                    except ValueError as exc:
+                        decoded, malformed = None, exc
+
+                    refusal = ConfigRefused.parse(decoded, status=response.status)
+                    if refusal is not None:
+                        # Raised, not logged: it carries everything a log line would say,
+                        # and whoever handles it is who decides what the call does next.
+                        raise refusal
+
                     if response.status < 300:
-                        try:
-                            return json.loads(text) if text.strip() else None
-                        except ValueError as exc:
-                            raise FetchError(f"response was not JSON: {exc}") from exc
+                        if malformed is not None:
+                            raise FetchError(
+                                f"response was not JSON: {malformed}"
+                            ) from malformed
+                        return decoded
 
                     last = f"HTTP {response.status}: {text[:500]}"
                     if response.status < 500:
                         raise FetchError(last)
                     logger.warning("config request failed, %s", last)
-            except FetchError:
+            except (FetchError, ConfigRefused):
                 raise
             except asyncio.CancelledError:
                 raise

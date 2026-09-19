@@ -16,9 +16,9 @@ from .identity import (
     resolve_direction,
 )
 from .log import logger
-from .state import CallState, NoJobContext, context, ensure_identity
+from .state import CallState, NoJobContext, claim_ending, context, ensure_identity
 from .state import state as call_state
-from .transport import WebhookTarget, post_json
+from .transport import ConfigError, ConfigRefused, WebhookTarget, post_json
 from .version import __version__
 
 # `state` deliberately stays bound to the submodule: re-exporting the function under that
@@ -31,12 +31,15 @@ __all__ = [
     "OUTBOUND",
     "CallIdentity",
     "CallState",
+    "ConfigError",
+    "ConfigRefused",
     "DispatchEnvelope",
     "NoJobContext",
     "Party",
     "WebhookTarget",
     "__version__",
     "call_state",
+    "claim_ending",
     "context",
     "disconnect_reason_name",
     "ensure_identity",

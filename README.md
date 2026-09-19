@@ -71,6 +71,30 @@ participant's disconnect reason, which cannot tell busy from declined — so thi
 does not claim to either. `rejected` means one of them. The raw signals travel untouched in
 `livekit.sip.callStatus` and `livekit.disconnect_reason`.
 
+`call.ended_by` answers the other question — not how the call came out, but who decided it
+was over. A completed call the caller rang off from and one a duration limit cut short are
+the same status and not the same event.
+
+| `ended_by` | who decided |
+| --- | --- |
+| `agent` | this side — a tool, a farewell, any `end()` that names nothing else |
+| `user` | the other end hung up or left the room |
+| `silence` | nobody spoke for long enough that the call was ended over it |
+| `duration` | the call reached the limit it was placed under |
+| `no_answer` | nobody ever answered, so nobody ended it |
+
+Those five are what the package can see for itself. Anything else that ends a call — a
+transfer, a supervisor pulling it — is yours to claim, and the word is not interpreted:
+
+```python
+callva_call.ended_by("transfer")
+```
+
+First writer wins. An ending has one cause and the first observer is the closest to it, so
+a later claim over one already made does nothing — which is what makes it safe to claim
+from two places that both watch the same hangup. The key is on every event and null until
+something claims it.
+
 ```json
 {
   "event": "call.ended",
@@ -82,7 +106,7 @@ does not claim to either. `rejected` means one of them. The raw signals travel u
     "from": { "number": "+37255512345", "identity": "sip_+37255512345", "name": null },
     "to":   { "number": "+3726001234", "identity": null, "name": null },
     "started_at": 1757599940.5, "ended_at": 1757600000.1, "duration": 59.6,
-    "status": "completed",
+    "status": "completed", "ended_by": "user",
     "project_id": "pr_…", "tenant_id": "tn_…", "type": "outbound_campaign"
   },
   "agent": { "id": "ag_…", "name": "Anna", "…": "the agent block exactly as configured" },
@@ -240,6 +264,47 @@ When configuration cannot be resolved the call is **terminated** and the reason 
 agent without its prompt is a broken call either way. Pass `on_error="continue"` if you
 would rather carry on.
 
+### When the endpoint says no
+
+An endpoint can also refuse the call — the number is disabled, the balance is spent, too
+many calls are already up. That is not a failed request, and it does not arrive as one:
+
+```json
+{ "error": "Balance exhausted.", "action": "terminate",
+  "reason_code": "insufficient_balance",
+  "caller_message": "Sorry, this service is unavailable right now." }
+```
+
+Flat and top-level, with no wrapper around it — a wrapper key would be one vendor's
+envelope, and this package knows none. `action` is what decides: a body asking for the
+call to end is a refusal whatever HTTP status carried it, and it is raised on the first
+response and never retried, because a refusal spelled as a 5xx is still an answer and
+retrying it only hammers an endpoint that is already struggling.
+
+```python
+try:
+    config = await callva_config.load()
+except callva_config.ConfigRefused as refused:
+    if refused.caller_message:
+        await session.generate_reply(instructions=f"Say: {refused.caller_message}")
+    await callva_call.end(reason=refused.reason_code or "refused")
+    return
+```
+
+`reason_code` is carried and never read here — which codes mean what is the responder's
+vocabulary, the same way `environment` is passed through untouched. `caller_message` is
+what the responder wrote for the person on the phone, and is the reason this is an object
+and not a log line.
+
+`ConfigRefused` **is** a `ConfigError`, so an agent that already handles configuration
+failing needs no new handler: an agent that was refused is as short of a prompt as one
+that could not ask. Catching the specific case first, as above, is all new code does
+differently. `on_error="continue"` covers it like anything else — ask to carry on without
+configuration and you carry on, with the refusal logged.
+
+Nothing is hung up for it either: the message is there to be said first, and ending the
+call stays your decision.
+
 Room metadata is deliberately not used as a channel: it is broadcast to every participant
 in the room, so a prompt placed there is readable by any connected client.
 
@@ -299,11 +364,14 @@ still tell which configuration was in force.
 Semantic versioning, and the compatibility promise is about **what a receiver has to
 parse**, not about the size of the diff:
 
-- **0.1.x** — fixes, and fields *added* to a payload. Adding is not breaking: a receiver
-  ignores keys it does not know, and because everything LiveKit produces is nested verbatim,
-  fields the SDK adds arrive without a release here at all.
-- **0.2.0** — anything a receiver could choke on: a field renamed or removed, an event name
-  changed, a header changed, an environment variable renamed, a public function changed.
+- **the patch position** — fixes, and fields *added* to a payload. Adding is not breaking:
+  a receiver ignores keys it does not know, and because everything LiveKit produces is
+  nested verbatim, fields the SDK adds arrive without a release here at all. A new
+  exception type belongs here too when it lands under one a caller already catches.
+- **the minor position** — anything a receiver could choke on: a field renamed or removed,
+  an event name changed, a header changed, an environment variable renamed, a public
+  function changed — an exception that escapes every handler written against the last
+  release included.
 - **1.0.0** — when the contract is worth freezing.
 
 In `0.x` the digits are shifted one place: the middle number is the breaking one, which is

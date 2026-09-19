@@ -107,6 +107,11 @@ def build(
         if st.ended_at and st.started_at
         else None,
         "status": status,
+        # Who decided the call was over — `agent`, `user`, `silence`, `duration` or
+        # `no_answer` — and null while nothing has. `status` says how the call came
+        # out; this says who brought it about, which is a different question and the
+        # one a consumer asks when a completed call was cut short.
+        "ended_by": st.ended_by,
         # Only a call nobody was ever on has one: why it never began.
         "reason": st.unanswered_reason,
     }

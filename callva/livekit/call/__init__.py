@@ -4,18 +4,40 @@ Neither is something the SDK models. ``await_pickup`` tells an outbound call tha
 ringing from one that was answered; ``end`` releases the caller before the job shuts
 down, which is the difference between a call that has ended and one that merely has no
 agent in it.
+
+Every ending this module can see for itself is claimed as it happens — a call nobody
+answered, a duration limit, the other end leaving, silence — and ``ended_by`` lets
+whoever ends a call some other way claim it too. The first claim is the one that stands.
 """
 
 from .pickup import ANSWER_TIMEOUT, await_pickup
-from .release import GRACE, QUIET_TIMEOUT, end, leave_console_when_done, until_quiet
+from .release import (
+    AGENT,
+    DURATION,
+    GRACE,
+    NO_ANSWER,
+    QUIET_TIMEOUT,
+    SILENCE,
+    USER,
+    end,
+    ended_by,
+    leave_console_when_done,
+    until_quiet,
+)
 from .supervise import stop, supervise
 
 __all__ = [
+    "AGENT",
     "ANSWER_TIMEOUT",
+    "DURATION",
     "GRACE",
+    "NO_ANSWER",
     "QUIET_TIMEOUT",
+    "SILENCE",
+    "USER",
     "await_pickup",
     "end",
+    "ended_by",
     "leave_console_when_done",
     "stop",
     "supervise",

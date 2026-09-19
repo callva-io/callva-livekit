@@ -50,6 +50,8 @@ class CallState:
     ended_sent: bool = False
     ending: bool = False
     """Set the moment a hangup is decided, so the second one to decide does nothing."""
+    ended_by: str | None = None
+    """Who decided this call was over. Claimed once; see :func:`claim_ending`."""
     failure: str | None = None
     """What broke a call that was otherwise going fine. Set by the call module."""
     unanswered_reason: str | None = None
@@ -114,6 +116,26 @@ def adopt_call_id(st: CallState, call_id: str) -> bool:
         # file gets here first. Held until it is.
         st.extras["call_id"] = call_id
 
+    return True
+
+
+def claim_ending(st: CallState, who: str) -> bool:
+    """Say who ended this call, and say whether the claim was taken.
+
+    First writer wins. An ending has one cause, and the first observer of it is the
+    closest to it: by the time a second one notices, what it is seeing is the consequence
+    of the first. A call the caller dropped is reported by the room and then by the
+    session closing, and both are right — but only one of them is why.
+
+    Nothing here checks the word against a vocabulary. The five this package writes itself
+    are the ones it can honestly observe; whatever else ended a call is the caller's to
+    name, and naming it is not this package's business.
+    """
+    who = who.strip()
+    if not who or st.ended_by is not None:
+        return False
+
+    st.ended_by = who
     return True
 
 
