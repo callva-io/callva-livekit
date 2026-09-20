@@ -1095,7 +1095,7 @@ wheels = [
 
 [[package]]
 name = "livekit-agents"
-version = "1.8.1"
+version = "1.8.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiofiles" },
@@ -1133,9 +1133,9 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "watchfiles" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/5c/f1/cc1fcbc24da6f90cf38809c5ceafff1a1d1c1527a32431ce9b00e64deb95/livekit_agents-1.8.1.tar.gz", hash = "sha256:9319b4a7cf3891db4c1de9edd98fad4918919beadb2ceff5b3fbd34ae67384b5", size = 2712687, upload-time = "2026-09-10T18:59:30.729Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/12/34/523d759af2d16b2f76dcd2dc3093d8e7306405b78ccf9dbf5852e20511c6/livekit_agents-1.8.2.tar.gz", hash = "sha256:4aff07ff77c398ff23da4c9715b5f0f05c01c37492e660c479643718fc890a49", size = 2732581, upload-time = "2026-09-15T18:13:59.705Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/0e/2c/29419a913c57b863eba93cbb41df2f3e58b57c3d8f790c6f97be81203ef7/livekit_agents-1.8.1-py3-none-any.whl", hash = "sha256:3e9e4e732ecebcf0512d5eec25621a365c3572289d1f136396d8a1c5ea78e2ac", size = 2832498, upload-time = "2026-09-10T18:59:28.67Z" },
+    { url = "https://files.pythonhosted.org/packages/ff/8c/4a3c72a5bd935d5f5a72bedddee500eebb95455044a3e5f50afa35914f1a/livekit_agents-1.8.2-py3-none-any.whl", hash = "sha256:314683e470a1b31d7d8862a8e1162e7f42e3959193daac41eaf707674f413b06", size = 2854670, upload-time = "2026-09-15T18:13:57.512Z" },
 ]
 
 [[package]]
