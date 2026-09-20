@@ -169,6 +169,55 @@ not ended. It waits for the agent to stop speaking first — pass `wait=False` f
 being abandoned rather than finished — and the report and the recording still go out,
 because they belong to the shutdown sequence and a closed room does not interrupt it.
 
+## A call nobody is ending
+
+```python
+callva_call.supervise(
+    session,
+    max_duration=config.agent.max_duration,
+    silence_timeout=config.agent.user_silence_timeout,     # None: the quiet is not watched
+    prompt_phrases=config.agent.prompt_phrases,
+    max_prompt_attempts=config.agent.max_prompt_attempts,
+    call_silence_timeout=config.agent.call_silence_timeout,
+    utter=say_this,                                        # async def say_this(phrase) -> None
+)
+```
+
+A call ends on its own terms or it does not end at all: the caller hangs up and the job stays
+in the room, the line runs on past what anyone meant to pay for, or the other end simply stops
+answering. `supervise` watches for all three and hangs up through `end`, so the caller is
+released and the report still goes out.
+
+The quiet is measured here rather than by the framework's `user_away_timeout`, which is a
+single edge at a fixed timeout that nothing re-arms — no use for counting. After
+`silence_timeout` of nothing said, the caller is reminded with one of `prompt_phrases`, up to
+`max_prompt_attempts` times; when those are spent the call ends `call_silence_timeout` later,
+as `ended_by: silence`, or the conversation simply goes on where you set none.
+
+Two measurements, two kinds of evidence. The **clock** restarts on any sign of life — a
+voice-detected edge either way, any transcript, the agent speaking, a tool landing — because
+what it prevents is talking over somebody. The **count** goes back to zero only on a transcript
+carrying words, interim or final: a cough is not an answer, and one must not buy back a
+reminder. A reminder is held back for a moment in case the caller was only pausing, a tool in
+flight is not quiet, and none of it runs before the caller is on the call or after it has ended.
+
+The reminders belong to an episode of quiet rather than to the call: a caller who answers and
+goes quiet again is reminded again.
+
+This package never speaks. `utter` is your async callable, handed the phrase and returning
+nothing — how a line reaches a particular model is that stack's business. It is waited on for
+at most `PROMPT_GRACE`'s sibling `UTTERANCE_TIMEOUT`, because it is yours and a coroutine that
+never returns would park the watch for the life of the process; giving up on one costs that
+reminder and nothing else. Without a callable at all the timing, the counting and the ending
+still happen; nothing is said, and a line is logged saying so. Every number is yours: no timeout, phrase or attempt count is invented here, and
+the whole of it is inert until `silence_timeout` is set.
+
+`end_when_away=True` is the short version for anyone who wants it — hang up on the framework's
+own away edge, at whatever timeout the session was built with. It is inert on a session built
+with `user_away_timeout=None`, which is what a deployment measuring its own quiet passes, and
+asking for both on one call is warned about: two clocks on one silence, and the framework's
+fixed one wins.
+
 ## When a call goes wrong
 
 ```python

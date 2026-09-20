@@ -8,6 +8,11 @@ agent in it.
 Every ending this module can see for itself is claimed as it happens — a call nobody
 answered, a duration limit, the other end leaving, silence — and ``ended_by`` lets
 whoever ends a call some other way claim it too. The first claim is the one that stands.
+
+Silence is the one of those the framework half-models and this module finishes. ``supervise``
+measures the quiet on its own clock, reminds a caller who has gone quiet with a phrase its
+caller supplies, and ends the call when the reminders run out — none of which the framework's
+single ``user_away_timeout`` edge can express.
 """
 
 from .pickup import ANSWER_TIMEOUT, await_pickup
@@ -24,7 +29,7 @@ from .release import (
     leave_console_when_done,
     until_quiet,
 )
-from .supervise import stop, supervise
+from .supervise import PROMPT_GRACE, stop, supervise
 
 __all__ = [
     "AGENT",
@@ -32,6 +37,7 @@ __all__ = [
     "DURATION",
     "GRACE",
     "NO_ANSWER",
+    "PROMPT_GRACE",
     "QUIET_TIMEOUT",
     "SILENCE",
     "USER",

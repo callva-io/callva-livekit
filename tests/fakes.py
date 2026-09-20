@@ -146,35 +146,92 @@ class FakeReport:
         }
 
 
-class FakeSession:
-    """Enough of an AgentSession to be waited on."""
+class FakeInput:
+    """The session's input side, which says whether the caller can be heard at all."""
 
-    def __init__(self, agent_state: str = "listening") -> None:
+    def __init__(self, audio_enabled: bool = True) -> None:
+        self.audio_enabled = audio_enabled
+
+
+class FakeSession:
+    """Enough of an AgentSession to be waited on and watched.
+
+    Several listeners per event, because that is what the real emitter does and what a call
+    under supervision has: the away watch and the silence watch both want
+    ``user_state_changed``, and a fake that kept one would let a test pass on a session where
+    one of them had been quietly overwritten.
+    """
+
+    def __init__(self, agent_state: str = "listening", audio_enabled: bool = True) -> None:
         self.agent_state = agent_state
-        self.handlers: dict[str, Any] = {}
+        self.input = FakeInput(audio_enabled)
+        self.handlers: dict[str, list[Any]] = {}
 
     def on(self, event: str, handler: Any) -> None:
-        self.handlers[event] = handler
+        self.handlers.setdefault(event, []).append(handler)
 
     def off(self, event: str, handler: Any) -> None:
-        if self.handlers.get(event) is handler:
-            del self.handlers[event]
+        listeners = self.handlers.get(event) or []
+        if handler in listeners:
+            listeners.remove(handler)
+        if not listeners:
+            self.handlers.pop(event, None)
+
+    def emit(self, event: str, payload: Any) -> None:
+        for handler in list(self.handlers.get(event) or []):
+            handler(payload)
 
     def close(self, reason: str = "participant_disconnected") -> None:
-        handler = self.handlers.get("close")
-        if handler:
-            handler(type("Event", (), {"reason": type("R", (), {"value": reason})()})())
+        self.emit("close", type("Event", (), {"reason": type("R", (), {"value": reason})()})())
 
     def go_away(self, state: str = "away") -> None:
-        handler = self.handlers.get("user_state_changed")
-        if handler:
-            handler(type("Event", (), {"old_state": "listening", "new_state": state})())
+        self.emit(
+            "user_state_changed",
+            type("Event", (), {"old_state": "listening", "new_state": state})(),
+        )
+
+    def start_speaking(self) -> None:
+        """The caller opens their mouth, as voice detection reports it."""
+        self.emit(
+            "user_state_changed",
+            type("Event", (), {"old_state": "listening", "new_state": "speaking"})(),
+        )
+
+    def agent_speaks(self) -> None:
+        """The agent starts talking, which is this side of the call making a sound."""
+        self.agent_state = "speaking"
+        self.emit(
+            "agent_state_changed",
+            type("Event", (), {"old_state": "listening", "new_state": "speaking"})(),
+        )
 
     def stop_speaking(self, state: str = "listening") -> None:
         self.agent_state = state
-        handler = self.handlers.get("agent_state_changed")
-        if handler:
-            handler(type("Event", (), {"old_state": "speaking", "new_state": state})())
+        self.emit(
+            "agent_state_changed",
+            type("Event", (), {"old_state": "speaking", "new_state": state})(),
+        )
+
+    def stop_talking(self) -> None:
+        """The caller falls silent again, which is not the same as having gone."""
+        self.emit(
+            "user_state_changed",
+            type("Event", (), {"old_state": "speaking", "new_state": "listening"})(),
+        )
+
+    def transcribe(self, transcript: str = "hello", is_final: bool = True) -> None:
+        """A transcript arrives, which on a missed detection is the only sign of speech."""
+        self.emit(
+            "user_input_transcribed",
+            type("Event", (), {"transcript": transcript, "is_final": is_final})(),
+        )
+
+    def run_tool(self, kind: str = "tool_call_started") -> None:
+        """One end of a tool call, as ``tool_execution_updated`` reports it."""
+        self.emit(
+            "tool_execution_updated",
+            type("Event", (), {"update": type("Update", (), {"type": kind})()})(),
+        )
 
 
 # --- The HTTP side: what a delivery or a configuration fetch talks to ---------
