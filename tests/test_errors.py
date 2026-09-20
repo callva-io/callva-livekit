@@ -100,7 +100,7 @@ async def test_what_this_library_logs_about_the_call_reaches_the_report(
     bind_context(FakeContext())
 
     async def refuse(*_: object, **__: object) -> object:
-        raise transport.FetchError("HTTP 500: upstream is down")
+        raise transport.FetchError("HTTP 500", status=500, body="upstream is down")
 
     monkeypatch.setattr(resolver.transport, "fetch_json", refuse)
 
@@ -109,7 +109,8 @@ async def test_what_this_library_logs_about_the_call_reaches_the_report(
     collected = errors.drain()
 
     assert [e["logger"] for e in collected] == ["callva.livekit"]
-    assert "upstream is down" in collected[0]["message"]
+    assert "HTTP 500" in collected[0]["message"]
+    assert "upstream is down" not in collected[0]["message"]
 
 
 def test_a_call_that_breaks_without_stopping_is_capped():
