@@ -84,10 +84,15 @@ async def load(
     if st.config is not None:
         return st.config
 
+    # A prompt may speak about where this call is being held. The room is the job's, not the
+    # configuration's, so it is read here - the one place that holds both - and handed to
+    # every parse below rather than looked up again inside any of them.
+    room_name = getattr(getattr(st.ctx, "room", None), "name", None)
+
     envelope = st.envelope
 
     if envelope.config is not None:
-        return _store(st, CallConfig.parse(envelope.config, source="metadata"))
+        return _store(st, CallConfig.parse(envelope.config, source="metadata", room_name=room_name))
 
     endpoint = envelope.config_url or url or env.get("CONFIG_URL")
     if not endpoint:
@@ -102,7 +107,7 @@ async def load(
             reason = f"could not read configuration from {path}: {str(exc)[:MAX_QUOTED]}"
             return _fail(st, on_error, reason)
 
-        config = CallConfig.parse(body, source="file")
+        config = CallConfig.parse(body, source="file", room_name=room_name)
         if config.empty:
             return _fail(st, on_error, f"configuration file {path} carried nothing usable")
 
@@ -137,7 +142,7 @@ async def load(
     except transport.FetchError as exc:
         return _fail(st, on_error, f"configuration request to {named} failed: {exc}")
 
-    config = CallConfig.parse(body, source="url")
+    config = CallConfig.parse(body, source="url", room_name=room_name)
     if config.empty:
         return _fail(st, on_error, f"configuration response from {named} carried nothing usable")
 

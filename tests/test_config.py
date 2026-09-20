@@ -551,3 +551,98 @@ async def test_a_refusal_is_still_not_a_transport_failure(
             await callva_config.load()
         except transport.FetchError as exc:  # pragma: no cover - the point of the test
             raise AssertionError("a refusal is not a failure to fetch") from exc
+
+
+# --- the pool a prompt resolves against ------------------------------------
+#
+# The platform compiles a farewell onto every agent that has one and validates it, and no
+# worker has ever spoken one: it is not a line uttered at the end of a call, it is a value an
+# operator writes into their prompt and surrounds with whatever they want done with it. Which
+# makes it a variable, and makes these the tests that it is reachable at all.
+
+
+def pool(payload: Any, room_name: str | None = None) -> dict[str, Any]:
+    return dict(
+        callva_config.CallConfig.parse(payload, source="url", room_name=room_name).variables.items()
+    )
+
+
+def test_the_agents_own_fields_are_reachable_from_its_prompt():
+    config = callva_config.CallConfig.parse(
+        {
+            "agent": {
+                "prompt": "Sign off with: {{ agent.farewell }}",
+                "name": "Anna",
+                "greeting": "Hello there",
+                "farewell": "Thanks for calling, goodbye.",
+            }
+        },
+        source="url",
+    )
+
+    assert config.prompt == "Sign off with: Thanks for calling, goodbye."
+    assert pool({"agent": {"name": "Anna", "greeting": "Hi", "farewell": "Bye"}}) == {
+        "agent.name": "Anna",
+        "agent.greeting": "Hi",
+        "agent.farewell": "Bye",
+    }
+
+
+def test_an_agent_field_nobody_set_is_absent_rather_than_blank():
+    # An unresolved placeholder is meant to stay visible. Resolving it to nothing would put a
+    # hole in the prompt where an operator can see a name.
+    assert pool({"agent": {"name": "Anna", "farewell": None}}) == {"agent.name": "Anna"}
+
+
+def test_the_call_record_is_flattened_into_the_pool():
+    assert pool({"call": {"phone": "+3725550000", "attempt": 2, "id": "c-1"}}) == {
+        "phone": "+3725550000",
+        "attempt": 2,
+        "id": "c-1",
+    }
+
+
+def test_a_nested_call_value_is_not_rendered_into_a_prompt():
+    # One level and no further. A structure rendered into an instruction arrives as text
+    # nobody wrote, in the middle of text somebody did.
+    assert pool({"call": {"phone": "+372", "meta": {"a": 1}, "tags": ["x"], "empty": None}}) == {
+        "phone": "+372"
+    }
+
+
+def test_what_was_sent_for_this_call_beats_what_the_agent_is():
+    # Later wins: the room, then the agent, then who this call is with, then whatever was sent
+    # for this call in particular. A dispatch that overrode a variable meant to.
+    assert pool(
+        {
+            "agent": {
+                "name": "Anna",
+                "farewell": "Bye",
+                "prompt_variables": {"phone": "sent", "agent.farewell": "overridden"},
+            },
+            "call": {"phone": "from the record"},
+        },
+        room_name="room-7",
+    ) == {
+        "room_name": "room-7",
+        "agent.name": "Anna",
+        "agent.farewell": "overridden",
+        "phone": "sent",
+    }
+
+
+def test_the_call_record_beats_the_agent_where_they_collide():
+    assert pool({"agent": {"name": "Anna"}, "call": {"agent.name": "from the record"}}) == {
+        "agent.name": "from the record"
+    }
+
+
+def test_a_prompt_can_say_which_room_this_call_is_in():
+    assert pool({}, room_name="room-7") == {"room_name": "room-7"}
+
+
+def test_a_response_carrying_only_the_room_we_supplied_is_still_empty():
+    # The room's name is this worker's own fact, put into the pool by this worker. A config
+    # holding nothing else is a config holding nothing, and the caller that refuses an empty
+    # one has to keep refusing it.
+    assert callva_config.CallConfig.parse({}, source="url", room_name="room-7").empty

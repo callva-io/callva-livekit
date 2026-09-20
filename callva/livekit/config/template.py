@@ -14,6 +14,18 @@ _MISSING = object()
 
 
 def _lookup(variables: Mapping[str, Any], path: str) -> Any:
+    """Resolve one placeholder's name, by the exact key first and by the path second.
+
+    Both spellings are real and neither can be dropped. A variable sent for this call may be a
+    structure - ``{{ customer.name }}`` reaching into one the platform composed - and that is
+    walked. But a name may also *contain* a dot without being a path: ``agent.farewell`` is one
+    key, written that way because that is what an operator types, and it sits flat in the pool
+    beside every other. The exact key is tried first because it is the more specific match: a
+    name somebody wrote whole is not an accident of punctuation.
+    """
+    if path in variables:
+        return variables[path]
+
     cursor: Any = variables
     for part in path.split("."):
         if not isinstance(cursor, Mapping) or part not in cursor:

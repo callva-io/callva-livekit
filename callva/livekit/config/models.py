@@ -142,19 +142,32 @@ class CallConfig:
     source: str = "none"
     """Where this came from: ``metadata``, ``file``, ``url``, or ``none``."""
 
+    ROOM_NAME = "room_name"
+    """The one pool entry this package supplies rather than receives."""
+
     @property
     def empty(self) -> bool:
-        return not any(
-            (self.prompt, self.greeting, self.variables, self.preset, self.tools, self.extra)
-        )
+        """Whether the responder gave us nothing to run a call on.
+
+        The room's name is not counted. It is a fact about where the call is being held that
+        this worker already had and put into the pool itself, so a configuration holding
+        nothing else is still a configuration holding nothing - and the caller that refuses an
+        empty one has to keep refusing it.
+        """
+        told = {k: v for k, v in self.variables.items() if k != self.ROOM_NAME}
+        return not any((self.prompt, self.greeting, told, self.preset, self.tools, self.extra))
 
     @classmethod
-    def parse(cls, payload: Any, *, source: str) -> CallConfig:
+    def parse(cls, payload: Any, *, source: str, room_name: str | None = None) -> CallConfig:
         """Build a config from a decoded response body. Never raises.
 
         Every value has exactly one home. The prompt, the greeting and the variables belong
         to the agent; the call id belongs to the call; the webhook belongs to the services.
         Nothing is read from two places, so nothing can disagree with itself.
+
+        ``room_name`` is the one value that is not in the body, because it is a fact about
+        where this call is being held rather than about the agent holding it. It is passed in
+        so that a prompt may reach it, and passing nothing leaves it out of the pool.
         """
         if not isinstance(payload, dict):
             return cls(source=source)
@@ -166,8 +179,7 @@ class CallConfig:
         services = payload.get("services")
         services = services if isinstance(services, dict) else {}
 
-        variables = agent_block.get("prompt_variables")
-        variables = Variables(variables) if isinstance(variables, dict) else Variables()
+        variables = Variables(_pool(agent_block, call_block, room_name))
 
         raw_prompt = _text(agent_block.get("prompt"))
         raw_greeting = _text(agent_block.get("greeting"))
@@ -194,6 +206,56 @@ class CallConfig:
 def _text(value: Any) -> str | None:
     """A non-empty string, or nothing at all."""
     return value.strip() or None if isinstance(value, str) else None
+
+
+AGENT_VARIABLES = ("name", "greeting", "farewell")
+"""The agent's own fields a prompt may reach, under ``agent.`` and their own name.
+
+The farewell is the reason this exists. The platform compiles one and validates it, and no
+worker has ever said it: it is not a line anybody is told to utter at the end of a call, it is
+a value an operator writes into their prompt as ``{{agent.farewell}}`` and surrounds with
+whatever they want done with it. The same is true of the greeting and the name, which is why
+the three travel together and why this is a list rather than one field read on its own.
+"""
+
+
+def _pool(
+    agent_block: dict[str, Any], call_block: dict[str, Any], room_name: str | None
+) -> dict[str, Any]:
+    """Everything a prompt's ``{{placeholders}}`` may resolve against, in precedence order.
+
+    Four sources, and the later ones win, which is the order the production worker settled on
+    and the order that makes sense read aloud: where the call is being held, then what the
+    agent is, then who this call is with, then whatever was sent for this call in particular.
+    A dispatch that overrode a variable meant to override it, and the call record it is
+    speaking about is more specific than the agent it is speaking as.
+
+    The call record is flattened one level and no further. It is a flat record, and a nested
+    value rendered into a prompt would arrive as a stringified structure - text nobody wrote,
+    in the middle of an instruction somebody did. A value that is absent is left out rather
+    than resolved to nothing, so an unresolved placeholder still shows up as one instead of
+    quietly becoming an empty space in the prompt.
+    """
+    pool: dict[str, Any] = {}
+
+    if room_name:
+        pool["room_name"] = room_name
+
+    for key in AGENT_VARIABLES:
+        value = agent_block.get(key)
+        if value is not None:
+            pool[f"agent.{key}"] = value
+
+    for key, value in call_block.items():
+        if value is None or isinstance(value, (dict, list)):
+            continue
+        pool[key] = value
+
+    sent = agent_block.get("prompt_variables")
+    if isinstance(sent, dict):
+        pool.update(sent)
+
+    return pool
 
 
 def _block(value: Any) -> dict[str, Any]:
