@@ -9,7 +9,7 @@ from urllib.request import url2pathname
 
 from ..core import env, transport
 from ..core import state as _state
-from ..core.log import logger
+from ..core.log import MAX_QUOTED, logger
 from ..core.transport import ConfigError, ConfigRefused
 from .models import CallConfig
 
@@ -99,7 +99,8 @@ async def load(
         try:
             body = await _read_file(path)
         except (OSError, ValueError) as exc:
-            return _fail(st, on_error, f"could not read configuration from {path}: {exc}")
+            reason = f"could not read configuration from {path}: {str(exc)[:MAX_QUOTED]}"
+            return _fail(st, on_error, reason)
 
         config = CallConfig.parse(body, source="file")
         if config.empty:
@@ -111,7 +112,8 @@ async def load(
     try:
         participant = await st.ctx.wait_for_participant()
     except Exception as exc:
-        return _fail(st, on_error, f"no participant joined, cannot request configuration: {exc}")
+        reason = f"no participant joined, cannot request configuration: {str(exc)[:MAX_QUOTED]}"
+        return _fail(st, on_error, reason)
 
     identity = _state.ensure_identity(st, participant=participant, direction=direction)
     named = transport.endpoint_name(endpoint)
@@ -188,9 +190,17 @@ def _fail(st: _state.CallState, on_error: OnError, reason: str) -> CallConfig:
     container's log, which is where a post-mortem reads it.
 
     A refusal is the exception, and is one on purpose: a responder that answers
-    ``action: terminate`` in the flat shape :class:`ConfigRefused` parses composed that
-    text to be passed on. It is a channel an error page cannot arrive through — a page has
-    no ``action`` — so what travels by it is prose someone wrote about this call.
+    ``action: terminate`` in the flat shape :class:`ConfigRefused` parses is opting into a
+    channel for text it means to have passed on. What that gate is, though, is a shape
+    test on data the other side wrote — a top-level ``action`` that lowercases to
+    ``terminate``, at any status — and a WAF's JSON block page or a 200 with arbitrary
+    prose in ``error`` satisfies it as readily as a platform does. So the refusal's text
+    is bounded where it is quoted rather than trusted for having come that way; anything
+    exceeding :data:`~callva.livekit.core.log.MAX_QUOTED` is cut when the message is built.
+
+    Any other text this did not compose is cut there too, at the point it is copied in —
+    a client error's sentence, an ``OSError``'s. What this package wrote itself is not,
+    because there is nobody else's words in it to bound.
     """
     if on_error == "continue":
         logger.error("%s; continuing without configuration", reason)

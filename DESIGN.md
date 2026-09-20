@@ -479,12 +479,37 @@ never attaches a handler and never configures the root logger. Whatever the host
 configured is what applies.
 
 ERROR is the boundary between this container's log and what leaves it. The error collector
-is an ERROR-level handler, so an ERROR record is delivered to `WEBHOOK_URL` inside
-`call.ended` and everything below it stays here. What a request read off another party —
-an error page, a database message, a stack trace — is therefore logged at WARNING, and the
-ERROR line above it carries the status, the endpoint by name, and nothing either of them
-wrote. `config.resolver._fail` is where that rule is stated and `core.transport.FetchError`
-is where the body is kept instead.
+is an ERROR-level handler on the **root** logger, so every ERROR record the process writes
+— this package's, the SDK's, a plugin's, a model client's — is delivered to `WEBHOOK_URL`
+inside `call.ended`, and everything below it stays here. That makes the report a place
+other people's words arrive in, and three rules follow from it.
+
+**Text this package did not compose is quoted to `core.log.MAX_QUOTED` — 500 characters —
+and no further.** A line another library logged, a responder's refusal, the sentence of an
+exception an SDK raised. What the package composed itself is not cut, because there is
+nobody else's words in it to bound: an endpoint named by `transport.endpoint_name`, a
+status, a count of bytes, a file it was told to read.
+
+**An exception travels as what it was, never as what it said.** `webhook.errors._describe`
+rewrites it as the dotted class, up to `MAX_FRAMES` frames of `module:line in function`,
+and up to `MAX_CAUSES` links of what it was raised from. Its own message is dropped: that
+is where a client library puts an organisation id, a project, a quota, a prompt or a key it
+read back, and every `logger.exception` in this package and in the one that shares its
+namespace says what it was doing in the line above, so the sentence a reader needs is the
+one already kept. `traceback.format_exception` is not used at all — it renders a source
+line per frame by reading this deployment's files off its own disk, and renders each
+filename as an absolute path inside this container.
+
+**A body read off another party is logged at WARNING and reported as its status.** Whole
+into this container's log, which is the only place a post-mortem can read what actually
+answered and therefore not the place to abbreviate it, and never into the ERROR line above
+it. `config.resolver._fail` is where that rule is stated and `core.transport.FetchError` is
+where the body is kept for code still in this process.
+
+What remains is the trade `collect_errors()` makes, and it is deliberate: the *lines* other
+libraries write about this call do travel, bounded and stripped of their machinery. That is
+what the collector is for — what breaks a call is usually not this package — and a
+deployment pointing `WEBHOOK_URL` at a party it does not control is forwarding them.
 
 ## 11. Constraints worth knowing
 

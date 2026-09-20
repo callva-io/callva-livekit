@@ -176,13 +176,34 @@ callva_webhook.collect_errors()     # once, where the worker starts up
 ```
 
 Every error logged anywhere in the process is kept and delivered inside `call.ended`, as
-`errors`, with the traceback where there was one. There is no separate event for a call
-that fell apart: that call still ends and still reports — what was missing was ever saying
-why.
+`errors`. There is no separate event for a call that fell apart: that call still ends and
+still reports — what was missing was ever saying why.
 
 It attaches a handler to the root logger, which is a process-wide thing to do and so is
 asked for rather than assumed. Our own errors are never collected, because a failing
 delivery would report itself forever.
+
+A record carries the logger, the level, the line, and — where something was raised — what
+was raised and where it passed:
+
+```json
+{ "logger": "callva.livekit", "level": "ERROR",
+  "message": "the google stack was asked to open the call and could not",
+  "exception": "google.api_core.exceptions.PermissionDenied\n  at callva.livekit.internal.call.opening:191 in open\n  at google.api_core.grpc_helpers:76 in error_remapped_callable" }
+```
+
+Not the exception's own message and not a rendered traceback. A client library's sentence
+is where an organisation id, a project, a quota or a key it read back ends up, and a
+traceback carries this deployment's absolute container paths and its source lines, read off
+its disk at the moment of the failure. The class and the frames say what failed and roughly
+where, which is the part a reader acts on. The log line itself is kept, because a sentence
+somebody wrote about what went wrong is the reason this exists at all — and cut at 500
+characters, because it is not ours. Anything a library attaches to a record structurally,
+through `extra=`, is not read here at all.
+
+The trade that leaves is worth saying plainly: the lines other libraries write about the
+call do travel. If you point `WEBHOOK_URL` at a party you do not control, that is what you
+are forwarding.
 
 What this package writes into `errors` about a failed configuration request is its own
 account of the failure — `configuration request to https://platform.test/v1/config failed:
@@ -192,6 +213,8 @@ one, and a framework's stack trace is not the second one's to keep. The body is 
 this container's log in full, and carried on the `FetchError` for a caller still holding
 it. The endpoint is named by scheme, host, port and path; userinfo, query and fragment are
 where a key rides, so they are dropped from what is written down and not from what is sent.
+The path is kept, because without it a deployment serving several endpoints from one host
+cannot tell which failed — so do not put a secret in one.
 
 ## Configuration for a call
 

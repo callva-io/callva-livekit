@@ -14,7 +14,7 @@ from urllib.parse import urlsplit, urlunsplit
 import aiohttp
 
 from . import env
-from .log import delivery, logger
+from .log import MAX_QUOTED, delivery, logger
 
 RETRY_DELAYS = (1.0, 4.0, 16.0)
 """Backoff between delivery attempts. Four attempts in total."""
@@ -29,9 +29,10 @@ DEFAULT_CONFIG_TIMEOUT = 10.0
 class FetchError(RuntimeError):
     """A request for configuration could not be completed.
 
-    The message is this package's own account of the failure — ``HTTP 502``, or the name of
-    the client error that stopped the attempt — and never a line of what the responder
-    wrote. It is formatted into a log record at ERROR, which is the level
+    The message is this package's own account of the failure — ``HTTP 502``, the name of
+    the client error that stopped the attempt, or how much unreadable body a good status
+    came back with — and never a line of what the responder wrote. It is formatted into a
+    log record at ERROR, which is the level
     :mod:`callva.livekit.webhook.errors` collects and delivers inside ``call.ended``, and
     the endpoint that answers a configuration request and the endpoint that receives a
     report belong to two different parties as often as to one.
@@ -80,6 +81,12 @@ class ConfigRefused(ConfigError):
     the reason this is an object and not a log line: a message that is compiled,
     transmitted and then discarded was never worth sending.
 
+    Every field here is text the other side wrote, kept whole on the object for the caller
+    that has to act on it. The *message* is the part that travels: it is logged at ERROR
+    by whoever handles the refusal and therefore delivered inside ``call.ended``, so the
+    text it quotes is cut at :data:`~callva.livekit.core.log.MAX_QUOTED`. A responder that
+    sends a megabyte does not get to put a megabyte in somebody else's records.
+
     A :class:`ConfigError`, because an agent that was refused has no configuration either
     and a caller that already handles that handles this. What it is *not* is a
     :class:`FetchError`: a responder that could not be asked and a responder that was
@@ -106,9 +113,8 @@ class ConfigRefused(ConfigError):
         """What to say to whoever is on the phone, in the responder's words, if anything."""
         self.error = error
         """The responder's own description of the refusal, for a log and for a human."""
-        super().__init__(
-            f"HTTP {status}: {error or caller_message or reason_code or action}"
-        )
+        said = error or caller_message or reason_code or action
+        super().__init__(f"HTTP {status}: {said[:MAX_QUOTED]}")
 
     @classmethod
     def parse(cls, body: Any, *, status: int) -> ConfigRefused | None:
@@ -121,6 +127,15 @@ class ConfigRefused(ConfigError):
         Only ``action`` decides. A body that does not ask for the call to end is not a
         refusal however it is spelled, and a configuration response has no top-level
         ``action`` at all.
+
+        What this is, exactly: a shape test on data the other side wrote. It is satisfied
+        by any JSON object with a top-level ``action`` that strips and lowercases to
+        ``terminate``, at any status including a 2xx, and nothing about the responder is
+        authenticated by getting here. So it selects a channel and it does not vouch for
+        what comes down it — a block page that happens to be JSON with that key is a
+        refusal to this parser, and a 200 saying ``terminate`` carries whatever text it
+        likes. Which is why the text it carries is bounded where it is quoted rather than
+        trusted for having arrived.
         """
         if not isinstance(body, dict):
             return None
@@ -143,6 +158,10 @@ def _text(value: Any) -> str | None:
     return value.strip() or None if isinstance(value, str) else None
 
 
+_UNNAMED = "the configuration endpoint"
+"""What an endpoint is called when its URL cannot be reduced to a name safely."""
+
+
 def endpoint_name(url: str) -> str:
     """The endpoint as a name: scheme, host, port and path, and nothing else.
 
@@ -151,16 +170,28 @@ def endpoint_name(url: str) -> str:
     where a key rides — ``?token=…``, ``https://id:secret@host`` — and this string is
     written into records that leave the machine.
 
-    A URL this cannot read is named rather than echoed, for the same reason.
+    The path is kept whole, because without it a deployment serving several endpoints from
+    one host cannot tell which of them failed. HTTP puts credentials in userinfo, in the
+    query and in a header, and those are the three places this drops; a deployment that
+    instead puts a secret in the path — ``/config/<token>`` — is putting it into records
+    that leave here, and should name its endpoints so that it does not.
+
+    A URL this cannot read is named rather than echoed, for the same reason. It degrades
+    on anything at all rather than on a chosen list: both callers work this out before the
+    request they are about to describe, so raising here would take down the call instead
+    of reporting why it could not be configured.
     """
     try:
         parts = urlsplit(url)
         host, port, scheme, path = parts.hostname, parts.port, parts.scheme, parts.path
-    except ValueError:
-        return "the configuration endpoint"
-    if not scheme or not host:
-        return "the configuration endpoint"
-    return urlunsplit((scheme, f"{host}:{port}" if port else host, path, "", ""))
+        if not scheme or not host:
+            return _UNNAMED
+        # hostname strips the brackets an IPv6 literal arrives in, and without them back
+        # the name reads as a different host on a different port and parses as neither.
+        netloc = f"[{host}]" if ":" in host else host
+        return urlunsplit((scheme, f"{netloc}:{port}" if port else netloc, path, "", ""))
+    except Exception:
+        return _UNNAMED
 
 
 @dataclass(frozen=True)
@@ -334,6 +365,11 @@ async def fetch_json(
     nobody: it is whatever the responder's framework prints when something breaks, and this
     machine's log is where it belongs. The failure raised from here carries the status and
     this package's own words — see :class:`FetchError`.
+
+    A good status carrying something that is not JSON is read the same way, and is the
+    commonest way this fails in practice: a session expired and a proxy answered 200 with
+    a login page. It is logged here in full like any other body and reported as the status,
+    the number of bytes and where the decoder stopped.
     """
     body = json.dumps(payload, ensure_ascii=False, default=str)
     headers = {"Content-Type": "application/json"}
@@ -367,24 +403,29 @@ async def fetch_json(
                         # and whoever handles it is who decides what the call does next.
                         raise refusal
 
-                    if response.status < 300:
-                        if malformed is not None:
-                            raise FetchError(
-                                f"response was not JSON: {malformed}",
-                                status=response.status,
-                                body=text,
-                            ) from malformed
+                    if response.status < 300 and malformed is None:
                         return decoded
 
-                    # The body goes into this line and no other. It runs on the package
-                    # logger at WARNING, below the ERROR level the error collector reads,
-                    # so it reaches this machine's log and stops there.
+                    # Whatever came back goes into this line and no other, whole. It runs
+                    # on the package logger at WARNING, below the ERROR level the error
+                    # collector reads, so it reaches this machine's log and stops there —
+                    # and this machine's log is the one place a post-mortem can read what
+                    # the endpoint actually said, so it is not the place to abbreviate it.
                     logger.warning(
-                        "config request to %s answered HTTP %s: %s",
-                        named,
-                        response.status,
-                        text[:500],
+                        "config request to %s answered HTTP %s: %s", named, response.status, text
                     )
+
+                    if response.status < 300:
+                        # A good status carrying something that is not JSON: an SSO login
+                        # page, a proxy's interstitial, a CDN block. The count of bytes and
+                        # where the decoder gave up separate those from a truncated answer,
+                        # and neither is a line of what the page said.
+                        raise FetchError(
+                            f"HTTP {response.status} was not JSON: {len(text)} bytes, {malformed}",
+                            status=response.status,
+                            body=text,
+                        ) from malformed
+
                     last, last_status, last_body = f"HTTP {response.status}", response.status, text
                     if response.status < 500:
                         raise FetchError(last, status=last_status, body=last_body)
