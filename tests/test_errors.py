@@ -1,11 +1,18 @@
 from __future__ import annotations
 
 import logging
+import socket
 
 import pytest
+from fakes import Boom, FakeContext, FakeHttpSession, FakeResponse, use_http
 
-from callva.livekit.core import log
+from callva.livekit import config as callva_config
+from callva.livekit import webhook as callva_webhook
+from callva.livekit.config import resolver
+from callva.livekit.core import log, transport
+from callva.livekit.core.transport import WebhookTarget
 from callva.livekit.webhook import errors
+from callva.livekit.webhook.storage import Storage
 
 
 @pytest.fixture(autouse=True)
@@ -47,8 +54,12 @@ def test_warnings_are_not_errors():
 
 
 def test_the_delivery_path_does_not_report_itself():
-    """A failing delivery logs an error, which would be reported, which would fail..."""
-    logging.getLogger("callva.livekit.webhook").error("could not deliver call.ended")
+    """A failing delivery logs an error, which would be reported, which would fail...
+
+    Through the logger object, never through its name: what the deny list has to hold is
+    the path, and the name it currently goes by is not a second fact to pin.
+    """
+    log.delivery.error("could not deliver call.ended")
 
     assert errors.drain() is None
 
@@ -70,15 +81,34 @@ def test_the_delivery_path_is_the_only_one_of_ours_that_is_silenced():
     ]
 
 
-def test_what_this_library_logs_about_the_call_reaches_the_report():
-    """The two errors the package itself raises about a call, each through its own module."""
-    logging.getLogger("callva.livekit").error("configuration is unavailable; terminating the call")
-    logging.getLogger("callva.livekit.internal").error("the gemini stack could not open the call")
+async def test_what_this_library_logs_about_the_call_reaches_the_report(
+    bind_context, monkeypatch
+):
+    """The configuration that could not be resolved, driven through the resolver itself.
+
+    Logged by a production path and not by a name typed into the test: what the report has
+    to carry is the error this library really raises about a call, and the only evidence
+    that it travels is that the collector holds it after the code that raises it ran.
+
+    The name it arrives under is the package logger, which is the one every module of this
+    library and of the internal distribution that shares the namespace logs on. A reader of
+    ``errors`` is told the path, not the wheel: nothing is decided differently by knowing
+    which distribution shipped the module, and giving the internal one a logger of its own
+    would be a naming scheme with no reader.
+    """
+    bind_context(FakeContext())
+
+    async def refuse(*_: object, **__: object) -> object:
+        raise transport.FetchError("HTTP 500: upstream is down")
+
+    monkeypatch.setattr(resolver.transport, "fetch_json", refuse)
+
+    await callva_config.load(url="https://platform.test/config", on_error="continue")
 
     collected = errors.drain()
 
-    assert len(collected) == 2
-    assert {e["logger"] for e in collected} == {"callva.livekit", "callva.livekit.internal"}
+    assert [e["logger"] for e in collected] == ["callva.livekit"]
+    assert "upstream is down" in collected[0]["message"]
 
 
 def test_a_call_that_breaks_without_stopping_is_capped():
@@ -112,3 +142,125 @@ def test_nothing_is_collected_until_asked():
     logging.getLogger("some.plugin").error("unheard")
 
     assert errors.drain() is None
+
+
+# --- The reporting path cannot report itself ---------------------------------
+#
+# What keeps the loop shut is that the delivery path logs on the one logger ``DENY_PREFIXES``
+# names. A test that reads ``DENY_PREFIXES``, or that logs on that name itself, asserts the
+# deny list and never the connection: a delivery site that reached for the package logger
+# would leave the deny list right, every such test green, and the loop wide open. So every
+# test below installs the real collector, drives a real failure through the real delivery
+# code, and asserts that the collector stayed empty.
+
+TARGET = WebhookTarget(url="https://example.test/hook")
+
+
+async def test_a_rejection_is_not_quoted_back_to_the_endpoint_that_rejected_it(
+    monkeypatch, no_sleep
+):
+    """A 4xx: the receiver understood call.started and refused it, and says why."""
+    use_http(monkeypatch, FakeHttpSession(FakeResponse(422, "unprocessable: unknown call id")))
+
+    assert not await transport.post_json(TARGET, event="call.started", payload={}, key="k")
+    assert errors.drain() is None
+
+
+async def test_a_delivery_that_exhausts_its_retries_reports_nothing(monkeypatch, no_sleep):
+    """A 5xx through all four attempts, which logs once more when it gives up."""
+    use_http(monkeypatch, FakeHttpSession(*(FakeResponse(503, "gateway down") for _ in range(4))))
+
+    assert not await transport.post_json(TARGET, event="call.started", payload={}, key="k")
+    assert errors.drain() is None
+
+
+async def test_a_refused_connection_reports_nothing(monkeypatch, no_sleep):
+    """Nothing is listening: every attempt raises on the way out, and the last one is loud."""
+    refused = ConnectionRefusedError(61, "Connection refused")
+    use_http(monkeypatch, FakeHttpSession(*(Boom(refused) for _ in range(4))))
+
+    assert not await transport.post_json(TARGET, event="call.started", payload={}, key="k")
+    assert errors.drain() is None
+
+
+async def test_a_host_that_does_not_resolve_reports_nothing(monkeypatch, no_sleep):
+    """The endpoint's name is gone, which fails before a socket is ever opened."""
+    unresolved = socket.gaierror(-2, "Name or service not known")
+    use_http(monkeypatch, FakeHttpSession(*(Boom(unresolved) for _ in range(4))))
+
+    assert not await transport.post_json(TARGET, event="call.started", payload={}, key="k")
+    assert errors.drain() is None
+
+
+async def test_a_delivery_that_really_goes_out_and_really_fails_reports_nothing(no_sleep):
+    """The same, with nothing faked: a real client, a real socket, a real refusal.
+
+    The port is bound and released, so the address is routable and nothing is behind it.
+    This is the only one of these that also holds whatever the HTTP client itself logs on
+    the way down, which no deny list of ours covers.
+    """
+    with socket.socket() as probe:
+        probe.bind(("127.0.0.1", 0))
+        port = probe.getsockname()[1]
+
+    target = WebhookTarget(url=f"http://127.0.0.1:{port}/hook")
+
+    assert not await transport.post_json(
+        target, event="call.started", payload={}, key="k", timeout=2.0
+    )
+    assert errors.drain() is None
+
+
+async def test_an_upload_that_fails_reports_nothing(monkeypatch):
+    """The recording and the session report travel by upload, and that path reports too."""
+
+    class Refusing:
+        def put_object(self, **_: object) -> None:
+            raise RuntimeError("AccessDenied: not authorized to perform s3:PutObject")
+
+    monkeypatch.setattr(Storage, "_client", lambda _self: Refusing())
+
+    assert not await Storage(bucket="recordings").put_json("call-1.session.json", {"a": 1})
+    assert errors.drain() is None
+
+
+async def test_an_upload_with_no_client_installed_reports_nothing(monkeypatch):
+    """The other way ``_run`` fails: the [s3] extra was never installed.
+
+    Raised from the patched client rather than left to the real ``import boto3``, so the
+    branch is driven whether or not this environment happens to have boto3.
+    """
+
+    def missing(_self: object) -> object:
+        raise ImportError("No module named 'boto3'")
+
+    monkeypatch.setattr(Storage, "_client", missing)
+
+    assert not await Storage(bucket="recordings").put_json("call-1.session.json", {"a": 1})
+    assert errors.drain() is None
+
+
+async def test_a_rejected_start_does_not_ride_out_inside_the_call_that_ended(
+    bind_context, monkeypatch, no_sleep
+):
+    """The whole loop, end to end, as it was found: one call, two deliveries, one endpoint.
+
+    call.started is rejected with a 422 and the rejection is logged. call.ended is built
+    minutes later out of whatever the collector holds and posted to the same endpoint. If
+    the delivery path's own failure were collected, the body below would carry the text of
+    its own rejection back to the receiver that wrote it.
+    """
+    monkeypatch.setenv("WEBHOOK_URL", "https://example.test/hook")
+    rejected = (FakeResponse(422, "unprocessable: unknown call id") for _ in range(2))
+    session = use_http(monkeypatch, FakeHttpSession(*rejected))
+
+    ctx = bind_context(FakeContext())
+    callva_webhook.attach()
+    for entrypoint in ctx.participant_entrypoints:
+        await entrypoint(ctx, ctx._participant)
+    await callva_webhook.on_session_end(ctx)
+
+    posted = [kwargs["data"].decode("utf-8") for _url, kwargs in session.calls]
+    assert len(posted) == 2, "call.started and call.ended"
+    assert '"errors": null' in posted[1]
+    assert "unprocessable" not in posted[1]

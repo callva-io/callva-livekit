@@ -175,3 +175,54 @@ class FakeSession:
         handler = self.handlers.get("agent_state_changed")
         if handler:
             handler(type("Event", (), {"old_state": "speaking", "new_state": state})())
+
+
+# --- The HTTP side: what a delivery or a configuration fetch talks to ---------
+
+
+class FakeResponse:
+    def __init__(self, status: int, body: str = "") -> None:
+        self.status = status
+        self._body = body
+
+    async def text(self) -> str:
+        return self._body
+
+    async def __aenter__(self) -> FakeResponse:
+        return self
+
+    async def __aexit__(self, *_: object) -> bool:
+        return False
+
+
+class Boom:
+    """A request that fails the way the network fails: on the way out."""
+
+    def __init__(self, error: Exception) -> None:
+        self._error = error
+
+    async def __aenter__(self) -> Any:
+        raise self._error
+
+    async def __aexit__(self, *_: object) -> bool:
+        return False
+
+
+class FakeHttpSession:
+    def __init__(self, *responses: Any) -> None:
+        self._responses = list(responses)
+        self.calls: list[tuple[str, dict[str, Any]]] = []
+
+    def post(self, url: str, **kwargs: Any) -> Any:
+        self.calls.append((url, kwargs))
+        if self._responses:
+            return self._responses.pop(0)
+        return FakeResponse(200)
+
+
+def use_http(monkeypatch: Any, session: FakeHttpSession) -> FakeHttpSession:
+    """Make the transport talk to ``session`` instead of the network."""
+    from callva.livekit.core import transport
+
+    monkeypatch.setattr(transport, "_session", lambda: (session, False))
+    return session

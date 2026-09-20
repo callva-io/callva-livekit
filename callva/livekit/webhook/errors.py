@@ -5,10 +5,12 @@ import threading
 import traceback
 from typing import Any
 
+from ..core.log import delivery
+
 MAX_ERRORS = 100
 """Past this many, a call is broken in a way one more line will not explain."""
 
-DENY_PREFIXES = ("callva.livekit.webhook",)
+DENY_PREFIXES = (delivery.name,)
 """The one path whose errors are not collected: the path that delivers the report.
 
 A failing delivery logs its failure, that failure is collected, and the next report carries
@@ -18,8 +20,11 @@ call, and a call that broke is the thing a report exists to say, so an error fro
 that could not open, a configuration that could not be resolved or a plugin that could not
 be registered travels in ``errors`` like any other.
 
-The prefix is a logger name and not a module path: the reporting path logs on
-:data:`callva.livekit.core.log.delivery`, which is where that name comes from.
+Taken from the logger object rather than spelled again as a string: the deny and the logger
+it denies are one fact, and the copy that is typed out is the copy that drifts. What no
+name can enforce is that the reporting path actually logs on it, which is why
+``tests/test_errors.py`` drives a failing delivery and a failing upload through the real
+code and asserts the collector stayed empty.
 """
 
 

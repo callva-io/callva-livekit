@@ -36,6 +36,17 @@ def ctx() -> FakeContext:
 
 
 @pytest.fixture
+def no_sleep(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Take the backoff out of the retries, for tests that only want the attempts."""
+    from callva.livekit.core import transport
+
+    async def instant(_seconds: float) -> None:
+        return None
+
+    monkeypatch.setattr(transport.asyncio, "sleep", instant)
+
+
+@pytest.fixture
 def bind_context(monkeypatch: pytest.MonkeyPatch) -> Any:
     """Make ``core.state.context()`` resolve to a supplied fake context."""
     from callva.livekit.core import state as state_module

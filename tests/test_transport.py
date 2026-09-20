@@ -3,70 +3,19 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
-from typing import Any
 
 import pytest
+from fakes import Boom, FakeHttpSession, FakeResponse
+from fakes import use_http as use
 
 from callva.livekit.core import transport
 from callva.livekit.core.transport import WebhookTarget
-
-
-class FakeResponse:
-    def __init__(self, status: int, body: str = "") -> None:
-        self.status = status
-        self._body = body
-
-    async def text(self) -> str:
-        return self._body
-
-    async def __aenter__(self) -> FakeResponse:
-        return self
-
-    async def __aexit__(self, *_: object) -> bool:
-        return False
-
-
-class Boom:
-    def __init__(self, error: Exception) -> None:
-        self._error = error
-
-    async def __aenter__(self) -> Any:
-        raise self._error
-
-    async def __aexit__(self, *_: object) -> bool:
-        return False
-
-
-class FakeSession:
-    def __init__(self, *responses: Any) -> None:
-        self._responses = list(responses)
-        self.calls: list[tuple[str, dict[str, Any]]] = []
-
-    def post(self, url: str, **kwargs: Any) -> Any:
-        self.calls.append((url, kwargs))
-        if self._responses:
-            return self._responses.pop(0)
-        return FakeResponse(200)
-
-
-@pytest.fixture
-def no_sleep(monkeypatch: pytest.MonkeyPatch) -> None:
-    async def instant(_seconds: float) -> None:
-        return None
-
-    monkeypatch.setattr(transport.asyncio, "sleep", instant)
-
-
-def use(monkeypatch: pytest.MonkeyPatch, session: FakeSession) -> FakeSession:
-    monkeypatch.setattr(transport, "_session", lambda: (session, False))
-    return session
-
 
 TARGET = WebhookTarget(url="https://example.test/hook", secret="s3cret")
 
 
 async def test_successful_delivery_is_one_request(monkeypatch):
-    session = use(monkeypatch, FakeSession(FakeResponse(200)))
+    session = use(monkeypatch, FakeHttpSession(FakeResponse(200)))
 
     assert await transport.post_json(TARGET, event="call.started", payload={"a": 1}, key="k")
     assert len(session.calls) == 1
@@ -75,7 +24,7 @@ async def test_successful_delivery_is_one_request(monkeypatch):
 async def test_server_errors_are_retried_then_give_up(monkeypatch, no_sleep):
     session = use(
         monkeypatch,
-        FakeSession(*(FakeResponse(503, "nope") for _ in range(4))),
+        FakeHttpSession(*(FakeResponse(503, "nope") for _ in range(4))),
     )
 
     assert not await transport.post_json(TARGET, event="call.ended", payload={}, key="k")
@@ -83,28 +32,29 @@ async def test_server_errors_are_retried_then_give_up(monkeypatch, no_sleep):
 
 
 async def test_a_retry_that_succeeds_stops_there(monkeypatch, no_sleep):
-    session = use(monkeypatch, FakeSession(FakeResponse(500), FakeResponse(200)))
+    session = use(monkeypatch, FakeHttpSession(FakeResponse(500), FakeResponse(200)))
 
     assert await transport.post_json(TARGET, event="call.ended", payload={}, key="k")
     assert len(session.calls) == 2
 
 
 async def test_client_errors_fail_fast(monkeypatch, no_sleep):
-    session = use(monkeypatch, FakeSession(FakeResponse(422, "bad shape")))
+    session = use(monkeypatch, FakeHttpSession(FakeResponse(422, "bad shape")))
 
     assert not await transport.post_json(TARGET, event="call.ended", payload={}, key="k")
     assert len(session.calls) == 1, "a 4xx is a refusal, not a hiccup"
 
 
 async def test_network_errors_are_retried(monkeypatch, no_sleep):
-    session = use(monkeypatch, FakeSession(Boom(OSError("connection reset")), FakeResponse(200)))
+    reset = Boom(OSError("connection reset"))
+    session = use(monkeypatch, FakeHttpSession(reset, FakeResponse(200)))
 
     assert await transport.post_json(TARGET, event="call.started", payload={}, key="k")
     assert len(session.calls) == 2
 
 
 async def test_signature_is_over_timestamp_and_body(monkeypatch):
-    session = use(monkeypatch, FakeSession(FakeResponse(200)))
+    session = use(monkeypatch, FakeHttpSession(FakeResponse(200)))
 
     payload = {"event": "call.started", "id": "k"}
     await transport.post_json(TARGET, event="call.started", payload=payload, key="k")
@@ -124,7 +74,7 @@ async def test_signature_is_over_timestamp_and_body(monkeypatch):
 
 
 async def test_an_unsigned_target_sends_no_signature(monkeypatch):
-    session = use(monkeypatch, FakeSession(FakeResponse(200)))
+    session = use(monkeypatch, FakeHttpSession(FakeResponse(200)))
 
     await transport.post_json(
         WebhookTarget(url="https://example.test/hook"), event="e", payload={}, key="k"
@@ -136,7 +86,7 @@ async def test_an_unsigned_target_sends_no_signature(monkeypatch):
 
 
 async def test_config_fetch_returns_the_decoded_body(monkeypatch):
-    use(monkeypatch, FakeSession(FakeResponse(200, '{"prompt": "hello"}')))
+    use(monkeypatch, FakeHttpSession(FakeResponse(200, '{"prompt": "hello"}')))
 
     assert await transport.fetch_json("https://example.test/config", payload={}) == {
         "prompt": "hello"
@@ -144,7 +94,7 @@ async def test_config_fetch_returns_the_decoded_body(monkeypatch):
 
 
 async def test_config_fetch_gives_up_loudly_on_a_client_error(monkeypatch, no_sleep):
-    session = use(monkeypatch, FakeSession(FakeResponse(404, "no such agent")))
+    session = use(monkeypatch, FakeHttpSession(FakeResponse(404, "no such agent")))
 
     with pytest.raises(transport.FetchError, match="404"):
         await transport.fetch_json("https://example.test/config", payload={})
@@ -153,7 +103,7 @@ async def test_config_fetch_gives_up_loudly_on_a_client_error(monkeypatch, no_sl
 
 
 async def test_config_fetch_retries_server_errors(monkeypatch, no_sleep):
-    session = use(monkeypatch, FakeSession(*(FakeResponse(500) for _ in range(3))))
+    session = use(monkeypatch, FakeHttpSession(*(FakeResponse(500) for _ in range(3))))
 
     with pytest.raises(transport.FetchError):
         await transport.fetch_json("https://example.test/config", payload={})
@@ -162,14 +112,14 @@ async def test_config_fetch_retries_server_errors(monkeypatch, no_sleep):
 
 
 async def test_config_fetch_rejects_a_body_that_is_not_json(monkeypatch, no_sleep):
-    use(monkeypatch, FakeSession(FakeResponse(200, "<html>oops</html>")))
+    use(monkeypatch, FakeHttpSession(FakeResponse(200, "<html>oops</html>")))
 
     with pytest.raises(transport.FetchError, match="not JSON"):
         await transport.fetch_json("https://example.test/config", payload={})
 
 
 async def test_api_key_is_sent_as_a_bearer_token(monkeypatch):
-    session = use(monkeypatch, FakeSession(FakeResponse(200, "{}")))
+    session = use(monkeypatch, FakeHttpSession(FakeResponse(200, "{}")))
 
     await transport.fetch_json("https://example.test/config", payload={}, api_key="abc")
 
@@ -207,7 +157,7 @@ REFUSED = json.dumps(
 
 async def test_a_refusal_is_one_request_and_carries_what_it_said(monkeypatch, no_sleep):
     """402 and not a cent left. The reason is the whole point of asking."""
-    session = use(monkeypatch, FakeSession(FakeResponse(402, REFUSED)))
+    session = use(monkeypatch, FakeHttpSession(FakeResponse(402, REFUSED)))
 
     with pytest.raises(transport.ConfigRefused) as raised:
         await transport.fetch_json("https://example.test/config", payload={})
@@ -223,7 +173,7 @@ async def test_a_refusal_is_one_request_and_carries_what_it_said(monkeypatch, no
 
 async def test_a_refusal_spelled_as_a_server_error_is_still_not_retried(monkeypatch, no_sleep):
     """Retrying it would hammer an endpoint already struggling, for a call it refused."""
-    session = use(monkeypatch, FakeSession(FakeResponse(503, REFUSED)))
+    session = use(monkeypatch, FakeHttpSession(FakeResponse(503, REFUSED)))
 
     with pytest.raises(transport.ConfigRefused):
         await transport.fetch_json("https://example.test/config", payload={})
@@ -233,7 +183,7 @@ async def test_a_refusal_spelled_as_a_server_error_is_still_not_retried(monkeypa
 
 async def test_a_refusal_is_not_a_failure_to_fetch(monkeypatch, no_sleep):
     """The two are different answers, and only one of them has anything to say."""
-    use(monkeypatch, FakeSession(FakeResponse(402, REFUSED)))
+    use(monkeypatch, FakeHttpSession(FakeResponse(402, REFUSED)))
 
     with pytest.raises(transport.ConfigRefused):
         try:
@@ -251,7 +201,7 @@ def test_a_refusal_is_a_configuration_error():
 
 
 async def test_a_client_error_that_asks_for_nothing_is_still_a_fetch_error(monkeypatch, no_sleep):
-    session = use(monkeypatch, FakeSession(FakeResponse(422, '{"error": "bad shape"}')))
+    session = use(monkeypatch, FakeHttpSession(FakeResponse(422, '{"error": "bad shape"}')))
 
     with pytest.raises(transport.FetchError, match="422"):
         await transport.fetch_json("https://example.test/config", payload={})
@@ -262,7 +212,7 @@ async def test_a_client_error_that_asks_for_nothing_is_still_a_fetch_error(monke
 async def test_a_server_error_that_asks_for_nothing_is_still_retried(monkeypatch, no_sleep):
     session = use(
         monkeypatch,
-        FakeSession(*(FakeResponse(500, '{"error": "down"}') for _ in range(3))),
+        FakeHttpSession(*(FakeResponse(500, '{"error": "down"}') for _ in range(3))),
     )
 
     with pytest.raises(transport.FetchError):
@@ -272,7 +222,7 @@ async def test_a_server_error_that_asks_for_nothing_is_still_retried(monkeypatch
 
 
 async def test_an_error_body_that_is_not_json_is_read_no_further(monkeypatch, no_sleep):
-    session = use(monkeypatch, FakeSession(FakeResponse(404, "<html>no such agent</html>")))
+    session = use(monkeypatch, FakeHttpSession(FakeResponse(404, "<html>no such agent</html>")))
 
     with pytest.raises(transport.FetchError, match="404"):
         await transport.fetch_json("https://example.test/config", payload={})
@@ -282,7 +232,7 @@ async def test_an_error_body_that_is_not_json_is_read_no_further(monkeypatch, no
 
 async def test_a_refusal_answered_with_a_good_status_is_still_a_refusal(monkeypatch, no_sleep):
     """The action decides, not the status: a responder that says no at 200 means it."""
-    use(monkeypatch, FakeSession(FakeResponse(200, REFUSED)))
+    use(monkeypatch, FakeHttpSession(FakeResponse(200, REFUSED)))
 
     with pytest.raises(transport.ConfigRefused):
         await transport.fetch_json("https://example.test/config", payload={})
@@ -290,7 +240,7 @@ async def test_a_refusal_answered_with_a_good_status_is_still_a_refusal(monkeypa
 
 async def test_a_configuration_is_not_mistaken_for_a_refusal(monkeypatch):
     body = {"agent": {"prompt": "hello"}, "preset": {"name": "vertex"}}
-    use(monkeypatch, FakeSession(FakeResponse(200, json.dumps(body))))
+    use(monkeypatch, FakeHttpSession(FakeResponse(200, json.dumps(body))))
 
     assert await transport.fetch_json("https://example.test/config", payload={}) == body
 
