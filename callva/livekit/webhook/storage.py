@@ -72,6 +72,18 @@ class Storage:
         return await self._run(upload, key)
 
     async def _run(self, work: Any, what: str) -> bool:
+        """Run one upload, and say whether it happened.
+
+        A failure here is logged on the delivery logger and therefore never collected into
+        ``errors``, which is not the reason the delivery path is denied — an upload failing
+        does not make a report harder to deliver. It is that there is no longer a report to
+        put it in: uploads run after ``call.ended`` was built, which is where the collector
+        is drained, and after it was posted. An error logged here would sit in a buffer that
+        this call never reads again and that the next call in a reused process would report
+        as its own. The caller is told by the ``False`` returned, and acts on it by
+        confirming nothing — a ``call.recording`` that never arrives is what says the
+        objects are not there.
+        """
         try:
             await asyncio.get_running_loop().run_in_executor(None, work)
         except ImportError:

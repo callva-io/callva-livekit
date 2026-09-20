@@ -12,7 +12,7 @@ from fakes import FakeContext, FakeParticipant, FakeReport, envelope_metadata
 from callva.livekit import webhook as callva_webhook
 from callva.livekit.core import state as _state
 from callva.livekit.core.transport import WebhookTarget
-from callva.livekit.webhook import service
+from callva.livekit.webhook import errors, service
 
 
 @pytest.fixture
@@ -358,7 +358,13 @@ async def test_an_upload_that_failed_confirms_nothing(
 async def test_without_storage_the_recording_goes_nowhere_and_says_so(
     bind_context, sent, target, tmp_path, caplog
 ):
-    """No bucket means no audio is kept. The one thing that must not happen is silence."""
+    """No bucket means no audio is kept. The one thing that must not happen is silence.
+
+    Said to the platform and not only to a container log. A call whose audio was lost is a
+    fact about the call, which is what ``errors`` carries, and saying it costs the report
+    nothing: it is decided before the body is built, which is where the collector is
+    drained. The deny that keeps the delivery path quiet is about the delivery path.
+    """
     audio = tmp_path / "audio.ogg"
     audio.write_bytes(b"ogg")
 
@@ -366,13 +372,21 @@ async def test_without_storage_the_recording_goes_nowhere_and_says_so(
     ctx.report = FakeReport(audio_recording_path=audio)
     callva_webhook.attach()
 
-    with caplog.at_level("ERROR"):
-        await live_call(ctx)
-        await callva_webhook.on_session_end(ctx)
+    errors.collect()
+    try:
+        with caplog.at_level("ERROR"):
+            await live_call(ctx)
+            await callva_webhook.on_session_end(ctx)
+    finally:
+        errors.stop()
 
     assert sent[1]["payload"]["recording"] is None
     assert [s["event"] for s in sent] == ["call.started", "call.ended"]
     assert "RECORDING_S3_BUCKET" in caplog.text
+
+    reported = sent[1]["payload"]["errors"]
+    assert reported is not None, "a call that lost its audio reported nothing about it"
+    assert "nowhere to put it" in reported[0]["message"]
 
 
 async def test_no_recording_at_all(bind_context, sent, target):

@@ -9,7 +9,7 @@ from typing import Any
 from ..core import identity as _identity
 from ..core import state as _state
 from ..core import transport
-from ..core.log import delivery
+from ..core.log import delivery, logger
 from ..core.transport import WebhookTarget
 from . import errors as _errors
 from . import payload as _payload
@@ -405,6 +405,13 @@ def _plan_recording(
     alternative — posting the audio in the request body — asks a consumer to accept a
     multi-megabyte upload on the same route as its events, and no consumer of this
     package does.
+
+    That one is logged on the package logger and not on the delivery one, so it travels in
+    ``errors`` and the platform hears about a call whose audio was lost. It is a fact about
+    the call, not a failure of the reporting path: nothing about saying it makes the report
+    that carries it any harder to deliver. It can be said at all because this runs before
+    the body is built, which is where the collector is drained — an upload that fails does
+    so afterwards and has nobody left to tell, which :meth:`Storage._run` is where to read.
     """
     call_id = st.identity.id if st.identity else "unknown"
 
@@ -445,7 +452,7 @@ def _plan_recording(
         return described, upload
 
     if path is not None:
-        delivery.error(
+        logger.error(
             "a recording was made for call %s and there is nowhere to put it: "
             "set RECORDING_S3_BUCKET and its credentials, or this call keeps no audio",
             call_id,
