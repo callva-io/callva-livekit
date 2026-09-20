@@ -21,6 +21,14 @@ MANAGED_ENV = (
     "RECORDING_S3_ACCESS_KEY_ID",
     "RECORDING_S3_SECRET_ACCESS_KEY",
     "RECORDING_S3_PREFIX",
+    # OpenTelemetry's own, which the telemetry module turns on and off by. A developer whose
+    # shell exports a collector would otherwise have every test installing one.
+    "OTEL_EXPORTER_OTLP_ENDPOINT",
+    "OTEL_EXPORTER_OTLP_HEADERS",
+    "OTEL_SERVICE_NAME",
+    "OTEL_SDK_DISABLED",
+    "LIVEKIT_URL",
+    "LIVEKIT_OBSERVABILITY_URL",
 )
 
 
@@ -56,4 +64,3 @@ def bind_context(monkeypatch: pytest.MonkeyPatch) -> Any:
         return context
 
     return bind
-
