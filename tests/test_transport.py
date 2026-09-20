@@ -258,3 +258,25 @@ def test_only_the_action_makes_a_body_a_refusal():
     assert refusal.action == "terminate"
     assert refusal.reason_code is None
     assert refusal.caller_message is None
+
+
+# --- Naming an endpoint in something that will be written down ----------------
+
+
+def test_an_endpoint_is_named_by_the_parts_that_identify_it():
+    """Scheme, host, port and path say which endpoint. The rest is where a key rides."""
+    assert (
+        transport.endpoint_name("https://svc:s3cret@platform.test/v1/config?token=abc#frag")
+        == "https://platform.test/v1/config"
+    )
+    assert transport.endpoint_name("http://10.0.0.4:8080/config") == "http://10.0.0.4:8080/config"
+    assert transport.endpoint_name("https://platform.test") == "https://platform.test"
+
+
+def test_a_url_that_cannot_be_read_is_named_rather_than_echoed():
+    """It is unreadable to us and not to whoever reads the report, so it is not quoted."""
+    named = "the configuration endpoint"
+
+    assert transport.endpoint_name("https://platform.test:not-a-port/config") == named
+    assert transport.endpoint_name("not a url at all") == named
+    assert transport.endpoint_name("") == named

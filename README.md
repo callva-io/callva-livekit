@@ -184,6 +184,15 @@ It attaches a handler to the root logger, which is a process-wide thing to do an
 asked for rather than assumed. Our own errors are never collected, because a failing
 delivery would report itself forever.
 
+What this package writes into `errors` about a failed configuration request is its own
+account of the failure — `configuration request to https://platform.test/v1/config failed:
+HTTP 500` — and not the page the endpoint answered with. The endpoint that serves a
+configuration and the endpoint that receives a report belong to two parties as often as to
+one, and a framework's stack trace is not the second one's to keep. The body is written to
+this container's log in full, and carried on the `FetchError` for a caller still holding
+it. The endpoint is named by scheme, host, port and path; userinfo, query and fragment are
+where a key rides, so they are dropped from what is written down and not from what is sent.
+
 ## Configuration for a call
 
 Configuration reaches the agent through **agent dispatch metadata**, read as

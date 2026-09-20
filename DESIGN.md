@@ -478,6 +478,14 @@ Module-named loggers obtained from `logging.getLogger`. The package never sets a
 never attaches a handler and never configures the root logger. Whatever the host has
 configured is what applies.
 
+ERROR is the boundary between this container's log and what leaves it. The error collector
+is an ERROR-level handler, so an ERROR record is delivered to `WEBHOOK_URL` inside
+`call.ended` and everything below it stays here. What a request read off another party —
+an error page, a database message, a stack trace — is therefore logged at WARNING, and the
+ERROR line above it carries the status, the endpoint by name, and nothing either of them
+wrote. `config.resolver._fail` is where that rule is stated and `core.transport.FetchError`
+is where the body is kept instead.
+
 ## 11. Constraints worth knowing
 
 - **Metadata limits** are server config, not constants: 512 KiB for metadata, 64 KiB for

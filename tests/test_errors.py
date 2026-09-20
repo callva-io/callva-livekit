@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import logging
 import socket
 
@@ -264,3 +265,143 @@ async def test_a_rejected_start_does_not_ride_out_inside_the_call_that_ended(
     assert len(posted) == 2, "call.started and call.ended"
     assert '"errors": null' in posted[1]
     assert "unprocessable" not in posted[1]
+
+
+# --- What the configuration endpoint said stays where it was said -------------
+#
+# A configuration failure is logged at ERROR and therefore delivered inside call.ended, to
+# whatever WEBHOOK_URL the deployment names. That endpoint and the one that serves the
+# configuration are two parties as often as one, so what the report carries about the
+# failure is this package's own account of it. The body is on the exception for code still
+# in this process and in this container's log for the post-mortem, and reaches neither the
+# message nor any other field of the record.
+
+TRACE = (
+    "Traceback (most recent call last):\n"
+    '  File "/srv/config/app/resolver.py", line 88, in resolve\n'
+    "    tenant = Tenant.objects.get(number=number)\n"
+    "django.db.utils.OperationalError: FATAL: password authentication failed "
+    'for user "config_ro" at 10.0.0.4'
+)
+"""What a configuration endpoint answers when its own database is down."""
+
+
+async def test_a_configuration_failure_reports_the_status_and_not_the_page(
+    bind_context, monkeypatch, no_sleep
+):
+    """A real 500 with a real stack trace in it, through the real fetch and the real collector.
+
+    The whole record is searched, not only the message: a body kept anywhere in it — under
+    another key, inside an exception — has left the machine just the same.
+    """
+    use_http(monkeypatch, FakeHttpSession(*(FakeResponse(500, TRACE) for _ in range(3))))
+    bind_context(FakeContext())
+
+    with pytest.raises(callva_config.ConfigError):
+        await callva_config.load(url="https://platform.test/v1/config")
+
+    collected = errors.drain()
+
+    assert [e["message"] for e in collected] == [
+        "configuration request to https://platform.test/v1/config failed: HTTP 500; "
+        "terminating the call"
+    ]
+    assert "Traceback" not in json.dumps(collected)
+    assert "password authentication failed" not in json.dumps(collected)
+
+
+async def test_a_refused_request_reports_the_status_and_not_the_page(
+    bind_context, monkeypatch, no_sleep
+):
+    """The other branch: a 4xx is not retried, and fails from inside the attempt."""
+    use_http(monkeypatch, FakeHttpSession(FakeResponse(403, TRACE)))
+    bind_context(FakeContext())
+
+    await callva_config.load(url="https://platform.test/v1/config", on_error="continue")
+
+    collected = errors.drain()
+
+    assert [e["message"] for e in collected] == [
+        "configuration request to https://platform.test/v1/config failed: HTTP 403; "
+        "continuing without configuration"
+    ]
+    assert "django.db" not in json.dumps(collected)
+
+
+async def test_a_failure_with_no_response_is_named_by_what_stopped_it(
+    bind_context, monkeypatch, no_sleep
+):
+    """Nothing answered, so there is no status to report. A timeout's own text is empty."""
+    use_http(monkeypatch, FakeHttpSession(*(Boom(TimeoutError()) for _ in range(3))))
+    bind_context(FakeContext())
+
+    await callva_config.load(url="https://platform.test/v1/config", on_error="continue")
+
+    collected = errors.drain()
+
+    assert [e["message"] for e in collected] == [
+        "configuration request to https://platform.test/v1/config failed: TimeoutError; "
+        "continuing without configuration"
+    ]
+
+
+async def test_the_endpoint_is_reported_by_name_and_asked_in_full(
+    bind_context, monkeypatch, no_sleep
+):
+    """Which endpoint failed is worth reporting. The key it is asked with is not.
+
+    The request still goes out with everything, which is the point: the parts that carry a
+    secret are dropped from what is written down, not from what is sent.
+    """
+    session = use_http(monkeypatch, FakeHttpSession(FakeResponse(401, "invalid token")))
+    bind_context(FakeContext())
+    url = "https://svc:s3cret@platform.test/v1/config?token=abc123#frag"
+
+    await callva_config.load(url=url, on_error="continue")
+
+    collected = errors.drain()
+
+    assert [e["message"] for e in collected] == [
+        "configuration request to https://platform.test/v1/config failed: HTTP 401; "
+        "continuing without configuration"
+    ]
+    assert "s3cret" not in json.dumps(collected)
+    assert "abc123" not in json.dumps(collected)
+    assert session.calls[0][0] == url
+
+
+async def test_the_container_log_still_carries_what_the_endpoint_said(
+    bind_context, monkeypatch, no_sleep, caplog
+):
+    """The same failure, read from this machine's log: the page is there, whole.
+
+    Two levels, one failure. WARNING is where the body is written and ERROR is where the
+    account of the failure is, and the collector takes only the second — so a post-mortem
+    on this container reads everything and the report reads what it can act on.
+    """
+    use_http(monkeypatch, FakeHttpSession(*(FakeResponse(500, TRACE) for _ in range(3))))
+    bind_context(FakeContext())
+
+    with caplog.at_level(logging.WARNING, logger="callva.livekit"):
+        await callva_config.load(url="https://platform.test/v1/config", on_error="continue")
+
+    warned = [r.getMessage() for r in caplog.records if r.levelno == logging.WARNING]
+
+    assert len(warned) == 3, "one per attempt"
+    assert TRACE in warned[0]
+    assert "HTTP 500" in warned[0]
+    # A single line of it, because the record is searched as JSON and a newline is escaped
+    # there: the whole trace would be "absent" from the dump however plainly it was in it.
+    assert "django.db.utils.OperationalError" not in json.dumps(errors.drain())
+
+
+async def test_the_body_is_on_the_failure_for_code_still_in_this_process(monkeypatch, no_sleep):
+    """Nothing is thrown away. A caller that wants the page holds the exception."""
+    use_http(monkeypatch, FakeHttpSession(*(FakeResponse(503, TRACE) for _ in range(3))))
+
+    with pytest.raises(transport.FetchError) as raised:
+        await transport.fetch_json("https://platform.test/v1/config", payload={})
+
+    assert raised.value.status == 503
+    assert raised.value.body == TRACE
+    assert str(raised.value) == "HTTP 503"

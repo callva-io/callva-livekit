@@ -114,6 +114,7 @@ async def load(
         return _fail(st, on_error, f"no participant joined, cannot request configuration: {exc}")
 
     identity = _state.ensure_identity(st, participant=participant, direction=direction)
+    named = transport.endpoint_name(endpoint)
 
     try:
         body = await transport.fetch_json(
@@ -126,17 +127,17 @@ async def load(
         if on_error == "continue":
             # A caller who asked to carry on without configuration is as short of one
             # here as anywhere else, and said what to do about that.
-            return _fail(st, on_error, f"{endpoint} refused this call: {refusal}")
+            return _fail(st, on_error, f"{named} refused this call: {refusal}")
         # An answered "no" travels whole. Routing it through the unavailable-configuration
         # path would flatten it into a log line and lose the code and the message with it.
-        logger.info("%s refused this call: %s", endpoint, refusal)
+        logger.info("%s refused this call: %s", named, refusal)
         raise
     except transport.FetchError as exc:
-        return _fail(st, on_error, f"configuration request to {endpoint} failed: {exc}")
+        return _fail(st, on_error, f"configuration request to {named} failed: {exc}")
 
     config = CallConfig.parse(body, source="url")
     if config.empty:
-        return _fail(st, on_error, f"configuration response from {endpoint} carried nothing usable")
+        return _fail(st, on_error, f"configuration response from {named} carried nothing usable")
 
     logger.debug("resolved configuration for call %s from %s", identity.id, endpoint)
     return _store(st, config)
@@ -175,6 +176,22 @@ def _store(st: _state.CallState, config: CallConfig) -> CallConfig:
 
 
 def _fail(st: _state.CallState, on_error: OnError, reason: str) -> CallConfig:
+    """Say why configuration is not there, and do what the caller asked about it.
+
+    Both branches log at ERROR, and an ERROR record is what
+    :mod:`callva.livekit.webhook.errors` collects and delivers inside ``call.ended``. So a
+    reason handed here leaves the machine: it carries this package's own account of the
+    failure — which endpoint by name, what status came back, which file could not be read
+    — and never a line the configuration endpoint wrote for itself. The endpoint that
+    serves a configuration and the endpoint that receives a report can be two parties, and
+    one party's stack trace is not the other party's to keep. The whole body is in this
+    container's log, which is where a post-mortem reads it.
+
+    A refusal is the exception, and is one on purpose: a responder that answers
+    ``action: terminate`` in the flat shape :class:`ConfigRefused` parses composed that
+    text to be passed on. It is a channel an error page cannot arrive through — a page has
+    no ``action`` — so what travels by it is prose someone wrote about this call.
+    """
     if on_error == "continue":
         logger.error("%s; continuing without configuration", reason)
         return _store(st, CallConfig(source="none"))

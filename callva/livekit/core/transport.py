@@ -9,6 +9,7 @@ import time
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from typing import Any
+from urllib.parse import urlsplit, urlunsplit
 
 import aiohttp
 
@@ -26,7 +27,31 @@ DEFAULT_CONFIG_TIMEOUT = 10.0
 
 
 class FetchError(RuntimeError):
-    """A request for configuration could not be completed."""
+    """A request for configuration could not be completed.
+
+    The message is this package's own account of the failure — ``HTTP 502``, or the name of
+    the client error that stopped the attempt — and never a line of what the responder
+    wrote. It is formatted into a log record at ERROR, which is the level
+    :mod:`callva.livekit.webhook.errors` collects and delivers inside ``call.ended``, and
+    the endpoint that answers a configuration request and the endpoint that receives a
+    report belong to two different parties as often as to one.
+
+    What the responder wrote is kept whole on :attr:`body`, for code still inside this
+    process, and written to this machine's log by whoever read it.
+    """
+
+    def __init__(
+        self,
+        summary: str,
+        *,
+        status: int | None = None,
+        body: str | None = None,
+    ) -> None:
+        self.status = status
+        """The status the responder answered with, or ``None`` when no response arrived."""
+        self.body = body
+        """What the responder wrote, in full. In-process only: it is not in the message."""
+        super().__init__(summary)
 
 
 class ConfigError(RuntimeError):
@@ -116,6 +141,26 @@ class ConfigRefused(ConfigError):
 def _text(value: Any) -> str | None:
     """A non-empty string, or nothing at all."""
     return value.strip() or None if isinstance(value, str) else None
+
+
+def endpoint_name(url: str) -> str:
+    """The endpoint as a name: scheme, host, port and path, and nothing else.
+
+    Which endpoint was asked is the part of a URL that makes a failure actionable, and
+    those four pieces say it. Userinfo, query and fragment are dropped, because that is
+    where a key rides — ``?token=…``, ``https://id:secret@host`` — and this string is
+    written into records that leave the machine.
+
+    A URL this cannot read is named rather than echoed, for the same reason.
+    """
+    try:
+        parts = urlsplit(url)
+        host, port, scheme, path = parts.hostname, parts.port, parts.scheme, parts.path
+    except ValueError:
+        return "the configuration endpoint"
+    if not scheme or not host:
+        return "the configuration endpoint"
+    return urlunsplit((scheme, f"{host}:{port}" if port else host, path, "", ""))
 
 
 @dataclass(frozen=True)
@@ -284,6 +329,11 @@ async def fetch_json(
     :class:`ConfigRefused` and is never retried — whatever status it came with. A refusal
     spelled as a 5xx is still an answer, and sitting through the backoff only hammers an
     endpoint that is already struggling on a call that was never going to proceed.
+
+    An error body that asks for nothing is read the other way round. It was composed for
+    nobody: it is whatever the responder's framework prints when something breaks, and this
+    machine's log is where it belongs. The failure raised from here carries the status and
+    this package's own words — see :class:`FetchError`.
     """
     body = json.dumps(payload, ensure_ascii=False, default=str)
     headers = {"Content-Type": "application/json"}
@@ -293,7 +343,10 @@ async def fetch_json(
     resolved = timeout or env.get_float("CONFIG_TIMEOUT", DEFAULT_CONFIG_TIMEOUT)
     client_timeout = aiohttp.ClientTimeout(total=resolved or DEFAULT_CONFIG_TIMEOUT)
     attempts = len(CONFIG_RETRY_DELAYS) + 1
+    named = endpoint_name(url)
     last = "no attempt was made"
+    last_status: int | None = None
+    last_body: str | None = None
 
     async with _client() as session:
         for attempt in range(attempts):
@@ -317,23 +370,43 @@ async def fetch_json(
                     if response.status < 300:
                         if malformed is not None:
                             raise FetchError(
-                                f"response was not JSON: {malformed}"
+                                f"response was not JSON: {malformed}",
+                                status=response.status,
+                                body=text,
                             ) from malformed
                         return decoded
 
-                    last = f"HTTP {response.status}: {text[:500]}"
+                    # The body goes into this line and no other. It runs on the package
+                    # logger at WARNING, below the ERROR level the error collector reads,
+                    # so it reaches this machine's log and stops there.
+                    logger.warning(
+                        "config request to %s answered HTTP %s: %s",
+                        named,
+                        response.status,
+                        text[:500],
+                    )
+                    last, last_status, last_body = f"HTTP {response.status}", response.status, text
                     if response.status < 500:
-                        raise FetchError(last)
-                    logger.warning("config request failed, %s", last)
+                        raise FetchError(last, status=last_status, body=last_body)
             except (FetchError, ConfigRefused):
                 raise
             except asyncio.CancelledError:
                 raise
             except Exception as exc:
-                last = str(exc)
-                logger.warning("config request attempt %s failed: %s", attempt + 1, exc)
+                # The class, not the sentence: a timeout's own text is empty, and what a
+                # client error says about the attempt varies by library and version while
+                # the kind of failure — timed out, could not connect, disconnected — is
+                # what a reader acts on. The sentence goes in the line below it.
+                last, last_status, last_body = type(exc).__name__, None, None
+                logger.warning(
+                    "config request to %s, attempt %s, failed: %s: %s",
+                    named,
+                    attempt + 1,
+                    last,
+                    exc,
+                )
 
             if attempt < len(CONFIG_RETRY_DELAYS):
                 await asyncio.sleep(CONFIG_RETRY_DELAYS[attempt])
 
-    raise FetchError(last)
+    raise FetchError(last, status=last_status, body=last_body)
