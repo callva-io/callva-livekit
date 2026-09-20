@@ -33,6 +33,39 @@ jobs:
       - name: Test
         run: uv run pytest tests -q
 
+  # The typed markers, proven by the wheel rather than by the tree. This is a namespace
+  # distribution, so there is no single package root to carry one: PEP 561 wants a marker
+  # in each regular subpackage shipped, and a subpackage added without one is the whole
+  # tree reading as untyped to a consumer with no error anywhere.
+  typed:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          python-version: "3.12"
+
+      - name: Build the wheel
+        run: uv build --wheel
+
+      - name: Every subpackage it ships carries the marker
+        run: |
+          python - <<'PY'
+          import pathlib, sys, zipfile
+
+          wheel = next(pathlib.Path("dist").glob("*.whl"))
+          names = set(zipfile.ZipFile(wheel).namelist())
+          packages = {
+              n.rsplit("/", 1)[0] for n in names if n.endswith("/__init__.py")
+          }
+          missing = sorted(p for p in packages if f"{p}/py.typed" not in names)
+          if missing:
+              sys.exit(f"{wheel} ships no py.typed in: {', '.join(missing)}")
+          print(f"{wheel}: {len(packages)} subpackages, every one marked typed")
+          PY
+
   # The floor declared in pyproject.toml, proven rather than asserted. The SDK surface
   # this package stands on — get_job_context, make_session_report, on_session_end,
   # add_participant_entrypoint — has to hold across the whole declared range.
