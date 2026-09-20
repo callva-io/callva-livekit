@@ -8,8 +8,19 @@ from typing import Any
 MAX_ERRORS = 100
 """Past this many, a call is broken in a way one more line will not explain."""
 
-DENY_PREFIXES = ("callva.livekit",)
-"""Our own errors are not collected: a failing delivery would report itself forever."""
+DENY_PREFIXES = ("callva.livekit.webhook",)
+"""The one path whose errors are not collected: the path that delivers the report.
+
+A failing delivery logs its failure, that failure is collected, and the next report carries
+it to the same endpoint that could not be reached — so the delivery path reports itself
+forever. Nothing else in this library has that shape. Everything else it logs is about the
+call, and a call that broke is the thing a report exists to say, so an error from a stack
+that could not open, a configuration that could not be resolved or a plugin that could not
+be registered travels in ``errors`` like any other.
+
+The prefix is a logger name and not a module path: the reporting path logs on
+:data:`callva.livekit.core.log.delivery`, which is where that name comes from.
+"""
 
 
 class _Collector(logging.Handler):

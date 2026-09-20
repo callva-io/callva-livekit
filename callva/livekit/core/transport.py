@@ -13,7 +13,7 @@ from typing import Any
 import aiohttp
 
 from . import env
-from .log import logger
+from .log import delivery, logger
 
 RETRY_DELAYS = (1.0, 4.0, 16.0)
 """Backoff between delivery attempts. Four attempts in total."""
@@ -213,12 +213,12 @@ async def _deliver(
                     **build_body(),
                 ) as response:
                     if response.status < 300:
-                        logger.debug("delivered %s to %s", event, target.url)
+                        delivery.debug("delivered %s to %s", event, target.url)
                         return True
 
                     text = (await response.text())[:500]
                     if response.status < 500:
-                        logger.error(
+                        delivery.error(
                             "%s rejected with HTTP %s, not retrying: %s",
                             event,
                             response.status,
@@ -226,16 +226,16 @@ async def _deliver(
                         )
                         return False
 
-                    logger.warning("%s failed with HTTP %s: %s", event, response.status, text)
+                    delivery.warning("%s failed with HTTP %s: %s", event, response.status, text)
             except asyncio.CancelledError:
                 raise
             except Exception as exc:
-                logger.warning("%s delivery attempt %s failed: %s", event, attempt + 1, exc)
+                delivery.warning("%s delivery attempt %s failed: %s", event, attempt + 1, exc)
 
             if attempt < len(RETRY_DELAYS):
                 await asyncio.sleep(RETRY_DELAYS[attempt])
 
-    logger.error("%s could not be delivered to %s after %s attempts", event, target.url, attempts)
+    delivery.error("%s could not be delivered to %s after %s attempts", event, target.url, attempts)
     return False
 
 

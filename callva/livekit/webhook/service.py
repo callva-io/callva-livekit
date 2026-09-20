@@ -9,7 +9,7 @@ from typing import Any
 from ..core import identity as _identity
 from ..core import state as _state
 from ..core import transport
-from ..core.log import logger
+from ..core.log import delivery
 from ..core.transport import WebhookTarget
 from . import errors as _errors
 from . import payload as _payload
@@ -73,7 +73,7 @@ def attach(
     st = _state.state()
 
     if st.extras.get(_ATTACHED):
-        logger.debug("webhooks are already attached to this job")
+        delivery.debug("webhooks are already attached to this job")
         return
     st.extras[_ATTACHED] = True
 
@@ -108,7 +108,7 @@ def attach(
         # waiting for a join that already happened.
         st.extras[_STARTED_TASK] = asyncio.create_task(_on_participant(ctx, present))
 
-    logger.debug("call webhooks attached")
+    delivery.debug("call webhooks attached")
 
 
 def _nobody_will_join(ctx: Any) -> bool:
@@ -261,7 +261,7 @@ async def _on_participant(ctx: Any, participant: Any = None) -> None:
         return
 
     if participant is not None and _ringing(participant):
-        logger.debug(
+        delivery.debug(
             "%s is still ringing, holding the start",
             getattr(participant, "identity", "?"),
         )
@@ -277,7 +277,7 @@ async def _on_participant(ctx: Any, participant: Any = None) -> None:
 
     target = resolve_target(st)
     if target is None:
-        logger.debug("no webhook target configured, not sending %s", _payload.STARTED)
+        delivery.debug("no webhook target configured, not sending %s", _payload.STARTED)
         return
 
     key = transport.idempotency_key(st.identity.id, _payload.STARTED)
@@ -345,7 +345,7 @@ async def on_session_end(ctx: Any = None) -> None:
             target, event=_payload.ENDED, payload=body, key=body["id"]
         )
     else:
-        logger.debug("no webhook target configured, not sending %s", _payload.ENDED)
+        delivery.debug("no webhook target configured, not sending %s", _payload.ENDED)
 
     if upload is not None:
         await upload(body, report_dict)
@@ -357,7 +357,7 @@ async def _on_shutdown(ctx: Any, _reason: str = "") -> None:
     if st.ended_sent:
         return
 
-    logger.warning(FALLBACK_WARNING)
+    delivery.warning(FALLBACK_WARNING)
     await on_session_end(ctx)
 
 
@@ -365,13 +365,13 @@ def _session_report(st: _state.CallState) -> tuple[Any, dict[str, Any] | None]:
     try:
         report = st.ctx.make_session_report(st.session)
     except Exception as exc:
-        logger.warning("could not build the session report: %s", exc)
+        delivery.warning("could not build the session report: %s", exc)
         return None, None
 
     try:
         return report, report.to_dict()
     except Exception:
-        logger.warning("could not serialize the session report", exc_info=True)
+        delivery.warning("could not serialize the session report", exc_info=True)
         return report, None
 
 
@@ -445,7 +445,7 @@ def _plan_recording(
         return described, upload
 
     if path is not None:
-        logger.error(
+        delivery.error(
             "a recording was made for call %s and there is nowhere to put it: "
             "set RECORDING_S3_BUCKET and its credentials, or this call keeps no audio",
             call_id,

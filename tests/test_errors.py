@@ -4,6 +4,7 @@ import logging
 
 import pytest
 
+from callva.livekit.core import log
 from callva.livekit.webhook import errors
 
 
@@ -45,11 +46,39 @@ def test_warnings_are_not_errors():
     assert errors.drain() is None
 
 
-def test_our_own_errors_are_not_collected():
+def test_the_delivery_path_does_not_report_itself():
     """A failing delivery logs an error, which would be reported, which would fail..."""
     logging.getLogger("callva.livekit.webhook").error("could not deliver call.ended")
 
     assert errors.drain() is None
+
+
+def test_the_delivery_path_is_the_only_one_of_ours_that_is_silenced():
+    """Every module in this library reports the call except the one delivering the report.
+
+    Asserted through the real loggers rather than against the prefix tuple: reading
+    DENY_PREFIXES here would pass against any value it happened to hold, and the value it
+    held for a year dropped everything below into a container log and nowhere else.
+    """
+    log.logger.error("the stack this call runs on could not be asked how it opens")
+    log.delivery.error("could not deliver call.ended")
+
+    collected = errors.drain()
+
+    assert [e["message"] for e in collected] == [
+        "the stack this call runs on could not be asked how it opens"
+    ]
+
+
+def test_what_this_library_logs_about_the_call_reaches_the_report():
+    """The two errors the package itself raises about a call, each through its own module."""
+    logging.getLogger("callva.livekit").error("configuration is unavailable; terminating the call")
+    logging.getLogger("callva.livekit.internal").error("the gemini stack could not open the call")
+
+    collected = errors.drain()
+
+    assert len(collected) == 2
+    assert {e["logger"] for e in collected} == {"callva.livekit", "callva.livekit.internal"}
 
 
 def test_a_call_that_breaks_without_stopping_is_capped():

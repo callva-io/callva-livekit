@@ -4,7 +4,7 @@ import time
 from typing import Any
 
 from ..core import state as _state
-from ..core.log import logger
+from ..core.log import delivery
 
 DIALING = "call.dialing"
 STARTED = "call.started"
@@ -18,7 +18,7 @@ def _job_dict(job: Any) -> dict[str, Any] | None:
 
         return MessageToDict(job, preserving_proto_field_name=True)
     except Exception:
-        logger.debug("could not serialize the job", exc_info=True)
+        delivery.debug("could not serialize the job", exc_info=True)
         return None
 
 
@@ -60,7 +60,7 @@ def _tags_dict(ctx: Any) -> dict[str, Any] | None:
         outcome = tagger.outcome
         reason = tagger.outcome_reason
     except Exception:
-        logger.debug("could not read session tags", exc_info=True)
+        delivery.debug("could not read session tags", exc_info=True)
         return None
 
     if not tags and not outcome:

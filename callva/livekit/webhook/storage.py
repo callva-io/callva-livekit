@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from ..core import env
-from ..core.log import logger
+from ..core.log import delivery
 
 
 @dataclass(frozen=True)
@@ -75,14 +75,14 @@ class Storage:
         try:
             await asyncio.get_running_loop().run_in_executor(None, work)
         except ImportError:
-            logger.error(
+            delivery.error(
                 "object storage is configured but boto3 is missing; "
                 "install callva-livekit[s3]"
             )
             return False
         except Exception as exc:
-            logger.error("failed to upload %s to %s: %s", what, self.bucket, exc)
+            delivery.error("failed to upload %s to %s: %s", what, self.bucket, exc)
             return False
 
-        logger.debug("uploaded %s to %s", what, self.bucket)
+        delivery.debug("uploaded %s to %s", what, self.bucket)
         return True
