@@ -54,6 +54,26 @@ session and return. This is a ceiling on the pathological case, not a deadline a
 runs against.
 """
 
+Utterance = Callable[[str | None], Awaitable[None]]
+"""What :func:`supervise` is given to say a reminder with, and the two cases it is called in.
+
+A phrase in and nothing out, and the phrase is one of two things.
+
+It is one of the operator's ``prompt_phrases`` wherever they wrote any: their words, picked
+from their list by the watch, to be put in the caller's ear however the implementation puts
+words in a caller's ear.
+
+It is ``None`` wherever they wrote none — and ``None`` does not mean say nothing. It means
+nothing was written for this reminder, so say something suitable yourself. An operator who
+switched reminders on and never sat down to compose a sentence still meant the caller to be
+asked whether they are there, and this package will not answer that by inventing a sentence:
+it has no idea what language the call is being held in or what the agent has been saying, and
+whoever is on the far side of this callable does.
+
+Both cases have to be handled. A reminder is due either way, the attempt is spent either way,
+and the call ends the same way afterwards.
+"""
+
 _DURATION_TASK = "call.duration_task"
 _AWAY_TASK = "call.away_task"
 _CLOSED_TASK = "call.closed_task"
@@ -75,7 +95,7 @@ def supervise(
     prompt_phrases: Sequence[str] = (),
     max_prompt_attempts: int | None = None,
     call_silence_timeout: float | None = None,
-    utter: Callable[[str], Awaitable[None]] | None = None,
+    utter: Utterance | None = None,
 ) -> None:
     """Watch a call in progress and end it when it should not go on.
 
@@ -104,6 +124,10 @@ def supervise(
     deployment that wants the second passes ``user_away_timeout=None`` to its session and
     leaves ``end_when_away`` alone — see :func:`_end_when_quiet` for why the two clocks must
     not both run.
+
+    ``utter`` is how a reminder is said, and it is called with one of ``prompt_phrases`` or
+    with ``None`` where none was written — both cases, and :data:`Utterance` is where what
+    they mean is written down.
     """
     st = _state.state(ctx)
     session = session or st.session
@@ -306,7 +330,7 @@ def _end_when_quiet(
     phrases: list[str],
     attempts: int,
     call_silence_timeout: float | None,
-    utter: Callable[[str], Awaitable[None]] | None,
+    utter: Utterance | None,
 ) -> None:
     """Measure the quiet by our own clock: remind the caller, then end the call.
 
@@ -345,23 +369,14 @@ def _end_when_quiet(
 
     **Nothing here is invented.** No timeout, no phrase, no number of attempts. An operator who
     configured none of it is never reached at all, because ``silence_timeout=None`` leaves this
-    unarmed; one who asked for reminders and wrote no phrase gets no reminder and a line saying
-    so, rather than a phrase this package chose for their agent to say.
+    unarmed; one who asked for reminders and wrote no phrase is reminded with ``None``, which is
+    this package saying that nothing was written rather than choosing words to fill the gap —
+    see :data:`Utterance`. What is composed from that, in what language, is decided on the far
+    side of the callable and never learnt here.
     """
-    voice = utter if (phrases and utter is not None) else None
-    if attempts and not phrases:
-        # Error, which is the floor the collector behind ``call.ended`` reads and so the only
-        # level that reaches the report. That is where this belongs: the phrases are the
-        # operator's own configuration, they are the only one who can write some, and a caller
-        # who hears nothing is the consequence of their agent as they set it up.
-        logger.error(
-            "%s reminders are configured for a caller who goes quiet and no phrase was written "
-            "for them, so nothing is said; the attempts are still counted and the call still ends",
-            attempts,
-        )
-    elif attempts and voice is None:
-        # Warning, and the outcome being the same as above does not make the level the same.
-        # The test is whether the operator can act on it, and this is the one line about a
+    if attempts and utter is None:
+        # Warning and not error, though a caller who hears nothing is the same silence either
+        # way. The test is whether the operator can act on it, and this is the one line about a
         # quiet caller where they cannot: nobody passed a callable, which is how the worker
         # around this package was assembled and nothing an agent's configuration reaches. The
         # neighbouring lines about a stack that cannot speak *are* at error, because a preset
@@ -375,9 +390,12 @@ def _end_when_quiet(
         )
 
     logger.debug(
-        "watching this call for quiet: %ss, %s reminder(s), then %s",
+        "watching this call for quiet: %ss, %s reminder(s) %s, then %s",
         silence_timeout,
         attempts,
+        f"drawn from {len(phrases)} phrase(s)"
+        if phrases
+        else "with no phrase written for them",
         f"ending it {call_silence_timeout}s later"
         if call_silence_timeout is not None
         else "letting the conversation go on",
@@ -510,7 +528,7 @@ def _end_when_quiet(
         if st.ending:
             return
         used += 1
-        if voice is None:
+        if utter is None:
             # Counted and not spoken, and the line says which. A reminder nobody hears buys no
             # more of the caller's attention than no reminder at all, so the count is the same;
             # a log line claiming the caller was reminded would be the one thing this may not do.
@@ -528,10 +546,15 @@ def _end_when_quiet(
                 attempts,
             )
             try:
+                # One of the operator's phrases, or ``None`` where they wrote none — which is
+                # this package saying nothing was written rather than choosing a phrase. See
+                # :data:`Utterance`.
+                #
                 # Bounded because it is foreign: see :data:`UTTERANCE_TIMEOUT`. Neither ending
                 # below is worth the call — a caller who hears nothing is no more present for
                 # it, and the attempt is spent either way, because it was made.
-                await asyncio.wait_for(voice(random.choice(phrases)), UTTERANCE_TIMEOUT)
+                chosen = random.choice(phrases) if phrases else None
+                await asyncio.wait_for(utter(chosen), UTTERANCE_TIMEOUT)
             except asyncio.TimeoutError:
                 # Caught before the clause below, which would otherwise take it: on 3.11 and
                 # after, ``asyncio.TimeoutError`` is the builtin one and an ordinary exception.

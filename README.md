@@ -179,7 +179,7 @@ callva_call.supervise(
     prompt_phrases=config.agent.prompt_phrases,
     max_prompt_attempts=config.agent.max_prompt_attempts,
     call_silence_timeout=config.agent.call_silence_timeout,
-    utter=say_this,                                        # async def say_this(phrase) -> None
+    utter=say_this,                                        # async def say_this(phrase: str | None)
 )
 ```
 
@@ -209,8 +209,14 @@ nothing — how a line reaches a particular model is that stack's business. It i
 at most `PROMPT_GRACE`'s sibling `UTTERANCE_TIMEOUT`, because it is yours and a coroutine that
 never returns would park the watch for the life of the process; giving up on one costs that
 reminder and nothing else. Without a callable at all the timing, the counting and the ending
-still happen; nothing is said, and a line is logged saying so. Every number is yours: no timeout, phrase or attempt count is invented here, and
-the whole of it is inert until `silence_timeout` is set.
+still happen; nothing is said, and a line is logged saying so.
+
+**It is called with `None` where no phrase was written**, and that is an ask like any other:
+nothing was written for this reminder, so say something suitable yourself. Handle both cases —
+an operator who switched reminders on and never composed a sentence still meant the caller to
+be checked on, and this package will not answer that by inventing one, in a language of its own
+choosing, for somebody else's agent to say. Every number is yours too: no timeout, phrase or
+attempt count is invented here, and the whole of it is inert until `silence_timeout` is set.
 
 `end_when_away=True` is the short version for anyone who wants it — hang up on the framework's
 own away edge, at whatever timeout the session was built with. It is inert on a session built

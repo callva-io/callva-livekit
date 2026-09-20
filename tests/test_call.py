@@ -500,13 +500,18 @@ class Voice:
 
     A plain async callable, which is the whole contract: a phrase in, nothing out. The package
     never speaks, and what is under test is that it asks.
+
+    ``None`` is recorded rather than dropped, because it is an ask like any other: it is the
+    package saying that the operator wrote no phrase for this reminder, and whatever is on this
+    side of the callable is expected to find words of its own. A fake that swallowed it would
+    pass for a package that never asked at all.
     """
 
     def __init__(self, raises: Exception | None = None) -> None:
-        self.said: list[str] = []
+        self.said: list[str | None] = []
         self._raises = raises
 
-    async def __call__(self, phrase: str) -> None:
+    async def __call__(self, phrase: str | None) -> None:
         self.said.append(phrase)
         if self._raises is not None:
             raise self._raises
@@ -601,15 +606,18 @@ async def test_the_phrase_comes_from_the_operator_and_is_one_of_theirs(
     assert voice.said and set(voice.said) <= {"hello?", "can you hear me?"}
 
 
-async def test_reminders_configured_with_no_phrase_say_nothing_and_say_so(
+async def test_reminders_configured_with_no_phrase_are_uttered_with_nothing(
     bind_context, no_grace, brisk, caplog
 ):
-    """The production worker substitutes a phrase of its own here. This one may not.
+    """The reminder still happens, and this package still chooses no words for it.
 
-    An operator who asked for two reminders and wrote no words for them configured something
-    that cannot happen, and a phrase invented here would be this package putting words in
-    their agent's mouth. The attempts are still spent and the call still ends, because that is
-    what was configured; what does not happen is the speaking.
+    An operator who asked for two reminders and wrote none of the words is not an operator who
+    asked for silence — they asked for the caller to be checked on. What this package may not
+    do is answer that by inventing a sentence: it would be words of its own, in a language of
+    its own choosing, in their agent's mouth. So the ask goes out carrying ``None``, which says
+    that nothing was written, and whoever is doing the speaking answers for what is said.
+
+    Nothing about this is an error. It is a configuration that works.
     """
     ctx = bind_context(FakeContext())
 
@@ -623,10 +631,37 @@ async def test_reminders_configured_with_no_phrase_say_nothing_and_say_so(
         )
         await asyncio.sleep(0.6)
 
-    assert voice.said == []
+    assert voice.said == [None, None], "the reminders were not asked for, or words were invented"
     assert ctx.deleted_room is True
-    said = [r.getMessage() for r in caplog.records if r.levelno >= logging.ERROR]
-    assert len(said) == 1 and "no phrase" in said[0]
+    assert [r.getMessage() for r in caplog.records if r.levelno >= logging.WARNING] == []
+
+
+async def test_a_second_episode_of_quiet_is_asked_for_again_with_nothing_written(
+    bind_context, no_grace, brisk
+):
+    """The reminders belong to an episode, and nothing about that turns on having phrases.
+
+    A caller who answers and goes quiet again gets the whole set back. With no phrase written
+    that is the same set of asks, each one carrying ``None`` — so whatever composes the words
+    is asked again rather than once per call.
+    """
+    ctx = bind_context(FakeContext())
+    session = FakeSession()
+
+    voice = watch(
+        ctx,
+        session,
+        silence_timeout=0.05,
+        max_prompt_attempts=1,
+        call_silence_timeout=10.0,
+    )
+    await asyncio.sleep(0.15)
+    assert voice.said == [None], "the first reminder never happened"
+
+    session.transcribe("still here", is_final=True)
+    await asyncio.sleep(0.2)
+
+    assert voice.said == [None, None], "the caller answering did not give the reminder back"
 
 
 async def test_reminders_with_nothing_to_utter_them_are_still_counted_and_still_end(
