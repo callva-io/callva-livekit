@@ -130,13 +130,15 @@ async def _report_dialing(ctx: Any, st: _state.CallState, participant: Any) -> N
         return
     st.extras[_DIALING_SENT] = True
 
-    _state.ensure_identity(st, participant=participant, direction=st.extras.get("direction"))
+    identity = _state.ensure_identity(
+        st, participant=participant, direction=st.extras.get("direction")
+    )
 
     target = resolve_target(st)
     if target is None:
         return
 
-    key = transport.idempotency_key(st.identity.id, _payload.DIALING)
+    key = transport.idempotency_key(identity.id, _payload.DIALING)
     body = _payload.build(
         st,
         event=_payload.DIALING,
@@ -273,14 +275,16 @@ async def _on_participant(ctx: Any, participant: Any = None) -> None:
     st.started_at = time.time()
     st.extras[_PARTICIPANT] = participant
 
-    _state.ensure_identity(st, participant=participant, direction=st.extras.get("direction"))
+    identity = _state.ensure_identity(
+        st, participant=participant, direction=st.extras.get("direction")
+    )
 
     target = resolve_target(st)
     if target is None:
         delivery.debug("no webhook target configured, not sending %s", _payload.STARTED)
         return
 
-    key = transport.idempotency_key(st.identity.id, _payload.STARTED)
+    key = transport.idempotency_key(identity.id, _payload.STARTED)
     body = _payload.build(
         st,
         event=_payload.STARTED,
