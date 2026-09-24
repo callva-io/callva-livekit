@@ -125,6 +125,12 @@ async def _report_dialing(ctx: Any, st: _state.CallState, participant: Any) -> N
     them ever appears. Two near-identical events seconds apart are noise to a consumer
     registering a call, so this is one event and the exact status travels in
     `livekit.sip.callStatus`.
+
+    Only an outbound call dials. An inbound SIP participant can also appear still
+    `ringing` - the carrier's call reached us and LiveKit has not answered it yet - and
+    reporting that as a dial would tell the consumer this call is being placed when it is
+    being received. The start is still held until it is answered; only this event is not
+    sent.
     """
     if st.extras.get(_DIALING_SENT):
         return
@@ -133,6 +139,9 @@ async def _report_dialing(ctx: Any, st: _state.CallState, participant: Any) -> N
     identity = _state.ensure_identity(
         st, participant=participant, direction=st.extras.get("direction")
     )
+    if identity.direction != _identity.OUTBOUND:
+        delivery.debug("an inbound call is ringing on our side, which is not a dial")
+        return
 
     target = resolve_target(st)
     if target is None:
@@ -243,8 +252,9 @@ def _ringing(participant: Any) -> bool:
 
     An outbound call's participant materialises as soon as the phone starts ringing, and
     reporting that as the call starting would tell the consumer somebody answered when
-    nobody has. Inbound is answered by the time the participant appears, so the same check
-    passes it straight through without having to know the direction.
+    nobody has. An inbound participant is usually answered by the time it appears and
+    passes straight through; one that is still ringing on our side is held the same way
+    until it is answered, without the dial :func:`_report_dialing` reports for outbound.
     """
     attributes = getattr(participant, "attributes", None) or {}
     status = attributes.get(SIP_STATUS)

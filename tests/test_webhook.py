@@ -542,7 +542,7 @@ async def test_a_ringing_call_is_dialing_not_started(bind_context, sent, target)
     ctx.room.remote_participants = {"sip_x": ctx._participant}
     bind_context(ctx)
 
-    callva_webhook.attach()
+    callva_webhook.attach(direction="outbound")
     await asyncio.sleep(0)
 
     assert [item["payload"]["event"] for item in sent] == ["call.dialing"]
@@ -556,7 +556,7 @@ async def test_the_start_is_reported_the_moment_they_pick_up(bind_context, sent,
     ctx.room.remote_participants = {"sip_x": caller}
     bind_context(ctx)
 
-    callva_webhook.attach()
+    callva_webhook.attach(direction="outbound")
     await asyncio.sleep(0)
     assert [item["payload"]["event"] for item in sent] == ["call.dialing"]
 
@@ -565,7 +565,7 @@ async def test_the_start_is_reported_the_moment_they_pick_up(bind_context, sent,
     await asyncio.sleep(0)
 
     assert [item["payload"]["event"] for item in sent] == ["call.dialing", "call.started"]
-    assert sent[-1]["payload"]["call"]["from"]["number"] == "+37255512345"
+    assert sent[-1]["payload"]["call"]["to"]["number"] == "+37255512345", "they were dialled"
     assert sent[0]["payload"]["call"]["id"] == sent[1]["payload"]["call"]["id"]
 
 
@@ -582,13 +582,36 @@ async def test_an_answered_inbound_call_is_not_held(bind_context, sent, target):
     assert [item["payload"]["event"] for item in sent] == ["call.started"]
 
 
+async def test_an_inbound_call_ringing_on_our_side_is_held_but_never_dialing(
+    bind_context, sent, target
+):
+    """A SIP dispatch rule can hand over the participant before LiveKit has answered the
+    carrier. The start still waits for the answer; what is never sent is a dial, because
+    nothing was dialled - the call is being received."""
+    caller = FakeParticipant(**{**DEFAULT_SIP, "sip.callStatus": "ringing"})
+    ctx = FakeContext(participant=caller)
+    ctx.room.remote_participants = {"sip_x": caller}
+    bind_context(ctx)
+
+    callva_webhook.attach(direction="inbound")
+    await asyncio.sleep(0)
+    assert sent == []
+
+    caller.attributes["sip.callStatus"] = "active"
+    ctx.room.emit_attributes_changed({"sip.callStatus": "active"}, caller)
+    await asyncio.sleep(0)
+
+    assert [item["payload"]["event"] for item in sent] == ["call.started"]
+    assert sent[0]["payload"]["call"]["direction"] == "inbound"
+
+
 async def test_dialing_is_said_once_however_many_rings_follow(bind_context, sent, target):
     caller = FakeParticipant(**{**DEFAULT_SIP, "sip.callStatus": "dialing"})
     ctx = FakeContext(participant=caller)
     ctx.room.remote_participants = {"sip_x": caller}
     bind_context(ctx)
 
-    callva_webhook.attach()
+    callva_webhook.attach(direction="outbound")
     await asyncio.sleep(0)
 
     caller.attributes["sip.callStatus"] = "ringing"
@@ -650,7 +673,7 @@ async def test_an_unanswered_call_never_claims_it_started(bind_context, sent, ta
     ctx.report = FakeReport()
     bind_context(ctx)
 
-    callva_webhook.attach()
+    callva_webhook.attach(direction="outbound")
     await asyncio.sleep(0)
     ctx.room.emit_participant_disconnected(caller, "USER_UNAVAILABLE")
     await callva_webhook.on_session_end(ctx)
