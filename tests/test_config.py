@@ -148,6 +148,24 @@ async def test_a_failed_request_terminates_the_call(bind_context, monkeypatch):
     assert ctx.shutdown_reason == "callva: configuration unavailable"
 
 
+async def test_a_failed_request_releases_the_caller_before_the_job_ends(bind_context, monkeypatch):
+    """Shutting the job down leaves the room behind, and an inbound line that was never
+    answered goes on ringing in it. FakeContext refuses a delete after the shutdown."""
+
+    async def boom(*_: Any, **__: Any) -> Any:
+        raise transport.FetchError("HTTP 502: bad gateway")
+
+    monkeypatch.setattr(resolver.transport, "fetch_json", boom)
+    monkeypatch.setenv("CONFIG_URL", "https://env.test/config")
+    ctx = bind_context(FakeContext())
+
+    with pytest.raises(callva_config.ConfigError):
+        await callva_config.load()
+
+    assert ctx.deleted_room is True
+    assert ctx.shutdown_reason == "callva: configuration unavailable"
+
+
 async def test_continuing_without_configuration_is_opt_in(bind_context, monkeypatch):
     async def boom(*_: Any, **__: Any) -> Any:
         raise transport.FetchError("nope")

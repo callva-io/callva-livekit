@@ -139,6 +139,62 @@ async def test_the_caller_is_released_before_the_job_ends(bind_context, no_grace
     assert ctx.shutdown_reason == "done"
 
 
+async def test_an_entrypoint_that_fails_hangs_the_call_up(bind_context, no_grace, caplog):
+    """An exception out of an entrypoint ends the job and leaves the room, so the caller
+    would go on hearing it ring. Guarded, the failure is logged and the call hung up."""
+    ctx = bind_context(FakeContext())
+
+    @call.hangs_up_on_failure
+    async def entrypoint(_ctx: Any) -> None:
+        raise RuntimeError("the provider refused the key")
+
+    with caplog.at_level(logging.ERROR, logger="callva.livekit"):
+        await entrypoint(ctx)
+
+    assert ctx.deleted_room is True
+    assert ctx.shutdown_reason == "the call could not be conducted"
+    assert "could not be conducted" in caplog.text
+    assert "the provider refused the key" in caplog.text
+
+
+async def test_an_entrypoint_that_succeeds_is_left_alone(bind_context):
+    ctx = bind_context(FakeContext())
+    ran = []
+
+    @call.hangs_up_on_failure
+    async def entrypoint(given: Any) -> None:
+        ran.append(given)
+
+    await entrypoint(ctx)
+
+    assert ran == [ctx]
+    assert ctx.deleted_room is False
+    assert ctx.shutdown_reason is None
+
+
+async def test_a_cancelled_entrypoint_is_not_a_failure(bind_context):
+    ctx = bind_context(FakeContext())
+
+    @call.hangs_up_on_failure
+    async def entrypoint(_ctx: Any) -> None:
+        raise asyncio.CancelledError
+
+    with pytest.raises(asyncio.CancelledError):
+        await entrypoint(ctx)
+    assert ctx.deleted_room is False
+
+
+def test_the_guarded_entrypoint_keeps_the_name_the_job_process_finds_it_by():
+    async def entrypoint(_ctx: Any) -> None: ...
+
+    guarded = call.hangs_up_on_failure(entrypoint)
+
+    assert guarded.__name__ == entrypoint.__name__
+    assert guarded.__qualname__ == entrypoint.__qualname__
+    assert guarded.__module__ == entrypoint.__module__
+    assert inspect.iscoroutinefunction(guarded)
+
+
 async def test_it_will_not_hang_up_mid_sentence(bind_context, no_grace):
     ctx = bind_context(FakeContext())
     session = FakeSession(agent_state="speaking")

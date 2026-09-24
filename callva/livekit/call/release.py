@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import functools
+from collections.abc import Awaitable, Callable
 from typing import Any
 
 from ..core import state as _state
@@ -117,6 +119,50 @@ async def until_quiet(session: Any, timeout: float = QUIET_TIMEOUT) -> bool:
     finally:
         with contextlib.suppress(Exception):
             session.off("agent_state_changed", on_state_changed)
+
+
+def hangs_up_on_failure(
+    entrypoint: Callable[[Any], Awaitable[None]],
+) -> Callable[[Any], Awaitable[None]]:
+    """Make an entrypoint that cannot conduct its call hang it up, never leave it ringing.
+
+    An exception out of an entrypoint ends the job and nothing else. The room outlives it,
+    so a caller on an inbound line that was never answered goes on hearing it ring, and
+    one on a line that was answered hears nothing, until the server gives up on the room -
+    a call that failed and says so to nobody on the phone. Whatever the entrypoint did not
+    handle itself is therefore logged, which reaches ``call.ended`` with the rest of the
+    call's errors, and the call is hung up at once: the room deleted, the job shut down.
+
+    Every such failure is hung up on in silence. Some are worth a sentence to the caller -
+    a balance that has run out is theirs to act on, and hearing so is better than hearing
+    the line drop - but most are ours, a server or a provider failing, and none of those
+    is anything to say to whoever answered. A failure that should be spoken is a refusal
+    the platform words for the caller, and that path exists already: the configuration
+    request answers no with a caller message, and the worker speaks it. Choosing which
+    other failures join it is left to that channel rather than decided here.
+
+    Put it under the session decorator, so that what the server registers is the guarded
+    function::
+
+        @server.rtc_session(agent_name=...)
+        @call.hangs_up_on_failure
+        async def entrypoint(ctx: JobContext) -> None: ...
+
+    ``functools.wraps`` keeps the entrypoint's name and module, which is how the job
+    process finds it again: the function is handed to that process by reference.
+    """
+
+    @functools.wraps(entrypoint)
+    async def guarded(ctx: Any) -> None:
+        try:
+            await entrypoint(ctx)
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            logger.exception("this call could not be conducted; hanging up")
+            await end(ctx, reason="the call could not be conducted", wait=False, ended_by=None)
+
+    return guarded
 
 
 def leave_console_when_done(ctx: Any = None) -> None:

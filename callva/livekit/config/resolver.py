@@ -212,6 +212,12 @@ def _fail(st: _state.CallState, on_error: OnError, reason: str) -> CallConfig:
         return _store(st, CallConfig(source="none"))
 
     logger.error("%s; terminating the call", reason)
+    # The room goes first. Shutting the job down only takes the agent out of it, and a
+    # caller whose inbound line was never answered would go on hearing it ring.
+    try:
+        st.ctx.delete_room()
+    except Exception:
+        logger.debug("could not delete the room", exc_info=True)
     try:
         st.ctx.shutdown(reason="callva: configuration unavailable")
     except Exception:

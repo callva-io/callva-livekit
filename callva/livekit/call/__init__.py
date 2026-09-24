@@ -26,6 +26,7 @@ from .release import (
     USER,
     end,
     ended_by,
+    hangs_up_on_failure,
     leave_console_when_done,
     until_quiet,
 )
@@ -45,6 +46,7 @@ __all__ = [
     "await_pickup",
     "end",
     "ended_by",
+    "hangs_up_on_failure",
     "leave_console_when_done",
     "stop",
     "supervise",
