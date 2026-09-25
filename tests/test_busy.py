@@ -105,3 +105,19 @@ async def test_outside_a_job_it_holds_nothing_and_raises_nothing():
     with call.busy():
         ran = True
     assert ran
+
+
+async def test_a_caller_who_never_declares_work_is_watched_exactly_as_before(
+    bind_context, no_grace, brisk
+):
+    """Nothing about busy() is armed until somebody holds it: the watch reads no count."""
+    ctx = bind_context(FakeContext())
+    st = _state.state(ctx)
+    said = watch(ctx, FakeSession())
+
+    assert supervising._BUSY not in st.extras
+    await asyncio.sleep(0.6)
+
+    assert said == ["are you there?", "are you there?"]
+    assert st.ended_by == call.SILENCE
+    assert supervising._BUSY not in st.extras
