@@ -4,7 +4,7 @@ import asyncio
 import contextlib
 import random
 import time
-from collections.abc import Awaitable, Callable, Sequence
+from collections.abc import Awaitable, Callable, Iterator, Sequence
 from typing import Any
 
 from ..core import state as _state
@@ -81,6 +81,48 @@ _ALONE_TASK = "call.alone_task"
 _ALONE_HANDLER = "call.alone_handler"
 _QUIET_TASK = "call.quiet_task"
 _QUIET_DETACH = "call.quiet_detach"
+_BUSY = "call.busy"
+_QUIET_STIRRED = "call.quiet_stirred"
+
+
+@contextlib.contextmanager
+def busy(ctx: Any = None) -> Iterator[None]:
+    """Say that this side of the call is working, for as long as the block runs.
+
+    The quiet watch already knows one kind of work: a tool the framework runs, which it reads off
+    ``tool_execution_updated``. Some work never passes through the framework's tool path - a
+    model the agent asks itself, behind a voice that has already said "one moment", for five or
+    six seconds at a time. Nothing about it is published, so without this the watch sees a
+    caller and an agent both saying nothing and reminds a caller who is only waiting for an
+    answer.
+
+    Held, the call is not quiet, exactly as with a tool in flight; released, the clock restarts,
+    exactly as when a tool lands, and the count of reminders is untouched, because the caller
+    has still said nothing. It nests and overlaps: the call is busy while any holder is.
+
+    Outside a job there is no call to watch, so nothing is held and the block simply runs. That
+    is the one thing this does not refuse: a signal about a call is never worth an exception
+    in the work it describes.
+    """
+    try:
+        st = _state.state(ctx)
+    except _state.NoJobContext:
+        yield
+        return
+
+    st.extras[_BUSY] = st.extras.get(_BUSY, 0) + 1
+    try:
+        yield
+    finally:
+        st.extras[_BUSY] = max(0, st.extras.get(_BUSY, 1) - 1)
+        stirred = st.extras.get(_QUIET_STIRRED)
+        if stirred is not None:
+            stirred()
+
+
+def _busy(st: _state.CallState) -> bool:
+    """Whether anybody is holding :func:`busy` on this call right now."""
+    return bool(st.extras.get(_BUSY))
 
 
 def supervise(
@@ -363,7 +405,8 @@ def _end_when_quiet(
     side of the call, and a caller who has heard three answers and said nothing to any of them
     has still said nothing.
 
-    **What is not quiet at all.** A tool in flight, which will speak when it lands; a session
+    **What is not quiet at all.** A tool in flight, which will speak when it lands; work held
+    under :func:`busy`, which is the same thing done off the framework's tool path; a session
     that is not running or cannot hear the caller; and the framework calling the caller away,
     which is the framework saying they have *not* stirred and must reset nothing.
 
@@ -488,6 +531,8 @@ def _end_when_quiet(
                 session.off(event_name, handler)
 
     st.extras[_QUIET_DETACH] = detach
+    # Work held under `busy` lands the way a tool does, and moves the clock the same way.
+    st.extras[_QUIET_STIRRED] = stirred
 
     def quiet_right_now() -> bool:
         """Whether there is any quiet to measure at this instant.
@@ -503,6 +548,7 @@ def _end_when_quiet(
             and not user_speaking
             and not agent_speaking
             and not running_tools
+            and not _busy(st)
         )
 
     async def rest(seconds: float) -> bool:
@@ -593,7 +639,8 @@ def _end_when_quiet(
 
                 if not quiet_right_now():
                     # A tool in flight is not quiet: whatever it answers will be spoken when it
-                    # lands, and its landing restarts the clock.
+                    # lands, and its landing restarts the clock. Work held under `busy` is the
+                    # same.
                     if not await rest(QUIET_TICK):
                         return
                     continue
@@ -666,6 +713,7 @@ def _end_when_quiet(
             # a courtesy a caller may not use.
             st.extras.pop(_QUIET_TASK, None)
             st.extras.pop(_QUIET_DETACH, None)
+            st.extras.pop(_QUIET_STIRRED, None)
             detach()
 
     st.extras[_QUIET_TASK] = asyncio.ensure_future(watch())

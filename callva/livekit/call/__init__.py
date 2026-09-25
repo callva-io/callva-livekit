@@ -12,7 +12,8 @@ whoever ends a call some other way claim it too. The first claim is the one that
 Silence is the one of those the framework half-models and this module finishes. ``supervise``
 measures the quiet on its own clock, hands a reminder to an ``Utterance`` its caller supplies,
 and ends the call when the reminders run out — none of which the framework's single
-``user_away_timeout`` edge can express.
+``user_away_timeout`` edge can express. ``busy`` is how work the framework never sees is
+counted the way a tool in flight is, rather than as quiet.
 """
 
 from .pickup import ANSWER_TIMEOUT, await_pickup
@@ -30,7 +31,7 @@ from .release import (
     leave_console_when_done,
     until_quiet,
 )
-from .supervise import PROMPT_GRACE, Utterance, stop, supervise
+from .supervise import PROMPT_GRACE, Utterance, busy, stop, supervise
 
 __all__ = [
     "AGENT",
@@ -44,6 +45,7 @@ __all__ = [
     "USER",
     "Utterance",
     "await_pickup",
+    "busy",
     "end",
     "ended_by",
     "hangs_up_on_failure",

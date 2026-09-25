@@ -204,6 +204,16 @@ flight is not quiet, and none of it runs before the caller is on the call or aft
 The reminders belong to an episode of quiet rather than to the call: a caller who answers and
 goes quiet again is reminded again.
 
+Work the framework never sees is not quiet either, once it is said out loud. A model your agent
+asks itself, off the framework's tool path, leaves the line silent for as long as it thinks;
+hold `callva_call.busy()` around it and the watch treats it as a tool in flight - no reminder
+while it runs, the clock restarted when it lands, the count untouched:
+
+```python
+with callva_call.busy():
+    answer = await ask_the_backend(...)
+```
+
 This package never speaks. `utter` is your async callable, handed the phrase and returning
 nothing — how a line reaches a particular model is that stack's business. It is waited on for
 at most `PROMPT_GRACE`'s sibling `UTTERANCE_TIMEOUT`, because it is yours and a coroutine that
