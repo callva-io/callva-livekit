@@ -436,9 +436,7 @@ def _end_when_quiet(
         "watching this call for quiet: %ss, %s reminder(s) %s, then %s",
         silence_timeout,
         attempts,
-        f"drawn from {len(phrases)} phrase(s)"
-        if phrases
-        else "with no phrase written for them",
+        f"drawn from {len(phrases)} phrase(s)" if phrases else "with no phrase written for them",
         f"ending it {call_silence_timeout}s later"
         if call_silence_timeout is not None
         else "letting the conversation go on",
