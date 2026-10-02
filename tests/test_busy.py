@@ -121,3 +121,26 @@ async def test_a_caller_who_never_declares_work_is_watched_exactly_as_before(
     assert said == ["are you there?", "are you there?"]
     assert st.ended_by == call.SILENCE
     assert supervising._BUSY not in st.extras
+
+
+async def test_call_silence_alone_pauses_while_busy(bind_context, no_grace, brisk):
+    """With no reminders configured, work held busy still keeps the call from being ended."""
+    ctx = bind_context(FakeContext())
+    st = _state.state(ctx)
+    said: list[str | None] = []
+
+    async def utter(phrase: str | None) -> None:
+        said.append(phrase)
+
+    call.supervise(FakeSession(), ctx=ctx, utter=utter, call_silence_timeout=0.2)
+
+    with call.busy():
+        await asyncio.sleep(0.4)
+        assert ctx.shutdown_reason is None, "the call was ended while the agent was working"
+
+    await asyncio.sleep(0.1)
+    assert ctx.shutdown_reason is None, "the clock did not restart once the work landed"
+
+    await asyncio.sleep(0.4)
+    assert said == []
+    assert st.ended_by == call.SILENCE

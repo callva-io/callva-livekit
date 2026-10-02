@@ -175,10 +175,10 @@ because they belong to the shutdown sequence and a closed room does not interrup
 callva_call.supervise(
     session,
     max_duration=config.agent.max_duration,
-    silence_timeout=config.agent.user_silence_timeout,     # None: the quiet is not watched
+    silence_timeout=config.agent.user_silence_timeout,     # None: nobody is reminded
     prompt_phrases=config.agent.prompt_phrases,
     max_prompt_attempts=config.agent.max_prompt_attempts,
-    call_silence_timeout=config.agent.call_silence_timeout,
+    call_silence_timeout=config.agent.call_silence_timeout,  # None: quiet ends nothing
     utter=say_this,                                        # async def say_this(phrase: str | None)
 )
 ```
@@ -189,10 +189,13 @@ answering. `supervise` watches for all three and hangs up through `end`, so the 
 released and the report still goes out.
 
 The quiet is measured here rather than by the framework's `user_away_timeout`, which is a
-single edge at a fixed timeout that nothing re-arms — no use for counting. After
-`silence_timeout` of nothing said, the caller is reminded with one of `prompt_phrases`, up to
-`max_prompt_attempts` times; when those are spent the call ends `call_silence_timeout` later,
-as `ended_by: silence`, or the conversation simply goes on where you set none.
+single edge at a fixed timeout that nothing re-arms — no use for counting. It is two
+independent settings, and either one arms the watch. `silence_timeout` reminds: after that much
+of nothing said, the caller is reminded with one of `prompt_phrases`, up to
+`max_prompt_attempts` times. `call_silence_timeout` ends the call, as `ended_by: silence`:
+`call_silence_timeout` after the last reminder where there are reminders, and after that much
+total quiet where there are none. Reminders with no `call_silence_timeout` let the conversation
+simply go on; neither set leaves the quiet unwatched.
 
 Two measurements, two kinds of evidence. The **clock** restarts on any sign of life — a
 voice-detected edge either way, any transcript, the agent speaking, a tool landing — because
@@ -226,7 +229,8 @@ nothing was written for this reminder, so say something suitable yourself. Handl
 an operator who switched reminders on and never composed a sentence still meant the caller to
 be checked on, and this package will not answer that by inventing one, in a language of its own
 choosing, for somebody else's agent to say. Every number is yours too: no timeout, phrase or
-attempt count is invented here, and the whole of it is inert until `silence_timeout` is set.
+attempt count is invented here, and the whole of it is inert until one of the two timeouts is
+set.
 
 `end_when_away=True` is the short version for anyone who wants it — hang up on the framework's
 own away edge, at whatever timeout the session was built with. It is inert on a session built

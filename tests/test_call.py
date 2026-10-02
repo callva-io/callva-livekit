@@ -1584,3 +1584,100 @@ async def test_giving_up_on_a_reminder_is_reported_and_does_not_end_the_call(
     assert ctx.shutdown_reason is None, "the call was ended over a reminder"
     failed = [r.getMessage() for r in caplog.records if r.levelno >= logging.ERROR]
     assert len(failed) == 1 and "not handed over" in failed[0]
+
+
+# --- Call silence on its own ----------------------------------------------------------------
+
+
+async def test_call_silence_alone_ends_the_call_after_that_much_quiet_with_no_reminder(
+    bind_context, no_grace, brisk
+):
+    """The two settings are independent: ending a quiet call does not need reminders switched on.
+
+    An agent configured with no user silence and thirty seconds of call silence is one whose
+    operator asked for a quiet call to be hung up, and never asked for the caller to be checked
+    on first. It is ended after that much total quiet, and nothing is said before it.
+    """
+    ctx = bind_context(FakeContext())
+    session = FakeSession()
+
+    voice = watch(
+        ctx,
+        session,
+        prompt_phrases=["are you there?"],
+        max_prompt_attempts=2,
+        call_silence_timeout=0.2,
+    )
+    await asyncio.sleep(0.1)
+    assert ctx.shutdown_reason is None, "the call ended before its quiet was up"
+
+    await asyncio.sleep(0.4)
+    assert voice.said == [], "a reminder nobody configured was asked for"
+    assert ctx.deleted_room is True
+    assert _state.state(ctx).ended_by == call.SILENCE
+
+
+async def test_call_silence_alone_is_measured_from_the_last_sound(bind_context, no_grace, brisk):
+    ctx = bind_context(FakeContext())
+    session = FakeSession()
+
+    watch(ctx, session, call_silence_timeout=0.3)
+    await asyncio.sleep(0.2)
+    session.start_speaking()
+    session.stop_talking()
+    await asyncio.sleep(0.2)
+    assert ctx.shutdown_reason is None, "the quiet before the caller spoke was counted"
+
+    await asyncio.sleep(0.4)
+    assert _state.state(ctx).ended_by == call.SILENCE
+
+
+async def test_zero_reminders_beside_a_user_silence_ends_on_call_silence_alone(
+    bind_context, no_grace, brisk
+):
+    """A user silence with nothing to remind with is no reminder stage, not a longer wait."""
+    ctx = bind_context(FakeContext())
+
+    voice = watch(
+        ctx,
+        FakeSession(),
+        silence_timeout=5.0,
+        max_prompt_attempts=0,
+        call_silence_timeout=0.1,
+    )
+    await asyncio.sleep(0.4)
+
+    assert voice.said == []
+    assert _state.state(ctx).ended_by == call.SILENCE
+
+
+async def test_both_set_reminds_and_then_ends_call_silence_after_the_last_reminder(
+    bind_context, no_grace, brisk
+):
+    ctx = bind_context(FakeContext())
+
+    voice = watch(
+        ctx,
+        FakeSession(),
+        silence_timeout=0.05,
+        prompt_phrases=["are you there?"],
+        max_prompt_attempts=1,
+        call_silence_timeout=0.3,
+    )
+    await asyncio.sleep(0.2)
+    assert voice.said == ["are you there?"]
+    assert ctx.shutdown_reason is None, "call silence was not counted from the reminder"
+
+    await asyncio.sleep(0.4)
+    assert _state.state(ctx).ended_by == call.SILENCE
+
+
+async def test_call_silence_beside_the_away_edge_is_two_clocks_too(bind_context, caplog):
+    ctx = bind_context(FakeContext())
+
+    with caplog.at_level(logging.INFO, logger="callva.livekit"):
+        call.supervise(FakeSession(), ctx=ctx, end_when_away=True, call_silence_timeout=30.0)
+    call.stop(ctx)
+
+    warned = [r.getMessage() for r in caplog.records if r.levelno == logging.WARNING]
+    assert warned and "two clocks" in warned[0]

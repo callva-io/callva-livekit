@@ -160,12 +160,14 @@ def supervise(
 
     **Silence is watched two ways and they do not mix.** ``end_when_away`` is the short one:
     it leans on the session's own ``user_away_timeout``, hangs up the moment the framework
-    calls the caller away, and knows nothing about reminding them first. ``silence_timeout``
-    and the three arguments under it are the long one: the quiet is measured here, the caller
-    is reminded up to ``max_prompt_attempts`` times, and only then is the call ended. A
-    deployment that wants the second passes ``user_away_timeout=None`` to its session and
-    leaves ``end_when_away`` alone — see :func:`_end_when_quiet` for why the two clocks must
-    not both run.
+    calls the caller away, and knows nothing about reminding them first. The long one is
+    measured here, and it is two settings that each stand on their own. ``silence_timeout``,
+    with ``prompt_phrases`` and ``max_prompt_attempts``, reminds a quiet caller.
+    ``call_silence_timeout`` ends the call: after that much quiet following the last reminder
+    where there are reminders, and after that much total quiet where there are none. Either
+    one arms the watch. A deployment that wants it passes ``user_away_timeout=None`` to its
+    session and leaves ``end_when_away`` alone — see :func:`_end_when_quiet` for why the two
+    clocks must not both run.
 
     ``utter`` is how a reminder is said, and it is called with one of ``prompt_phrases`` or
     with ``None`` where none was written — both cases, and :data:`Utterance` is where what
@@ -180,12 +182,14 @@ def supervise(
     if end_when_alone:
         _end_when_alone(st)
 
+    quiet_watched = silence_timeout is not None or call_silence_timeout is not None
+
     if session is None:
-        if end_when_away or end_when_closed or silence_timeout is not None:
+        if end_when_away or end_when_closed or quiet_watched:
             logger.warning("no session to watch, so nobody will notice the call ending")
         return
 
-    if end_when_away and silence_timeout is not None:
+    if end_when_away and quiet_watched:
         # At warning and not at error: nothing configured is lost, and both clocks do work. What
         # happens is that the shorter of two answers to one question wins, which is the framework's
         # own fixed timeout beating whatever an operator set. It is the deployment's mistake rather
@@ -203,13 +207,14 @@ def supervise(
     if end_when_closed:
         _end_when_closed(st, session)
 
-    if silence_timeout is not None:
+    if quiet_watched:
         _end_when_quiet(
             st,
             session,
             silence_timeout=silence_timeout,
             phrases=[p.strip() for p in prompt_phrases if isinstance(p, str) and p.strip()],
-            attempts=max_prompt_attempts or 0,
+            # Reminders hang off the quiet that triggers them: with no such quiet there are none.
+            attempts=(max_prompt_attempts or 0) if silence_timeout is not None else 0,
             call_silence_timeout=call_silence_timeout,
             utter=utter,
         )
@@ -368,7 +373,7 @@ def _end_when_quiet(
     st: _state.CallState,
     session: Any,
     *,
-    silence_timeout: float,
+    silence_timeout: float | None,
     phrases: list[str],
     attempts: int,
     call_silence_timeout: float | None,
@@ -410,8 +415,14 @@ def _end_when_quiet(
     that is not running or cannot hear the caller; and the framework calling the caller away,
     which is the framework saying they have *not* stirred and must reset nothing.
 
+    **The two settings are independent.** With reminders — a ``silence_timeout`` and at least
+    one attempt — the caller is reminded after that much quiet, up to the attempts, and the
+    call ends ``call_silence_timeout`` after the last one. With none, there is no reminder stage
+    at all and the call ends once the total quiet reaches ``call_silence_timeout``. With neither
+    there is nothing to act on, and this is never reached.
+
     **Nothing here is invented.** No timeout, no phrase, no number of attempts. An operator who
-    configured none of it is never reached at all, because ``silence_timeout=None`` leaves this
+    configured none of it is never reached at all, because both timeouts at ``None`` leave this
     unarmed; one who asked for reminders and wrote no phrase is reminded with ``None``, which is
     this package saying that nothing was written rather than choosing words to fill the gap —
     see :data:`Utterance`. What is composed from that, in what language, is decided on the far
@@ -432,20 +443,29 @@ def _end_when_quiet(
             attempts,
         )
 
-    logger.debug(
-        "watching this call for quiet: %ss, %s reminder(s) %s, then %s",
-        silence_timeout,
-        attempts,
-        f"drawn from {len(phrases)} phrase(s)" if phrases else "with no phrase written for them",
-        f"ending it {call_silence_timeout}s later"
-        if call_silence_timeout is not None
-        else "letting the conversation go on",
-    )
-
     if not attempts and call_silence_timeout is None:
         # Nothing to remind with and nothing to end on: there is no moment at which this could
         # act, so it does not wait for one.
         return
+
+    reminding = silence_timeout is not None and attempts > 0
+    if reminding:
+        logger.debug(
+            "watching this call for quiet: %ss, %s reminder(s) %s, then %s",
+            silence_timeout,
+            attempts,
+            f"drawn from {len(phrases)} phrase(s)"
+            if phrases
+            else "with no phrase written for them",
+            f"ending it {call_silence_timeout}s later"
+            if call_silence_timeout is not None
+            else "letting the conversation go on",
+        )
+    else:
+        logger.debug(
+            "watching this call for quiet: no reminders, ending it after %ss of it",
+            call_silence_timeout,
+        )
 
     last = time.time()
     used = 0
@@ -644,12 +664,12 @@ def _end_when_quiet(
                     continue
 
                 quiet = time.time() - last
-                if quiet < silence_timeout:
+                if reminding and quiet < silence_timeout:
                     if not await rest(silence_timeout - quiet):
                         return
                     continue
 
-                if used < attempts:
+                if reminding and used < attempts:
                     stirred_at = last
                     if not await rest(PROMPT_GRACE):
                         return
@@ -672,7 +692,8 @@ def _end_when_quiet(
                 if quiet < call_silence_timeout:
                     # Looked at again on the ordinary tick rather than slept out in one go: the
                     # caller can still come back inside this last stretch, and a clock asleep
-                    # until the hangup would not notice until it had already hung up.
+                    # until the hangup would not notice until it had already hung up. Without
+                    # reminders this is the whole of the wait, measured from the last sound.
                     if not await rest(min(QUIET_TICK, call_silence_timeout - quiet)):
                         return
                     continue
